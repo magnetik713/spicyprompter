@@ -1,6 +1,7 @@
 process.env.NODE_ENV = 'test';
 const { test, after } = require('node:test');
 const assert = require('node:assert');
+const request = require('supertest');
 
 const db = require('../db');
 
@@ -27,6 +28,26 @@ test('insert and retrieve prompt', () => {
   const row = db.prepare("SELECT name, positive FROM prompts WHERE id = ?").get(result.lastInsertRowid);
   assert.strictEqual(row.name, 'Test Prompt');
   assert.strictEqual(row.positive, 'a cat');
+});
+
+let app;
+test('before routes — load app', () => {
+  app = require('../server');
+});
+
+test('GET /prompts returns 200', async () => {
+  const res = await request(app).get('/prompts');
+  assert.strictEqual(res.status, 200);
+});
+
+test('GET /prompts/workflows returns 200', async () => {
+  const res = await request(app).get('/prompts/workflows');
+  assert.strictEqual(res.status, 200);
+});
+
+test('GET /prompts/9999 returns 404', async () => {
+  const res = await request(app).get('/prompts/9999');
+  assert.strictEqual(res.status, 404);
 });
 
 after(() => {
