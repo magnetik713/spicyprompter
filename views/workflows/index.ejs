@@ -1,3 +1,36 @@
 <%- include('../partials/header') %>
-<p>workflows index stub</p>
+<div class="page-header">
+  <h1>Workflows</h1>
+  <a href="/prompts/workflows/new" class="btn btn-primary">+ New Workflow</a>
+</div>
+<% if (workflows.length === 0) { %>
+  <div class="empty"><p>No workflows yet. <a href="/prompts/workflows/new">Add one</a>.</p></div>
+<% } else { %>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Sampler</th>
+      <th>Scheduler</th>
+      <th>Steps</th>
+      <th>CFG</th>
+      <th>Source</th>
+      <th>Added</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% workflows.forEach(w => { %>
+    <tr>
+      <td><a href="/prompts/workflows/<%= w.id %>"><%= w.name %></a></td>
+      <td><%= w.sampler || '—' %></td>
+      <td><%= w.scheduler || '—' %></td>
+      <td><%= w.steps || '—' %></td>
+      <td><%= w.cfg_scale || '—' %></td>
+      <td><% if (w.source_url) { %><a href="<%= w.source_url %>" target="_blank">link</a><% } else { %>—<% } %></td>
+      <td><%= new Date(w.created_at).toLocaleDateString() %></td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+<% } %>
 <%- include('../partials/footer') %>
