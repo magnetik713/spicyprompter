@@ -1,3 +1,52 @@
 <%- include('../partials/header') %>
-<p>prompts index stub</p>
+<div class="page-header">
+  <h1>Prompt Library</h1>
+  <a href="/prompts/new" class="btn btn-primary">+ New Prompt</a>
+</div>
+<form method="GET" action="/prompts" class="search-bar">
+  <input type="text" name="q" value="<%= q %>" placeholder="Search name, tags, positive prompt...">
+  <% if (currentModel !== 'All') { %><input type="hidden" name="model" value="<%= currentModel %>"><% } %>
+  <button type="submit" class="btn btn-secondary">Search</button>
+  <% if (q) { %><a href="/prompts<%= currentModel !== 'All' ? '?model=' + currentModel : '' %>" class="btn btn-secondary">Clear</a><% } %>
+</form>
+<div class="model-tabs">
+  <a href="/prompts<%= q ? '?q=' + encodeURIComponent(q) : '' %>" class="model-tab <%= currentModel === 'All' ? 'active' : '' %>">All</a>
+  <% models.forEach(m => { %>
+    <a href="/prompts?model=<%= encodeURIComponent(m) %><%= q ? '&q=' + encodeURIComponent(q) : '' %>"
+       class="model-tab <%= currentModel === m ? 'active' : '' %>"><%= m %></a>
+  <% }) %>
+</div>
+<% if (prompts.length === 0) { %>
+  <div class="empty">
+    <p>No prompts found. <a href="/prompts/new">Save your first one</a>.</p>
+  </div>
+<% } else { %>
+<div class="card-grid">
+  <% prompts.forEach(p => { %>
+  <a href="/prompts/<%= p.id %>" class="card">
+    <div class="card-thumb">
+      <% if (p.image_path) { %>
+        <img src="/prompts/<%= p.image_path %>" alt="<%= p.name %>">
+      <% } else { %>
+        &#127912;
+      <% } %>
+    </div>
+    <div class="card-body">
+      <div class="card-title"><%= p.name %></div>
+      <div class="card-meta">
+        <% if (p.base_model) { %><%= p.base_model %><% } %>
+        <% if (p.workflow_name) { %> &middot; <%= p.workflow_name %><% } %>
+      </div>
+      <% if (p.tags) { %>
+      <div class="card-tags">
+        <% p.tags.split(',').slice(0, 4).forEach(t => { %>
+          <span class="tag"><%= t.trim() %></span>
+        <% }) %>
+      </div>
+      <% } %>
+    </div>
+  </a>
+  <% }) %>
+</div>
+<% } %>
 <%- include('../partials/footer') %>
