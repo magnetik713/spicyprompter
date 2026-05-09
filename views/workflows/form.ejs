@@ -4,12 +4,19 @@
 <form action="<%= action %>" method="<%= method %>" enctype="multipart/form-data">
   <div class="form-grid">
     <div class="field">
-      <label>Name *</label>
-      <input type="text" name="name" value="<%= workflow.name || '' %>" required>
+      <label>Name</label>
+      <input type="text" name="name" value="<%= workflow.name || '' %>">
     </div>
     <div class="field">
       <label>Source URL</label>
       <input type="url" name="source_url" value="<%= workflow.source_url || '' %>">
+    </div>
+    <div class="field">
+      <label>Base Model</label>
+      <input type="text" name="base_model" value="<%= workflow.base_model || '' %>" list="wf-model-list" placeholder="Flux.1, SDXL, WAN 2.2, Pony...">
+      <datalist id="wf-model-list">
+        <% models.forEach(m => { %><option value="<%= m %>"><% }) %>
+      </datalist>
     </div>
     <div class="form-row">
       <div class="field">
