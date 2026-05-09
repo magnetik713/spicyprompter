@@ -61,8 +61,8 @@ router.post('/', upload.single('image'), (req, res) => {
   const result = db.prepare(`
     INSERT INTO prompts (name, workflow_id, base_model, positive, negative, loras, trigger_words, tags, image_path, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(name, workflow_id || null, base_model || null, environment || null, scene || null,
-         positive || null, negative || null, loras || null, trigger_words || null, tags || null, image_path, notes || null);
+  `).run(name || null, workflow_id || null, base_model || null, positive || null,
+         negative || null, loras || null, trigger_words || null, tags || null, image_path, notes || null);
   res.redirect(`/prompts/${result.lastInsertRowid}`);
 });
 
