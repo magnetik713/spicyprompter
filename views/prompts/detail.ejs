@@ -29,16 +29,13 @@
     <% } %>
   </div>
   <div class="detail-main">
-    <% if (prompt.environment) { %>
+    <% if (prompt.positive) { %>
     <div class="section">
-      <div class="section-label">Environment</div>
-      <div class="prompt-box"><%= prompt.environment %></div>
-    </div>
-    <% } %>
-    <% if (prompt.scene) { %>
-    <div class="section">
-      <div class="section-label">Scene</div>
-      <div class="prompt-box"><%= prompt.scene %></div>
+      <div class="section-label">
+        Positive Prompt
+        <button class="copy-btn" data-target="positive-text">Copy</button>
+      </div>
+      <div class="prompt-box positive" id="positive-text"><%= prompt.positive %></div>
     </div>
     <% } %>
     <% if (prompt.negative) { %>
