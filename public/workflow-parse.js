@@ -78,7 +78,9 @@ document.addEventListener('DOMContentLoaded', function () {
           fillSelect('scheduler', ksampler.scheduler);
         }
         var deps = extractDeps(data);
-        if (deps.length) fillTextarea('dependencies', deps.join('\n'));
+        var loraLines = extractLoras(data).map(function(l){ return 'LoRA: ' + l; });
+        var allDeps = deps.concat(loraLines);
+        if (allDeps.length) fillTextarea('dependencies', allDeps.join('\n'));
       } catch (err) {}
     };
     reader.readAsText(file);
@@ -92,6 +94,41 @@ document.addEventListener('DOMContentLoaded', function () {
       return Object.values(data).filter(function (v) { return v && v.class_type; }).map(function (v) { return v.class_type; });
     }
     return [];
+  }
+
+
+  function extractLoras(data) {
+    var results = [];
+    // API format
+    if (data && typeof data === 'object' && !data.nodes) {
+      Object.values(data).forEach(function (node) {
+        if (!node) return;
+        if (node.class_type === 'LoraLoader' || node.class_type === 'LoraLoaderModelOnly') {
+          var name = node.inputs && node.inputs.lora_name;
+          var str  = node.inputs && (node.inputs.strength_model != null ? node.inputs.strength_model : node.inputs.strength);
+          if (name) results.push(name + (str != null ? ':' + str : ''));
+        }
+      });
+    }
+    // UI format
+    if (data && data.nodes && Array.isArray(data.nodes)) {
+      data.nodes.forEach(function (node) {
+        if (node.type === 'LoraLoader' || node.type === 'LoraLoaderModelOnly') {
+          var wv = node.widgets_values || [];
+          if (wv[0]) results.push(wv[0] + (wv[1] != null ? ':' + wv[1] : ''));
+        }
+        // Power Lora Loader (rgthree): widgets_values alternates [name, strength, clip_strength, name, ...]
+        if (node.type && node.type.indexOf('Power Lora Loader') !== -1) {
+          var wv = node.widgets_values || [];
+          for (var i = 0; i < wv.length - 1; i += 3) {
+            if (wv[i] && typeof wv[i] === 'string' && wv[i] !== 'None') {
+              results.push(wv[i] + (wv[i+1] != null ? ':' + wv[i+1] : ''));
+            }
+          }
+        }
+      });
+    }
+    return results;
   }
 
   function extractDeps(data) {
