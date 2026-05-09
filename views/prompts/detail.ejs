@@ -1,3 +1,68 @@
 <%- include('../partials/header') %>
-<p>prompt detail stub: <%= prompt.name %></p>
+<div class="breadcrumb"><a href="/prompts">Library</a> &rsaquo; <%= prompt.name %></div>
+<div class="page-header">
+  <h1><%= prompt.name %></h1>
+  <div style="display:flex;gap:8px">
+    <a href="/prompts/<%= prompt.id %>/edit" class="btn btn-secondary">Edit</a>
+    <form action="/prompts/<%= prompt.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this prompt?')">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+<div class="detail-layout">
+  <div class="detail-sidebar">
+    <% if (prompt.image_path) { %>
+      <img src="/prompts/<%= prompt.image_path %>" alt="<%= prompt.name %>">
+    <% } else { %>
+      <div class="placeholder-thumb">&#127912;</div>
+    <% } %>
+    <ul class="meta-list">
+      <% if (prompt.base_model) { %><li><span class="label">Model</span><%= prompt.base_model %></li><% } %>
+      <% if (prompt.workflow_name) { %><li><span class="label">Workflow</span><a href="/prompts/workflows/<%= prompt.workflow_id %>"><%= prompt.workflow_name %></a></li><% } %>
+      <% if (prompt.loras) { %><li><span class="label">LoRAs</span><%= prompt.loras %></li><% } %>
+      <% if (prompt.trigger_words) { %><li><span class="label">Trigger Words</span><%= prompt.trigger_words %></li><% } %>
+    </ul>
+    <% if (prompt.tags) { %>
+    <div class="card-tags" style="margin-top:8px">
+      <% prompt.tags.split(',').forEach(t => { %><span class="tag"><%= t.trim() %></span><% }) %>
+    </div>
+    <% } %>
+  </div>
+  <div class="detail-main">
+    <% if (prompt.environment) { %>
+    <div class="section">
+      <div class="section-label">Environment</div>
+      <div class="prompt-box"><%= prompt.environment %></div>
+    </div>
+    <% } %>
+    <% if (prompt.scene) { %>
+    <div class="section">
+      <div class="section-label">Scene</div>
+      <div class="prompt-box"><%= prompt.scene %></div>
+    </div>
+    <% } %>
+    <div class="section">
+      <div class="section-label">
+        Positive Prompt
+        <button class="copy-btn" data-target="positive-text">Copy</button>
+      </div>
+      <div class="prompt-box positive" id="positive-text"><%= prompt.positive %></div>
+    </div>
+    <% if (prompt.negative) { %>
+    <div class="section">
+      <div class="section-label">
+        Negative Prompt
+        <button class="copy-btn negative" data-target="negative-text">Copy</button>
+      </div>
+      <div class="prompt-box negative" id="negative-text"><%= prompt.negative %></div>
+    </div>
+    <% } %>
+    <% if (prompt.notes) { %>
+    <div class="section">
+      <div class="section-label">Notes</div>
+      <div class="prompt-box" style="color:var(--dim);font-style:italic"><%= prompt.notes %></div>
+    </div>
+    <% } %>
+  </div>
+</div>
 <%- include('../partials/footer') %>
