@@ -74,6 +74,39 @@ test('POST /prompts/workflows missing name returns 400', async () => {
   assert.strictEqual(res.status, 400);
 });
 
+
+test('POST /prompts creates prompt and redirects', async () => {
+  const res = await request(app)
+    .post('/prompts')
+    .type('form')
+    .send({ name: 'Test Prompt', positive: 'a beautiful cat', base_model: 'Flux.1' });
+  assert.strictEqual(res.status, 302);
+  assert.ok(res.headers.location.startsWith('/prompts/'));
+});
+
+test('GET /prompts/:id returns 200 after create', async () => {
+  const p = db.prepare("SELECT id FROM prompts WHERE name='Test Prompt'").get();
+  const res = await request(app).get(`/prompts/${p.id}`);
+  assert.strictEqual(res.status, 200);
+});
+
+test('POST /prompts missing positive returns 400', async () => {
+  const res = await request(app)
+    .post('/prompts')
+    .type('form')
+    .send({ name: 'No Positive' });
+  assert.strictEqual(res.status, 400);
+});
+
+test('GET /prompts with model filter returns 200', async () => {
+  const res = await request(app).get('/prompts?model=Flux.1');
+  assert.strictEqual(res.status, 200);
+});
+
+test('GET /prompts with search query returns 200', async () => {
+  const res = await request(app).get('/prompts?q=cat');
+  assert.strictEqual(res.status, 200);
+});
 after(() => {
   db.close();
   const fs = require('fs');
