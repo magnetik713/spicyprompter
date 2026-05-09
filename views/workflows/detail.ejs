@@ -1,3 +1,58 @@
 <%- include('../partials/header') %>
-<p>workflow detail stub: <%= workflow.name %></p>
+<div class="breadcrumb"><a href="/prompts/workflows">Workflows</a> &rsaquo; <%= workflow.name %></div>
+<div class="page-header">
+  <h1><%= workflow.name %></h1>
+  <div style="display:flex;gap:8px">
+    <a href="/prompts/workflows/<%= workflow.id %>/edit" class="btn btn-secondary">Edit</a>
+    <form action="/prompts/workflows/<%= workflow.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this workflow?')">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+<div class="detail-layout">
+  <div class="detail-sidebar">
+    <ul class="meta-list">
+      <li><span class="label">Sampler</span><%= workflow.sampler || '—' %></li>
+      <li><span class="label">Scheduler</span><%= workflow.scheduler || '—' %></li>
+      <li><span class="label">Steps</span><%= workflow.steps || '—' %></li>
+      <li><span class="label">CFG Scale</span><%= workflow.cfg_scale || '—' %></li>
+      <li><span class="label">Denoise</span><%= workflow.denoise != null ? workflow.denoise : '—' %></li>
+    </ul>
+    <% if (workflow.workflow_json_path) { %>
+      <a href="/prompts/<%= workflow.workflow_json_path %>" download class="btn btn-secondary" style="width:100%;text-align:center;display:block">Download JSON</a>
+    <% } %>
+  </div>
+  <div class="detail-main">
+    <% if (workflow.source_url) { %>
+    <div class="section">
+      <div class="section-label">Source</div>
+      <a href="<%= workflow.source_url %>" target="_blank"><%= workflow.source_url %></a>
+    </div>
+    <% } %>
+    <% if (workflow.dependencies) { %>
+    <div class="section">
+      <div class="section-label">Dependencies</div>
+      <div class="prompt-box"><%= workflow.dependencies %></div>
+    </div>
+    <% } %>
+    <% if (workflow.notes) { %>
+    <div class="section">
+      <div class="section-label">Notes</div>
+      <div class="prompt-box"><%= workflow.notes %></div>
+    </div>
+    <% } %>
+    <div class="section">
+      <div class="section-label">Linked Prompts (<%= linkedPrompts.length %>)</div>
+      <% if (linkedPrompts.length === 0) { %>
+        <p style="color:var(--dim);font-size:11px">No prompts linked to this workflow yet.</p>
+      <% } else { %>
+        <ul class="linked-list">
+          <% linkedPrompts.forEach(p => { %>
+          <li><a href="/prompts/<%= p.id %>"><%= p.name %></a> <span style="color:var(--dim)"><%= p.base_model || '' %></span></li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
 <%- include('../partials/footer') %>
