@@ -1,0 +1,6 @@
+node_modules/
+uploads/images/
+uploads/workflows/
+prompts.db
+test.db
+*.log
