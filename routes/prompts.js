@@ -57,7 +57,6 @@ router.get('/new', (req, res) => {
 
 router.post('/', upload.single('image'), (req, res) => {
   const { name, workflow_id, base_model, positive, negative, loras, trigger_words, tags, notes } = req.body;
-  if (!name) return res.status(400).send('Name is required');
   const image_path = req.file ? `uploads/images/${req.file.filename}` : null;
   const result = db.prepare(`
     INSERT INTO prompts (name, workflow_id, base_model, positive, negative, loras, trigger_words, tags, image_path, notes)
@@ -89,14 +88,13 @@ router.put('/:id', upload.single('image'), (req, res) => {
   const existing = db.prepare('SELECT * FROM prompts WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).render('404', { title: 'Not Found' });
   const { name, workflow_id, base_model, positive, negative, loras, trigger_words, tags, notes } = req.body;
-  if (!name) return res.status(400).send('Name is required');
   const image_path = req.file ? `uploads/images/${req.file.filename}` : existing.image_path;
   db.prepare(`
     UPDATE prompts SET name=?, workflow_id=?, base_model=?, positive=?,
     negative=?, loras=?, trigger_words=?, tags=?, image_path=?, notes=?,
     updated_at=CURRENT_TIMESTAMP WHERE id=?
-  `).run(name, workflow_id || null, base_model || null, environment || null, scene || null,
-         positive || null, negative || null, loras || null, trigger_words || null, tags || null,
+  `).run(name || null, workflow_id || null, base_model || null, positive || null,
+         negative || null, loras || null, trigger_words || null, tags || null,
          image_path, notes || null, req.params.id);
   res.redirect(`/prompts/${req.params.id}`);
 });
