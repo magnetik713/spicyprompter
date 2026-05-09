@@ -26,12 +26,8 @@
       </select>
     </div>
     <div class="field">
-      <label>Environment</label>
-      <textarea name="environment"><%= prompt.environment || '' %></textarea>
-    </div>
-    <div class="field">
-      <label>Scene</label>
-      <textarea name="scene"><%= prompt.scene || '' %></textarea>
+      <label>Positive Prompt</label>
+      <textarea class="large" name="positive"><%= prompt.positive || '' %></textarea>
     </div>
     <div class="field">
       <label>Negative Prompt</label>
