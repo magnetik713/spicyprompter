@@ -50,6 +50,30 @@ test('GET /prompts/9999 returns 404', async () => {
   assert.strictEqual(res.status, 404);
 });
 
+
+test('POST /prompts/workflows creates workflow and redirects', async () => {
+  const res = await request(app)
+    .post('/prompts/workflows')
+    .type('form')
+    .send({ name: 'My Workflow', sampler: 'dpmpp_2m', scheduler: 'karras', steps: '25', cfg_scale: '7.0' });
+  assert.strictEqual(res.status, 302);
+  assert.ok(res.headers.location.startsWith('/prompts/workflows/'));
+});
+
+test('GET /prompts/workflows/:id returns 200 after create', async () => {
+  const wf = db.prepare("SELECT id FROM workflows WHERE name='My Workflow'").get();
+  const res = await request(app).get(`/prompts/workflows/${wf.id}`);
+  assert.strictEqual(res.status, 200);
+});
+
+test('POST /prompts/workflows missing name returns 400', async () => {
+  const res = await request(app)
+    .post('/prompts/workflows')
+    .type('form')
+    .send({ name: '' });
+  assert.strictEqual(res.status, 400);
+});
+
 after(() => {
   db.close();
   const fs = require('fs');
