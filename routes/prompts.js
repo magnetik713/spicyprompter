@@ -34,6 +34,16 @@ router.get('/', (req, res) => {
   res.render('prompts/index', { prompts, models, currentModel: model || 'All', q: q || '', title: 'Prompt Library' });
 });
 
+router.get('/api/loras', async (req, res) => {
+  try {
+    const r = await fetch('http://192.168.1.30:8188/object_info/LoraLoader');
+    const d = await r.json();
+    res.json(d.LoraLoader?.input?.required?.lora_name?.[0] || []);
+  } catch (e) {
+    res.json([]);
+  }
+});
+
 router.get('/new', (req, res) => {
   const workflows = db.prepare('SELECT id, name FROM workflows ORDER BY name').all();
   const models = db.prepare('SELECT DISTINCT base_model FROM prompts WHERE base_model IS NOT NULL').all().map(r => r.base_model);

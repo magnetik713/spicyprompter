@@ -40,7 +40,8 @@
     <div class="form-row">
       <div class="field">
         <label>LoRAs</label>
-        <input type="text" name="loras" value="<%= prompt.loras || '' %>" placeholder="DetailEnhance:0.8, kenva:1.0">
+        <input type="text" name="loras" value="<%= prompt.loras || '' %>" list="lora-list" placeholder="DetailEnhance:0.8, kenva:1.0">
+        <datalist id="lora-list"></datalist>
       </div>
       <div class="field">
         <label>Trigger Words</label>
