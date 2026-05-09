@@ -34,6 +34,11 @@ router.get('/', (req, res) => {
   res.render('prompts/index', { prompts, models, currentModel: model || 'All', q: q || '', title: 'Prompt Library' });
 });
 
+router.get('/api/workflow/:id', (req, res) => {
+  const wf = db.prepare('SELECT id, base_model FROM workflows WHERE id = ?').get(req.params.id);
+  res.json(wf || {});
+});
+
 router.get('/api/loras', async (req, res) => {
   try {
     const r = await fetch('http://192.168.1.30:8188/object_info/LoraLoader');

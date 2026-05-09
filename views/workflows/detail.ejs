@@ -12,6 +12,7 @@
 <div class="detail-layout">
   <div class="detail-sidebar">
     <ul class="meta-list">
+      <% if (workflow.base_model) { %><li><span class="label">Model</span><%= workflow.base_model %></li><% } %>
       <li><span class="label">Sampler</span><%= workflow.sampler || '—' %></li>
       <li><span class="label">Scheduler</span><%= workflow.scheduler || '—' %></li>
       <li><span class="label">Steps</span><%= workflow.steps || '—' %></li>
