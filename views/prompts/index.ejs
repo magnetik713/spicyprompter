@@ -269,24 +269,23 @@ function updateCount() {
 }
 
 
-function downloadSelected() {
-  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
-  if (!ids.length) return;
-  fetch('/prompts/api/download-images', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids })
-  }).then(r => {
-    if (!r.ok) return r.json().then(e => alert(e.error || 'No images to download'));
-    return r.blob();
-  }).then(blob => {
-    if (!blob) return;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'spicyprompter-images.zip';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
+async function downloadSelected() {
+  const checks = [...document.querySelectorAll('.row-check:checked')];
+  const imgs = checks.map(cb => cb.closest('.prompt-row-wrap').querySelector('img')).filter(Boolean);
+  if (!imgs.length) return;
+  let dir;
+  try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); }
+  catch (e) { return; }
+  for (const img of imgs) {
+    const filename = img.src.split('/').pop();
+    try {
+      const blob = await fetch(img.src).then(r => r.blob());
+      const fh = await dir.getFileHandle(filename, { create: true });
+      const w = await fh.createWritable();
+      await w.write(blob);
+      await w.close();
+    } catch(e) { console.warn('skip', filename, e); }
+  }
 }
 function deleteSelected() {
   const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
