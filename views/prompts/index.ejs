@@ -45,6 +45,10 @@
   .row-btn.comfy.queued { color:#6db86d; border-color:#6db86d; }
   .row-btn.comfy.err { color:#c0392b; border-color:#c0392b; }
   .row-btn.comfy.running { color:#e09a3a; border-color:#e09a3a; }
+  .row-btn.dl { display:none; }
+  .row-btn.dl.has-img { display:inline-block; }
+  @keyframes dl-pulse { 0%,100%{border-color:var(--border);color:var(--muted)} 50%{border-color:var(--accent);color:var(--accent);box-shadow:0 0 6px var(--accent)} }
+  .row-btn.dl.ready { animation:dl-pulse .8s ease 4; }
   .controls-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
   .sort-btn { padding:4px 12px; border-radius:var(--radius); font-size:12px; background:var(--bg2); color:var(--dim); border:1px solid var(--border); cursor:pointer; text-decoration:none; }
   .sort-btn:hover { color:var(--text); text-decoration:none; }
@@ -184,6 +188,7 @@
       <button class="row-btn star <%= p.starred ? 'on' : '' %>" data-id="<%= p.id %>" onclick="toggleStar(event,this)" title="Star">★</button>
       <button class="row-btn comfy" data-id="<%= p.id %>" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="queueComfy(event,this)" title="Send to ComfyUI">⚡</button>
       <button class="row-btn copy" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="copyPrompt(event,this)" title="Copy">Copy</button>
+      <button class="row-btn dl<%= p.image_path ? ' has-img' : '' %>" data-src="<%= p.image_path ? '/prompts/' + p.image_path : '' %>" onclick="downloadRowImg(event,this)" title="Download image">&#x2B07;</button>
     </div><% } %>
     <a href="/prompts/<%= p.id %>" class="prompt-row" style="flex:1" id="row-<%= p.id %>">
       <div class="row-thumb">
@@ -367,6 +372,16 @@ async function queueComfy(e, btn) {
   }
 }
 
+function downloadRowImg(e, btn) {
+  e.preventDefault(); e.stopPropagation();
+  var src = btn.dataset.src;
+  if (!src) return;
+  var a = document.createElement("a");
+  a.href = src;
+  a.download = src.split("/").pop();
+  a.click();
+}
+
 async function fetchComfyImage(btn, filename) {
   var promptDbId = btn.dataset.id;
   if (!promptDbId) return;
@@ -383,6 +398,15 @@ async function fetchComfyImage(btn, filename) {
       var thumb = wrap.querySelector('.row-thumb');
       if (!thumb) return;
       thumb.innerHTML = '<img src="' + d.image_url + '" style="width:100%;height:100%;object-fit:cover">';
+      var dlBtn = wrap.querySelector('.row-btn.dl');
+      if (dlBtn) {
+        dlBtn.dataset.src = d.image_url;
+        dlBtn.classList.add('has-img');
+        dlBtn.classList.remove('ready');
+        void dlBtn.offsetWidth;
+        dlBtn.classList.add('ready');
+        dlBtn.addEventListener('animationend', function() { dlBtn.classList.remove('ready'); }, { once: true });
+      }
     }
   } catch(e) {}
 }
