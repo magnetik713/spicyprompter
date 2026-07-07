@@ -270,16 +270,22 @@ function updateCount() {
 
 
 function downloadSelected() {
-  const checks = [...document.querySelectorAll('.row-check:checked')];
-  checks.forEach((cb, i) => {
-    const img = cb.closest('.prompt-row-wrap').querySelector('img');
-    if (!img) return;
-    setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = img.src;
-      a.download = img.src.split('/').pop();
-      a.click();
-    }, i * 300);
+  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
+  if (!ids.length) return;
+  fetch('/prompts/api/download-images', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids })
+  }).then(r => {
+    if (!r.ok) return r.json().then(e => alert(e.error || 'No images to download'));
+    return r.blob();
+  }).then(blob => {
+    if (!blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'spicyprompter-images.zip';
+    a.click();
+    URL.revokeObjectURL(a.href);
   });
 }
 function deleteSelected() {
