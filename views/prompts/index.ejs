@@ -273,18 +273,27 @@ async function downloadSelected() {
   const checks = [...document.querySelectorAll('.row-check:checked')];
   const imgs = checks.map(cb => cb.closest('.prompt-row-wrap').querySelector('img')).filter(Boolean);
   if (!imgs.length) return;
-  let dir;
-  try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); }
-  catch (e) { return; }
-  for (const img of imgs) {
-    const filename = img.src.split('/').pop();
-    try {
-      const blob = await fetch(img.src).then(r => r.blob());
-      const fh = await dir.getFileHandle(filename, { create: true });
-      const w = await fh.createWritable();
-      await w.write(blob);
-      await w.close();
-    } catch(e) { console.warn('skip', filename, e); }
+  if (window.showDirectoryPicker) {
+    let dir;
+    try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); }
+    catch (e) { return; }
+    for (const img of imgs) {
+      const filename = img.src.split('/').pop();
+      try {
+        const blob = await fetch(img.src).then(r => r.blob());
+        const fh = await dir.getFileHandle(filename, { create: true });
+        const w = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+      } catch(e) { console.warn('skip', filename, e); }
+    }
+  } else {
+    imgs.forEach((img, i) => setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = img.src;
+      a.download = img.src.split('/').pop();
+      a.click();
+    }, i * 200));
   }
 }
 function deleteSelected() {
