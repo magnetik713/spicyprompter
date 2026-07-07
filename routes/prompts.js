@@ -1,5 +1,4 @@
 const express = require('express');
-const archiver = require('archiver');
 const multer = require('multer');
 const path = require('path');
 const db = require('../db');
@@ -482,25 +481,5 @@ router.post("/batch-delete", (req, res) => {
   res.redirect("/prompts?" + new URLSearchParams(req.body._back || "").toString());
 });
 
-
-router.post('/api/download-images', (req, res) => {
-  const ids = [].concat(req.body.ids || []).map(Number).filter(Boolean);
-  if (!ids.length) return res.status(400).json({ error: 'no ids' });
-  const placeholders = ids.map(() => '?').join(',');
-  const rows = db.prepare('SELECT id, image_path FROM prompts WHERE id IN (' + placeholders + ')').all(...ids);
-  const valid = rows.filter(r => r.image_path);
-  if (!valid.length) return res.status(404).json({ error: 'no images' });
-
-  res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Disposition', 'attachment; filename=spicyprompter-images.zip');
-
-  const archive = archiver('zip', { zlib: { level: 0 } });
-  archive.pipe(res);
-  valid.forEach(r => {
-    const file = require('path').join(__dirname, '..', 'uploads', r.image_path.replace(/^uploads\//, ''));
-    archive.file(file, { name: require('path').basename(file) });
-  });
-  archive.finalize();
-});
 
 module.exports = router;

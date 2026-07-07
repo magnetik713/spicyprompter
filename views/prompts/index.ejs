@@ -68,7 +68,6 @@
   <button class="btn btn-secondary" onclick="selectNone()">None</button>
   <button id="del-btn" class="btn" style="background:#c0392b;color:#fff;border-color:#c0392b" onclick="deleteSelected()" disabled>Delete</button>
   <button id="queue-btn" class="btn" style="background:var(--accent);color:#fff;border-color:var(--accent)" onclick="queueSelected(this)" disabled>&#x26A1; Queue</button>
-  <button id="dl-btn" class="btn btn-secondary" onclick="downloadSelected()" disabled>&#x2B07; Download</button>
   <div class="export-wrap">
     <button id="export-btn" class="btn btn-secondary" onclick="toggleExportMenu(event)" disabled>Export ▾</button>
     <div class="export-menu" id="export-menu">
@@ -265,44 +264,9 @@ function updateCount() {
   document.getElementById('del-btn').disabled = n === 0;
   document.getElementById('queue-btn').disabled = n === 0;
   document.getElementById('export-btn').disabled = n === 0;
-  document.getElementById('dl-btn').disabled = n === 0;
 }
 
 
-async function downloadSelected() {
-  const checks = [...document.querySelectorAll('.row-check:checked')];
-  const ids = checks.map(cb => cb.value);
-  if (!ids.length) return;
-  if (window.showDirectoryPicker) {
-    const imgs = checks.map(cb => cb.closest('.prompt-row-wrap').querySelector('img')).filter(Boolean);
-    let dir;
-    try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); }
-    catch (e) { return; }
-    for (const img of imgs) {
-      const filename = img.src.split('/').pop();
-      try {
-        const blob = await fetch(img.src).then(r => r.blob());
-        const fh = await dir.getFileHandle(filename, { create: true });
-        const w = await fh.createWritable();
-        await w.write(blob);
-        await w.close();
-      } catch(e) { console.warn('skip', filename, e); }
-    }
-  } else {
-    fetch('/prompts/api/download-images', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids })
-    }).then(r => r.ok ? r.blob() : r.json().then(e => { throw e; }))
-      .then(blob => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'spicyprompter-images.zip';
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }).catch(e => alert(e.error || 'No images to download'));
-  }
-}
 function deleteSelected() {
   const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
   if (!ids.length) return;
