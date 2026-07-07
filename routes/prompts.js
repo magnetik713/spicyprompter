@@ -494,7 +494,7 @@ router.post('/api/download-images', (req, res) => {
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', 'attachment; filename=spicyprompter-images.zip');
 
-  const archive = archiver('zip', { zlib: { level: 1 } });
+  const archive = archiver('zip', { zlib: { level: 0 } });
   archive.pipe(res);
   valid.forEach(r => {
     const file = require('path').join(__dirname, '..', 'uploads', r.image_path.replace(/^uploads\//, ''));

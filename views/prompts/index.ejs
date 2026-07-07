@@ -271,9 +271,10 @@ function updateCount() {
 
 async function downloadSelected() {
   const checks = [...document.querySelectorAll('.row-check:checked')];
-  const imgs = checks.map(cb => cb.closest('.prompt-row-wrap').querySelector('img')).filter(Boolean);
-  if (!imgs.length) return;
+  const ids = checks.map(cb => cb.value);
+  if (!ids.length) return;
   if (window.showDirectoryPicker) {
+    const imgs = checks.map(cb => cb.closest('.prompt-row-wrap').querySelector('img')).filter(Boolean);
     let dir;
     try { dir = await window.showDirectoryPicker({ mode: 'readwrite' }); }
     catch (e) { return; }
@@ -288,12 +289,18 @@ async function downloadSelected() {
       } catch(e) { console.warn('skip', filename, e); }
     }
   } else {
-    imgs.forEach((img, i) => setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = img.src;
-      a.download = img.src.split('/').pop();
-      a.click();
-    }, i * 200));
+    fetch('/prompts/api/download-images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids })
+    }).then(r => r.ok ? r.blob() : r.json().then(e => { throw e; }))
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'spicyprompter-images.zip';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }).catch(e => alert(e.error || 'No images to download'));
   }
 }
 function deleteSelected() {
