@@ -313,8 +313,32 @@ router.post('/api/comfyui/fetch-image', async (req, res) => {
     const savePath = path.join(__dirname, '../uploads/images', saveName);
     require('fs').writeFileSync(savePath, buf);
     const image_path = `uploads/images/${saveName}`;
-    db.prepare('UPDATE prompts SET image_path=?, comfy_prompt_id=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(image_path, prompt_db_id);
-    res.json({ ok: true, image_url: '/prompts/' + image_path });
+
+    // Pull seed + dimensions from ComfyUI history
+    let seed = null, width = null, height = null;
+    try {
+      const promptRow = db.prepare('SELECT comfy_prompt_id FROM prompts WHERE id=?').get(prompt_db_id);
+      const comfyId = promptRow && promptRow.comfy_prompt_id;
+      if (comfyId) {
+        const hr = await fetch(`http://${comfyHost}:${comfyPort}/history/${comfyId}`);
+        const h = await hr.json();
+        const job = h[comfyId];
+        if (job) {
+          const nodes = (job.prompt && job.prompt[2]) || {};
+          for (const n of Object.values(nodes)) {
+            const inp = n.inputs || {};
+            if (inp.seed != null) { seed = inp.seed; }
+            if (inp.width && inp.height) { width = inp.width; height = inp.height; }
+          }
+        }
+      }
+    } catch (e) { /* non-fatal */ }
+
+    db.prepare(
+      'UPDATE prompts SET image_path=?, seed=?, width=?, height=?, comfy_prompt_id=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=?'
+    ).run(image_path, seed, width, height, prompt_db_id);
+
+    res.json({ ok: true, image_url: '/prompts/' + image_path, seed, width, height });
   } catch (e) {
     res.status(502).json({ error: e.message });
   }
