@@ -4,29 +4,42 @@
   <h1><%= prompt.name %></h1>
   <div style="display:flex;gap:8px">
     <a href="/prompts/<%= prompt.id %>/edit" class="btn btn-secondary">Edit</a>
+    <% if (prompt.image_path) { %>
+    <a href="/prompts/<%= prompt.image_path %>" download class="btn btn-secondary">Download</a>
+    <% } %>
     <form action="/prompts/<%= prompt.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this prompt?')">
       <button type="submit" class="btn btn-danger">Delete</button>
     </form>
   </div>
 </div>
 <div class="detail-layout">
-  <div class="detail-sidebar">
+  <div class="detail-hero">
     <% if (prompt.image_path) { %>
-      <img src="/prompts/<%= prompt.image_path %>" alt="<%= prompt.name %>">
+      <a href="/prompts/<%= prompt.image_path %>" download style="display:block;line-height:0">
+        <img src="/prompts/<%= prompt.image_path %>" alt="<%= prompt.name %>" style="cursor:pointer">
+      </a>
     <% } else { %>
       <div class="placeholder-thumb">&#127912;</div>
     <% } %>
-    <ul class="meta-list">
-      <% if (prompt.base_model) { %><li><span class="label">Model</span><%= prompt.base_model %></li><% } %>
-      <% if (prompt.workflow_name) { %><li><span class="label">Workflow</span><a href="/prompts/workflows/<%= prompt.workflow_id %>"><%= prompt.workflow_name %></a></li><% } %>
-      <% if (prompt.loras) { %><li><span class="label">LoRAs</span><%= prompt.loras %></li><% } %>
-      <% if (prompt.trigger_words) { %><li><span class="label">Trigger Words</span><%= prompt.trigger_words %></li><% } %>
-    </ul>
-    <% if (prompt.tags) { %>
-    <div class="card-tags" style="margin-top:8px">
-      <% prompt.tags.split(',').forEach(t => { %><span class="tag"><%= t.trim() %></span><% }) %>
+    <div class="detail-hero-overlay">
+      <ul class="meta-list">
+        <% if (prompt.base_model) { %><li><span class="label">Model</span><%= prompt.base_model %></li><% } %>
+
+        <% if (prompt.width && prompt.height) { %><li><span class="label">Size</span><%= prompt.width %> &times; <%= prompt.height %></li><% } %>
+        <% if (prompt.steps) { %><li><span class="label">Steps</span><%= prompt.steps %></li><% } %>
+        <% if (prompt.guidance) { %><li><span class="label">Guidance</span><%= prompt.guidance %></li><% } %>
+        <% if (prompt.cfg_scale) { %><li><span class="label">CFG</span><%= prompt.cfg_scale %></li><% } %>
+        <% if (prompt.sampler) { %><li><span class="label">Sampler</span><%= prompt.sampler %></li><% } %>
+        <% if (prompt.seed) { %><li><span class="label">Seed</span><%= prompt.seed %></li><% } %>
+        <% if (prompt.loras) { %><li><span class="label">LoRAs</span><%= prompt.loras %></li><% } %>
+        <% if (prompt.trigger_words) { %><li><span class="label">Trigger Words</span><%= prompt.trigger_words %></li><% } %>
+      </ul>
+      <% if (prompt.tags) { %>
+      <div class="card-tags">
+        <% prompt.tags.split(',').forEach(t => { %><span class="tag"><%= t.trim() %></span><% }) %>
+      </div>
+      <% } %>
     </div>
-    <% } %>
   </div>
   <div class="detail-main">
     <% if (prompt.positive) { %>
