@@ -159,6 +159,7 @@
   <a href="<%= sortUrl('oldest') %>" class="sort-btn <%= selectedSort==='oldest' ? 'active' : '' %>">Oldest</a>
   <a href="<%= sortUrl('az') %>"     class="sort-btn <%= selectedSort==='az'     ? 'active' : '' %>">A–Z</a>
   <a href="<%= sortUrl('category') %>" class="sort-btn <%= selectedSort==='category' ? 'active' : '' %>">Category</a>
+  <a href="<%= sortUrl('starred') %>" class="sort-btn <%= selectedSort==='starred' ? 'active' : '' %>">★ First</a>
   <span style="margin-left:4px;width:1px;height:20px;background:var(--border);display:inline-block"></span>
   <a href="<%= starredUrl(!showStarred) %>" class="sort-btn <%= showStarred ? 'active' : '' %>">★ Starred</a>
   <% if (categories.length > 0) { %>

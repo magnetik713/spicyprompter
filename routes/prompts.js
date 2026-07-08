@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
   const currentPage = Math.max(1, parseInt(page) || 1);
   const selectedTags = tag ? (Array.isArray(tag) ? tag : [tag]).filter(t => t && t !== 'All') : [];
   const selectedCategory = category || '';
-  const selectedSort = ['newest','oldest','az','category'].includes(sort) ? sort : 'newest';
+  const selectedSort = ['newest','oldest','az','category','starred'].includes(sort) ? sort : 'newest';
   const showStarred = starred === '1';
 
   const ORDER = {
@@ -32,6 +32,7 @@ router.get('/', async (req, res) => {
     oldest:   'p.created_at ASC',
     az:       'p.positive ASC',
     category: 'p.category ASC, p.created_at DESC',
+    starred:  'p.starred DESC, p.created_at DESC',
   }[selectedSort];
 
   let where = 'WHERE 1=1';
@@ -478,7 +479,7 @@ router.get('/:id', (req, res) => {
     WHERE p.id = ?
   `).get(req.params.id);
   if (!prompt) return res.status(404).render('404', { title: 'Not Found' });
-  res.render('prompts/detail', { prompt, title: prompt.name });
+  res.render('prompts/detail', { prompt, title: prompt.name, paid: cfg.isPaid() });
 });
 
 router.put('/:id', upload.single('image'), (req, res) => {
