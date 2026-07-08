@@ -1,0 +1,267 @@
+<%- include('./partials/header') %>
+<style>
+  .settings-wrap { max-width: 620px; }
+  .settings-section { margin-bottom: 28px; }
+  .settings-section h2 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 5px; }
+  .field input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 13px;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .field select {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .field select:focus { outline: none; border-color: var(--accent); }
+  .field .hint { font-size: 11px; color: var(--dim); margin-top: 4px; }
+  .test-row { display: flex; gap: 10px; align-items: center; margin-top: 14px; }
+  #test-result { font-size: 12px; }
+  #test-result.ok { color: #6db86d; }
+  #test-result.err { color: #c96060; }
+  #model-list { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .model-chip {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 2px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .model-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .save-row { margin-top: 8px; display: flex; align-items: center; gap: 14px; }
+  .saved-msg { font-size: 12px; color: #6db86d; }
+</style>
+
+<div class="page-header">
+  <h1>Settings</h1>
+</div>
+
+<div class="settings-wrap">
+
+  <form method="POST" action="/prompts/settings">
+
+    <div class="settings-section">
+      <h2>LLM Inference</h2>
+
+      <div class="field">
+        <label>Base URL</label>
+        <input type="text" name="llm_base_url" value="<%= config.llm_base_url %>" placeholder="http://localhost:11434/v1">
+        <div class="hint">Include /v1. Ollama: :11434/v1 &nbsp;·&nbsp; llama-server: :8080/v1 &nbsp;·&nbsp; LM Studio: :1234/v1</div>
+      </div>
+
+      <div class="field">
+        <label>API Key</label>
+        <input type="text" name="llm_api_key" value="<%= config.llm_api_key %>" placeholder="ollama (or blank for local)">
+        <div class="hint">Leave as "ollama" for Ollama. Required for OpenAI / cloud endpoints.</div>
+      </div>
+
+      <div class="field">
+        <label>Default Model</label>
+        <input type="text" name="llm_default_model" id="model-input" value="<%= config.llm_default_model %>" placeholder="qwen3:8b">
+        <div class="hint">Model name as it appears in your inference server. Click a chip below after testing to auto-fill.</div>
+      </div>
+
+      <div class="test-row">
+        <button type="button" class="btn btn-secondary" onclick="testConnection()">Test Connection</button>
+        <span id="test-result"></span>
+      </div>
+      <div id="model-list"></div>
+    </div>
+
+
+    <div class="settings-section">
+      <h2>ComfyUI</h2>
+
+      <details style="margin-bottom:20px;border:1px solid var(--border);border-radius:4px;padding:0">
+        <summary style="padding:10px 14px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.05em;color:var(--muted);list-style:none;display:flex;align-items:center;gap:8px">
+          <span style="color:var(--accent)">⚠</span> VRAM tip — running ComfyUI on the same GPU as your LLM?
+        </summary>
+        <p style="padding:0 14px 12px;font-size:12px;color:var(--muted);line-height:1.7;margin:0">
+          If your LLM and ComfyUI share the same GPU, you may not have enough VRAM to run both at once.
+          Generate your prompts first, then <strong>unload your LLM model</strong> before queuing images to ComfyUI —
+          most Ollama-compatible servers let you do this by sending an empty keep-alive or restarting the model service.
+          Once ComfyUI finishes, reload your model to generate more prompts.
+        </p>
+      </details>
+
+      <div class="field">
+        <label>Host</label>
+        <input type="text" name="comfyui_host" value="<%= config.comfyui_host %>" placeholder="localhost">
+        <div class="hint">IP or hostname of your ComfyUI instance. Default: localhost</div>
+      </div>
+
+      <div class="field">
+        <label>Port</label>
+        <input type="text" name="comfyui_port" value="<%= config.comfyui_port %>" placeholder="8188" style="width:120px">
+        <div class="hint">Default: 8188</div>
+      </div>
+
+      <div class="field">
+        <label>Workflow File</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select name="comfyui_workflow" id="comfy-wf" style="flex:1">
+            <option value="">— select a workflow —</option>
+          </select>
+          <label class="btn btn-secondary" style="cursor:pointer;font-size:12px;white-space:nowrap" title="Upload a ComfyUI API-format workflow JSON">
+            + Upload
+            <input type="file" id="wf-upload" accept=".json" style="display:none" onchange="uploadWorkflow(this)">
+          </label>
+        </div>
+        <div class="hint">
+          <strong>Included workflows:</strong><br>
+          &bull; <code>sdxl-standard-t2i.json</code> &mdash; SD / SDXL (1024&times;1024)<br>
+          &bull; <code>sd15-standard-t2i.json</code> &mdash; Stable Diffusion 1.5 (512&times;768)<br><br>
+          Set your model in the <strong>Model</strong> field below &mdash; no JSON editing needed.<br>
+          To use your own: export from ComfyUI with <em>Save (API Format)</em> (enable Dev Mode first), then upload here.
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Model</label>
+        <input type="text" name="comfyui_model" id="comfy-model" value="<%= config.comfyui_model %>" placeholder="select or type model filename..." autocomplete="off" list="comfy-model-list">
+        <datalist id="comfy-model-list"></datalist>
+        <div class="hint">Your checkpoint filename (e.g. <code>dreamshaper_xl.safetensors</code>). Auto-populated from ComfyUI — click in the field to see your installed models. Overrides whatever model is in the workflow file.</div>
+      </div>
+
+      <div class="field">
+        <label>Prompt Node ID <span style="font-weight:400;text-transform:none;letter-spacing:0">(advanced)</span></label>
+        <input type="text" name="comfyui_node_id" value="<%= config.comfyui_node_id %>" placeholder="auto-detect" style="width:120px">
+        <div class="hint">Leave blank — auto-detects the prompt input node in your workflow. Only set this if you have multiple text inputs and auto-detect picks the wrong one.</div>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button type="submit" class="btn btn-primary">Save Settings</button>
+      <% if (saved) { %><span class="saved-msg">Saved.</span><% } %>
+    </div>
+
+  </form>
+
+<div class="settings-section" style="margin-top:24px">
+  <h2>License</h2>
+  <% const licenseStatus = config.license_status || 'free'; %>
+  <% const licenseKey    = config.license_key    || ''; %>
+  <% if (licenseStatus === 'paid') { %>
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(100,200,100,.06);border:1px solid rgba(100,200,100,.2);border-radius:4px;margin-bottom:12px">
+    <span style="color:#6db86d;font-size:18px">✓</span>
+    <span style="font-size:13px;color:var(--text)">License active — full access enabled</span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto"><%= licenseKey %></span>
+  </div>
+  <form method="POST" action="/prompts/settings/license/reset">
+    <button type="submit" class="btn btn-secondary" style="font-size:12px">Deactivate License</button>
+  </form>
+  <% } else { %>
+  <% if (query && query.license === 'invalid') { %>
+  <div style="padding:8px 12px;background:rgba(200,60,60,.08);border:1px solid rgba(200,60,60,.25);border-radius:4px;color:#e07070;font-size:12px;margin-bottom:10px">Invalid license key. Check your key and try again.</div>
+  <% } else if (query && query.license === 'error') { %>
+  <div style="padding:8px 12px;background:rgba(200,60,60,.08);border:1px solid rgba(200,60,60,.25);border-radius:4px;color:#e07070;font-size:12px;margin-bottom:10px">Could not verify license. Check your internet connection and try again.</div>
+  <% } %>
+  <form method="POST" action="/prompts/settings/license" style="display:flex;gap:8px;align-items:flex-end">
+    <div class="field" style="flex:1">
+      <label>License Key</label>
+      <input type="text" name="license_key" placeholder="PROMPT-XXXX-XXXX-XXXX" style="width:100%;font-family:monospace">
+    </div>
+    <button type="submit" class="btn btn-primary">Activate</button>
+  </form>
+  <p style="font-size:11px;color:var(--dim);margin-top:8px">Purchase a license to unlock full panel control, library features, and all category filters.</p>
+  <% } %>
+</div>
+
+</div>
+
+<script>
+async function testConnection() {
+  const url = document.querySelector('input[name="llm_base_url"]').value.trim();
+  const key = document.querySelector('input[name="llm_api_key"]').value.trim();
+  const el = document.getElementById('test-result');
+  const ml = document.getElementById('model-list');
+  el.textContent = 'Testing…';
+  el.className = '';
+  ml.innerHTML = '';
+  try {
+    const r = await fetch('/prompts/settings/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, key }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      el.textContent = 'Connected';
+      el.className = 'ok';
+      if (d.models.length) {
+        d.models.forEach(m => {
+          const chip = document.createElement('span');
+          chip.className = 'model-chip';
+          chip.textContent = m;
+          chip.onclick = () => { document.getElementById('model-input').value = m; };
+          ml.appendChild(chip);
+        });
+      }
+    } else {
+      el.textContent = 'Failed: ' + d.error;
+      el.className = 'err';
+    }
+  } catch (e) {
+    el.textContent = 'Error: ' + e.message;
+    el.className = 'err';
+  }
+}
+
+async function loadModels() {
+  try {
+    const r = await fetch('/prompts/api/comfyui/models');
+    const models = await r.json();
+    const dl = document.getElementById('comfy-model-list');
+    if (!dl) return;
+    dl.innerHTML = models.map(m => '<option value="' + m + '">').join('');
+  } catch(e) {}
+}
+loadModels();
+
+async function loadWorkflows(selectVal) {
+  try {
+    const r = await fetch('/prompts/api/comfyui/workflows');
+    const files = await r.json();
+    const sel = document.getElementById('comfy-wf');
+    if (!sel) return;
+    const current = selectVal || sel.value || '<%= config.comfyui_workflow %>';
+    sel.innerHTML = '<option value="">\u2014 select a workflow \u2014</option>' +
+      files.map(f => '<option value="' + f + '"' + (f === current ? ' selected' : '') + '>' + f + '</option>').join('');
+  } catch(e) {}
+}
+loadWorkflows();
+
+async function uploadWorkflow(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('workflow', file);
+  try {
+    const r = await fetch('/prompts/api/comfyui/upload-workflow', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.filename) { await loadWorkflows(d.filename); }
+    else alert('Upload failed: ' + (d.error || 'unknown error'));
+  } catch(e) { alert('Upload error: ' + e.message); }
+  input.value = '';
+}
+
+</script>
+
+<p style="font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:32px">SpicyPrompter v<%= version %></p>
+<%- include("./partials/footer") %>
