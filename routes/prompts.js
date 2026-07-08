@@ -372,6 +372,15 @@ router.get('/api/comfyui/status', async (req, res) => {
 });
 
 
+
+router.post('/api/prompts/texts', (req, res) => {
+  const ids = [].concat(req.body.ids || []).map(Number).filter(Boolean);
+  if (!ids.length) return res.json([]);
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = db.prepare('SELECT id, positive FROM prompts WHERE id IN (' + placeholders + ')').all(...ids);
+  res.json(rows);
+});
+
 router.post('/api/export', (req, res) => {
   const { ids, format } = req.body;
   if (!ids || !ids.length) return res.status(400).json({ error: 'no ids' });

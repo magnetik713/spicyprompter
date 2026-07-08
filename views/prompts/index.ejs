@@ -233,25 +233,36 @@
 
 <script>
 let selectMode = false;
+const SP_SEL_KEY = 'sp_selection';
+
+function getStoredIds() { try { return new Set(JSON.parse(localStorage.getItem(SP_SEL_KEY) || '[]')); } catch(e) { return new Set(); } }
+function saveStoredIds(set) { localStorage.setItem(SP_SEL_KEY, JSON.stringify([...set])); }
+function clearStoredIds() { localStorage.removeItem(SP_SEL_KEY); }
 
 function toggleSelect() {
   selectMode = !selectMode;
   document.getElementById('card-grid').classList.toggle('select-mode', selectMode);
   document.getElementById('select-bar').classList.toggle('active', selectMode);
   document.getElementById('select-toggle').textContent = selectMode ? 'Cancel' : 'Select';
-  if (!selectMode) selectNone();
+  if (!selectMode) { clearStoredIds(); selectNone(); }
 }
 
 function onCheck(cb) {
   cb.closest('.prompt-row-wrap').querySelector('.prompt-row').classList.toggle('selected', cb.checked);
+  const stored = getStoredIds();
+  if (cb.checked) stored.add(cb.value); else stored.delete(cb.value);
+  saveStoredIds(stored);
   updateCount();
 }
 
 function selectAll() {
+  const stored = getStoredIds();
   document.querySelectorAll('.row-check').forEach(cb => {
     cb.checked = true;
     cb.closest('.prompt-row-wrap').querySelector('.prompt-row').classList.add('selected');
+    stored.add(cb.value);
   });
+  saveStoredIds(stored);
   updateCount();
 }
 
@@ -260,22 +271,41 @@ function selectNone() {
     cb.checked = false;
     cb.closest('.prompt-row-wrap').querySelector('.prompt-row').classList.remove('selected');
   });
+  clearStoredIds();
   updateCount();
 }
 
 function updateCount() {
-  const n = document.querySelectorAll('.row-check:checked').length;
+  const n = getStoredIds().size;
   document.getElementById('sel-count').textContent = n + ' selected';
   document.getElementById('del-btn').disabled = n === 0;
   document.getElementById('queue-btn').disabled = n === 0;
   document.getElementById('export-btn').disabled = n === 0;
 }
 
+// Restore selection state on page load
+(function restoreSelection() {
+  const stored = getStoredIds();
+  if (!stored.size) return;
+  selectMode = true;
+  document.getElementById('card-grid').classList.add('select-mode');
+  document.getElementById('select-bar').classList.add('active');
+  document.getElementById('select-toggle').textContent = 'Cancel';
+  document.querySelectorAll('.row-check').forEach(cb => {
+    if (stored.has(cb.value)) {
+      cb.checked = true;
+      cb.closest('.prompt-row-wrap').querySelector('.prompt-row').classList.add('selected');
+    }
+  });
+  updateCount();
+})();
+
 
 function deleteSelected() {
-  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
+  const ids = [...getStoredIds()];
   if (!ids.length) return;
   if (!confirm('Delete ' + ids.length + ' prompt' + (ids.length !== 1 ? 's' : '') + '?')) return;
+  clearStoredIds();
   document.getElementById('batch-ids').innerHTML = ids.map(id => '<input type="hidden" name="ids" value="' + id + '">').join('');
   document.getElementById('batch-form').submit();
 }
@@ -291,7 +321,7 @@ document.addEventListener('click', function() {
 
 async function exportSelected(format) {
   document.getElementById('export-menu').classList.remove('open');
-  const ids = [...document.querySelectorAll('.row-check:checked')].map(cb => cb.value);
+  const ids = [...getStoredIds()];
   if (!ids.length) return;
   try {
     const r = await fetch('/prompts/api/export', {
@@ -313,30 +343,36 @@ async function exportSelected(format) {
 }
 
 async function queueSelected(btn) {
-  const checks = [...document.querySelectorAll('.row-check:checked')];
-  if (!checks.length) return;
+  const ids = [...getStoredIds()];
+  if (!ids.length) return;
   const orig = btn.textContent;
   btn.disabled = true;
+  btn.textContent = '⚡ loading…';
+  let rows;
+  try {
+    const r = await fetch('/prompts/api/prompts/texts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids })
+    });
+    rows = await r.json();
+  } catch(e) { btn.textContent = '✗ failed'; btn.disabled = false; return; }
   let ok = 0, fail = 0;
-  for (const cb of checks) {
-    const wrap = cb.closest('.prompt-row-wrap');
-    const comfyBtn = wrap && wrap.querySelector('.row-btn.comfy');
-    const text = comfyBtn && comfyBtn.dataset.text;
-    if (!text) { fail++; continue; }
-    btn.textContent = '⚡ ' + (ok + fail + 1) + '/' + checks.length;
+  for (const row of rows) {
+    if (!row.positive) { fail++; continue; }
+    btn.textContent = '⚡ ' + (ok + fail + 1) + '/' + rows.length;
+    const comfyBtn = document.querySelector('.row-btn.comfy[data-id="' + row.id + '"]');
     try {
       const r = await fetch('/prompts/api/comfyui/queue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt_text: text, prompt_db_id: cb.value })
+        body: JSON.stringify({ prompt_text: row.positive, prompt_db_id: row.id })
       });
       const d = await r.json();
       if (d.ok) {
         ok++;
-        comfyBtn.textContent = '#' + d.number;
-        comfyBtn.title = 'Queued as #' + d.number;
-        pollComfy(comfyBtn, d.prompt_id, 0);
-      } else { fail++; comfyBtn.textContent = '✗'; comfyBtn.classList.add('err'); }
+        if (comfyBtn) { comfyBtn.textContent = '#' + d.number; comfyBtn.title = 'Queued as #' + d.number; pollComfy(comfyBtn, d.prompt_id, 0); }
+      } else { fail++; if (comfyBtn) { comfyBtn.textContent = '✗'; comfyBtn.classList.add('err'); } }
     } catch(e) { fail++; }
   }
   btn.textContent = '✓ ' + ok + ' queued' + (fail ? ' (' + fail + ' failed)' : '');
