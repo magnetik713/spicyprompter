@@ -358,9 +358,10 @@ async function queueSelected(btn) {
     rows = await r.json();
   } catch(e) { btn.textContent = '✗ failed'; btn.disabled = false; return; }
   let ok = 0, fail = 0;
-  for (const row of rows) {
-    if (!row.positive) { fail++; continue; }
-    btn.textContent = '⚡ ' + (ok + fail + 1) + '/' + rows.length;
+  const toQueue = rows.filter(r => r.positive && !r.image_path);
+  const skipped = rows.length - toQueue.length;
+  for (const row of toQueue) {
+    btn.textContent = '⚡ ' + (ok + fail + 1) + '/' + toQueue.length;
     const comfyBtn = document.querySelector('.row-btn.comfy[data-id="' + row.id + '"]');
     try {
       const r = await fetch('/prompts/api/comfyui/queue', {
@@ -375,7 +376,7 @@ async function queueSelected(btn) {
       } else { fail++; if (comfyBtn) { comfyBtn.textContent = '✗'; comfyBtn.classList.add('err'); } }
     } catch(e) { fail++; }
   }
-  btn.textContent = '✓ ' + ok + ' queued' + (fail ? ' (' + fail + ' failed)' : '');
+  btn.textContent = '✓ ' + ok + ' queued' + (fail ? ' (' + fail + ' failed)' : '') + (skipped ? ' (' + skipped + ' skipped, have image)' : '');
   setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 4000);
 }
 
