@@ -1,0 +1,391 @@
+<%- include('../partials/header') %>
+<style>
+  .gen-topbar {
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;
+    padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--bg2);
+  }
+  .gen-label {
+    font-size:10px; color:var(--muted); font-family:var(--font);
+    letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+  }
+  .gen-input {
+    background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius);
+    padding:5px 8px; font-size:12px; color:var(--text); font-family:var(--font);
+  }
+  .gen-input:focus { outline:none; border-color:var(--accent); }
+  .gen-num { width:54px; text-align:center; }
+  .gen-model { flex:1; min-width:160px; }
+  .gen-preview { font-size:11px; color:var(--muted); font-style:italic; font-family:var(--font); }
+  .gen-btn { font-family:var(--font); letter-spacing:.06em; font-weight:700; white-space:nowrap; margin-left:auto; padding:7px 18px; }
+  #gen-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+  /* Category tab row */
+  .cat-tab-row {
+    display:flex; border:1px solid var(--border);
+    border-radius:var(--radius) var(--radius) 0 0; overflow:hidden; background:var(--bg3);
+  }
+  .cat-tab {
+    flex:1; padding:8px 6px 6px; background:transparent; border:none;
+    border-right:1px solid var(--border); color:var(--muted); font-family:var(--font);
+    font-size:10px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:3px; transition:background .1s,color .1s;
+  }
+  .cat-tab:last-child { border-right:none; }
+  .cat-tab:hover { background:rgba(255,255,255,.03); color:var(--text); }
+  .cat-tab.active { background:var(--bg2); color:var(--accent); box-shadow:inset 0 -2px 0 var(--accent); }
+  .cat-tab-name { font-size:10px; font-weight:600; }
+  .cat-tab-val { font-size:9px; color:var(--dim); font-weight:400; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cat-tab.active .cat-tab-val { color:var(--muted); }
+  .cat-tab.has-val .cat-tab-val { color:var(--accent); opacity:.9; }
+
+  /* Expandable options panel */
+  .cat-panel {
+    border:1px solid var(--border); border-top:none;
+    border-radius:0 0 var(--radius) var(--radius); background:var(--bg3);
+    margin-bottom:14px;
+  }
+  .cat-pane { display:none; flex-wrap:wrap; }
+  .cat-pane.active { display:flex; }
+
+  .opt-item { display:flex; align-items:center; gap:6px; padding:5px 10px; cursor:pointer; width:25%; min-width:130px; }
+  .opt-item:hover { background:var(--hover,rgba(255,255,255,.04)); }
+  .opt-item input { cursor:pointer; accent-color:var(--accent); flex-shrink:0; }
+  .opt-item label { cursor:pointer; font-size:11px; line-height:1.3; }
+  .opt-item .slug { font-family:var(--font); font-size:9px; color:var(--muted); display:block; }
+
+  /* Locked panel */
+  .panel-locked { border:1px solid var(--border); border-radius:var(--radius); background:var(--bg3); position:relative; margin-bottom:14px; }
+  .panel-head { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:6px 10px; border-bottom:1px solid var(--border); }
+  .panel-body { padding:24px 16px; text-align:center; }
+
+  #output-box {
+    background:#0d0d0d; border:1px solid var(--border); border-radius:var(--radius);
+    padding:12px 14px; font-family:var(--font); font-size:12px; line-height:1.7;
+    min-height:180px; max-height:480px; overflow-y:auto; white-space:pre-wrap;
+    color:#ccc; display:none; margin-top:14px;
+  }
+  .line-ok   { color:#4ade80; }
+  .line-err  { color:#f87171; }
+  .line-skip { color:#facc15; }
+  .line-info { color:#60a5fa; }
+
+  #act-warning { display:none; padding:6px 12px; border-radius:var(--radius); font-size:12px;
+    background:rgba(250,180,50,.08); border:1px solid rgba(250,180,50,.3);
+    color:#f5c842; margin-bottom:8px; }
+</style>
+
+<div class="page-header">
+  <h1>Generate Prompts</h1>
+  <a href="/prompts" class="btn btn-secondary">&#8592; Library</a>
+</div>
+
+<div class="gen-topbar">
+  <span class="gen-label">Women</span>
+  <input type="number" id="subj-w" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
+  <span class="gen-label">Men</span>
+  <input type="number" id="subj-m" value="0" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
+  <span class="gen-label">Count</span>
+  
+  <input type="number" id="count" value="5" min="1" max="200" class="gen-input gen-num">
+  <% } else { %>
+  <input type="number" id="count" value="5" min="1" max="5" class="gen-input gen-num">
+  <span style="font-size:10px;color:var(--accent);margin-right:8px">&#128274; unlock in Settings</span>
+  <% } %>
+  <input type="text" id="model" value="<%= defaultModel %>" class="gen-input gen-model" placeholder="model">
+  <span id="subj-preview" class="gen-preview"></span>
+  <button id="gen-btn" class="btn btn-primary gen-btn" onclick="startGenerate()">&#9654; Generate</button>
+</div>
+<% if (!paid) { %>
+<p style="font-size:10px;color:var(--muted);margin:6px 0 0;font-family:var(--font-mono)"><%= promptTotal %> / 50 free prompts used &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></p>
+<% } %>
+
+<div id="act-warning"></div>
+
+
+<div class="cat-tab-row">
+  <button class="cat-tab active" data-cat="race" onclick="selectCat('race',this)">
+    <span class="cat-tab-name">Race</span>
+    <span class="cat-tab-val" id="tabval-race">Any</span>
+  </button>
+  <button class="cat-tab" data-cat="bodytype" onclick="selectCat('bodytype',this)">
+    <span class="cat-tab-name">Body</span>
+    <span class="cat-tab-val" id="tabval-bodytype">Any</span>
+  </button>
+  <button class="cat-tab" data-cat="role" onclick="selectCat('role',this)">
+    <span class="cat-tab-name">Role</span>
+    <span class="cat-tab-val" id="tabval-role">None</span>
+  </button>
+  <button class="cat-tab" data-cat="act" onclick="selectCat('act',this)">
+    <span class="cat-tab-name">Act</span>
+    <span class="cat-tab-val" id="tabval-act">Random</span>
+  </button>
+  <button class="cat-tab" data-cat="scene" onclick="selectCat('scene',this)">
+    <span class="cat-tab-name">Scene</span>
+    <span class="cat-tab-val" id="tabval-scene">Random</span>
+  </button>
+  <button class="cat-tab" data-cat="theme" onclick="selectCat('theme',this)">
+    <span class="cat-tab-name">Theme</span>
+    <span class="cat-tab-val" id="tabval-theme">Random</span>
+  </button>
+  <button class="cat-tab" data-cat="style" onclick="selectCat('style',this)">
+    <span class="cat-tab-name">Style</span>
+    <span class="cat-tab-val" id="tabval-style">Default</span>
+  </button>
+</div>
+
+<div class="cat-panel">
+  <!-- Race -->
+  <div id="cat-pane-race" class="cat-pane active">
+    <div class="opt-item"><input type="radio" name="race" id="race_none" value="" checked><label for="race_none">Any</label></div>
+    <% raceCategories.forEach(c => { %>
+    <div class="opt-item">
+      <input type="radio" name="race" id="race_<%= c.name %>" value="<%= c.name %>">
+      <label for="race_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Body Type -->
+  <div id="cat-pane-bodytype" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="bodytype" id="bt_none" value="" checked><label for="bt_none">Any</label></div>
+    <% bodyTypeCategories.forEach(c => { %>
+    <div class="opt-item">
+      <input type="radio" name="bodytype" id="bt_<%= c.name %>" value="<%= c.name %>">
+      <label for="bt_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Role -->
+  <div id="cat-pane-role" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="role" id="role_none" value="" checked><label for="role_none">None</label></div>
+    <% roleCategories.forEach(c => { %>
+    <div class="opt-item">
+      <input type="radio" name="role" id="role_<%= c.name %>" value="<%= c.name %>">
+      <label for="role_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Act -->
+  <div id="cat-pane-act" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="act" id="act_none" value="" checked><label for="act_none" style="color:var(--muted);font-style:italic">None / random</label></div>
+    <% actCategories.forEach(c => { %>
+    <div class="opt-item">
+      <input type="radio" name="act" id="act_<%= c.id %>" value="<%= c.name %>">
+      <label for="act_<%= c.id %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Scene -->
+  <div id="cat-pane-scene" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="scene" id="scene_none" value="" checked><label for="scene_none" style="color:var(--muted);font-style:italic">None / random</label></div>
+    <% sceneCategories.forEach(c => { %>
+    <div class="opt-item">
+      <input type="radio" name="scene" id="scene_<%= c.id %>" value="<%= c.name %>">
+      <label for="scene_<%= c.id %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Theme -->
+  <div id="cat-pane-theme" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="theme" id="theme_none" value="" checked><label for="theme_none" style="color:var(--muted);font-style:italic">None / random</label></div>
+    <% themeCategories.forEach(c => { %>
+    <div class="opt-item">
+      <input type="radio" name="theme" id="theme_<%= c.id %>" value="<%= c.name %>">
+      <label for="theme_<%= c.id %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Style -->
+  <div id="cat-pane-style" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="style" id="style_none" value="" checked><label for="style_none" style="color:var(--muted);font-style:italic">None / default</label></div>
+    <% styleCategories.forEach(c => { %>
+    <div class="opt-item">
+      <input type="radio" name="style" id="style_<%= c.id %>" value="<%= c.name %>">
+      <label for="style_<%= c.id %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+</div>
+
+<% } %>
+<% if (!paid) { %>
+<p style="font-size:11px;color:var(--muted);margin:8px 0 0;font-family:var(--font-mono)">&#128274; Demo: limited selections shown &mdash; <a href="/prompts/settings" style="color:var(--accent)">unlock all with a license</a></p>
+<% } %>
+
+<div id="output-box"></div>
+
+<script>
+function selectCat(cat, btn) {
+  document.querySelectorAll('.cat-tab').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.cat-pane').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('cat-pane-' + cat).classList.add('active');
+}
+
+var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'None', act:'Random', scene:'Random', theme:'Random', style:'Default' };
+
+function syncTabVals() {
+  ['race','bodytype','role','act','scene','theme','style'].forEach(function(cat) {
+    var checked = document.querySelector('input[name="' + cat + '"]:checked');
+    var hasVal = !!(checked && checked.value !== '');
+    var labelEl = checked ? checked.closest('.opt-item').querySelector('label') : null;
+    var labelText = labelEl ? (labelEl.firstChild.nodeValue || labelEl.textContent).trim() : DEFAULT_VALS[cat];
+    var el = document.getElementById('tabval-' + cat);
+    if (el) el.textContent = hasVal ? labelText : DEFAULT_VALS[cat];
+    var tab = document.querySelector('[data-cat="' + cat + '"]');
+    if (tab) tab.classList.toggle('has-val', hasVal);
+  });
+}
+
+document.addEventListener('change', function(e) {
+  if (e.target.type === 'radio') {
+    syncTabVals();
+    if (e.target.name === 'act') checkActWarning();
+  }
+});
+
+function startGenerate() {
+  var act   = (document.querySelector('input[name="act"]:checked') || {}).value   || '';
+  var scene = (document.querySelector('input[name="scene"]:checked') || {}).value || '';
+  var theme = (document.querySelector('input[name="theme"]:checked') || {}).value || '';
+  var cat   = [act, scene, theme].filter(Boolean).join(',');
+
+  var subject  = buildSubject();
+  var race     = (document.querySelector('input[name="race"]:checked') || {}).value      || '';
+  var bodytype = (document.querySelector('input[name="bodytype"]:checked') || {}).value  || '';
+  var role     = (document.querySelector('input[name="role"]:checked') || {}).value      || '';
+  var style    = (document.querySelector('input[name="style"]:checked') || {}).value     || '';
+  var count    = document.getElementById('count').value;
+  var model    = document.getElementById('model').value;
+
+  var box = document.getElementById('output-box');
+  var btn = document.getElementById('gen-btn');
+  box.innerHTML = '';
+  box.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+
+  var params = new URLSearchParams({ count: count, model: model });
+  if (cat)      params.set('cats',     cat);
+  if (subject)  params.set('subject',  subject);
+  if (race)     params.set('race',     race);
+  if (bodytype) params.set('bodytype', bodytype);
+  if (role)     params.set('role',     role);
+  if (style)    params.set('style',    style);
+
+  var es = new EventSource('/prompts/generate/run?' + params);
+
+  es.onmessage = function(e) {
+    var d = JSON.parse(e.data);
+    if (d.type === 'start') {
+      box.innerHTML += '<span class="line-info">▶ ' + d.args + '</span>\n';
+    } else if (d.type === 'line') {
+      var t = d.text;
+      var cls = t.includes('ok') ? 'line-ok' : t.includes('error') ? 'line-err' : t.includes('skip') || t.includes('retry') ? 'line-skip' : '';
+      box.innerHTML += (cls ? '<span class="' + cls + '">' + t + '</span>' : t) + '\n';
+      box.scrollTop = box.scrollHeight;
+    } else if (d.type === 'err') {
+      box.innerHTML += '<span class="line-err">' + d.text + '</span>\n';
+      box.scrollTop = box.scrollHeight;
+    } else if (d.type === 'limit') {
+      box.innerHTML += '<span class="line-err">⚠ ' + d.msg + ' <a href="/prompts/settings" style="color:var(--accent)">Enter license key &rarr;</a></span>\n';
+      btn.disabled = false;
+      btn.textContent = 'Generate';
+      es.close();
+    } else if (d.type === 'done') {
+      var genCount = parseInt(count);
+      box.innerHTML += '\n<span class="line-info">✓ Done (exit ' + d.code + ')</span>\n';
+      if (d.code === 0) {
+        box.innerHTML += '<button class="row-btn" style="margin-top:8px;font-size:11px" onclick="queueRecent(' + genCount + ')">⚡ Queue last ' + genCount + ' in ComfyUI</button>\n';
+      }
+      box.scrollTop = box.scrollHeight;
+      btn.disabled = false;
+      btn.textContent = 'Generate';
+      es.close();
+    }
+  };
+
+  es.onerror = function() {
+    box.innerHTML += '<span class="line-err">Connection error</span>\n';
+    btn.disabled = false;
+    btn.textContent = 'Generate';
+    es.close();
+  };
+}
+
+async function queueRecent(n) {
+  var btn = event.target;
+  btn.textContent = 'Queuing…';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/prompts/api/recent?n=' + n);
+    var prompts = await r.json();
+    var ok = 0, fail = 0;
+    for (var i = 0; i < prompts.length; i++) {
+      try {
+        var res = await fetch('/prompts/api/comfyui/queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt_text: prompts[i].positive })
+        });
+        var d = await res.json();
+        if (d.ok) ok++; else fail++;
+      } catch(e) { fail++; }
+    }
+    btn.textContent = '✓ Queued ' + ok + (fail ? ' (' + fail + ' failed)' : '');
+  } catch(e) {
+    btn.textContent = '✗ Error: ' + e.message;
+  }
+}
+
+function buildSubject() {
+  var w = Math.max(0, Math.min(6, parseInt(document.getElementById('subj-w').value) || 0));
+  var m = Math.max(0, Math.min(6, parseInt(document.getElementById('subj-m').value) || 0));
+  var nums = ['','one','two','three','four','five','six'];
+  var women = w === 0 ? '' : w === 1 ? 'woman' : nums[w] + ' women';
+  var men   = m === 0 ? '' : m === 1 ? 'man'   : nums[m] + ' men';
+  if (w && m) return (w === 1 ? 'a woman' : women) + ' and ' + (m === 1 ? 'a man' : men);
+  return women || men || '';
+}
+
+function previewSubj() {
+  var el = document.getElementById('subj-preview');
+  if (el) { var s = buildSubject(); el.textContent = s ? '"' + s + '"' : ''; }
+  checkActWarning();
+}
+
+var SOLO_ACTS  = { joi:1, squirting:1 };
+var GROUP_ACTS = { bukakke:1, dp:1 };
+
+function checkActWarning() {
+  var w = Math.max(0, parseInt((document.getElementById('subj-w') || {}).value) || 0);
+  var m = Math.max(0, parseInt((document.getElementById('subj-m') || {}).value) || 0);
+  var total = w + m;
+  var actEl = document.querySelector('input[name="act"]:checked');
+  var act = actEl ? actEl.value : '';
+  var box = document.getElementById('act-warning');
+  if (!box || !act) { if (box) box.style.display = 'none'; return; }
+  if (SOLO_ACTS[act]) { box.style.display = 'none'; return; }
+  if (GROUP_ACTS[act] && total < 3) {
+    box.textContent = '⚠ "' + act + '" typically needs 3+ people — current subject: ' + (total || 'none');
+    box.style.display = 'block'; return;
+  }
+  if (!GROUP_ACTS[act] && total < 2) {
+    box.textContent = '⚠ "' + act + '" requires a partner — current subject: ' + (total < 1 ? 'none' : '1 person');
+    box.style.display = 'block'; return;
+  }
+  box.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  previewSubj();
+  syncTabVals();
+});
+</script>
+<%- include('../partials/footer') %>

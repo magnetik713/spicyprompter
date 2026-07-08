@@ -123,6 +123,16 @@ const { spawn } = require('child_process');
 const GENERATOR = require('path').join(__dirname, '../scripts/llm_generator.js');
 const PROJ_DIR  = require('path').join(__dirname, '..');
 
+
+// Demo-mode allowed values per filter
+const DEMO_ALLOWED = {
+  race:     new Set(['asian','ebony','latina','russian']),
+  bodytype: new Set(['athletic','busty','curvy','petite']),
+  role:     new Set(['cheerleader','college','maid','role_girlfriend','teacher']),
+  cats:     new Set(['cowgirl','doggy_style','missionary','oral','beach','bedroom','office','shower','boudoir','glamour','interracial','lingerie','pov']),
+  style:    new Set(['film_grain','golden_hour','studio_flash']),
+};
+
 router.get('/generate', (req, res) => { try {
   const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race'      ORDER BY label").all();
   const styleCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='style'     ORDER BY label").all();
@@ -133,7 +143,18 @@ router.get('/generate', (req, res) => { try {
   const themeCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='theme'     ORDER BY label").all();
   const defaultModel = cfg.get('llm_default_model') || '';
   const genPromptTotal = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
-  res.render('prompts/generate', { raceCategories, bodyTypeCategories, roleCategories, actCategories, sceneCategories, themeCategories, styleCategories, defaultModel, paid: cfg.isPaid(), promptTotal: genPromptTotal, title: 'Generate Prompts' });
+  const paid = cfg.isPaid();
+  const filterDemo = (arr, key) => paid ? arr : arr.filter(c => DEMO_ALLOWED[key].has(c.name));
+  res.render('prompts/generate', {
+    raceCategories:     filterDemo(raceCategories,     'race'),
+    bodyTypeCategories: filterDemo(bodyTypeCategories, 'bodytype'),
+    roleCategories:     filterDemo(roleCategories,     'role'),
+    actCategories:      filterDemo(actCategories,      'cats'),
+    sceneCategories:    filterDemo(sceneCategories,    'cats'),
+    themeCategories:    filterDemo(themeCategories,    'cats'),
+    styleCategories:    filterDemo(styleCategories,    'style'),
+    defaultModel, paid, promptTotal: genPromptTotal, title: 'Generate Prompts'
+  });
   } catch(e) {
     res.status(500).send('<div style="font-family:sans-serif;padding:40px"><h2>Setup incomplete</h2><p>The database is not ready. Restart the server using <code>install.bat</code> and refresh this page.</p><pre style="color:red">' + e.message + '</pre></div>');
   }
@@ -159,11 +180,15 @@ router.get('/generate/run', async (req, res) => {
   const safeCats    = (cats || '').replace(/[^a-zA-Z0-9_,]/g, '');
   const safeSubject = (subject || '').replace(/[^a-zA-Z0-9 _,-]/g, '').trim();
   const paid = cfg.isPaid();
-  const safeCatsGated     = paid ? safeCats     : null;
-  const safeRaceGated     = paid ? (race     || '').replace(/[^a-z_]/g, '') : '';
-  const safeBodytypeGated = paid ? (bodytype || '').replace(/[^a-z_]/g, '') : '';
-  const safeRoleGated     = paid ? (role     || '').replace(/[^a-z_]/g, '') : '';
-  const safeStyleGated    = paid ? (style    || '').replace(/[^a-z_]/g, '') : '';
+  const demoFilter = (val, key) => {
+    const clean = (val || '').replace(/[^a-z_]/g, '');
+    return paid ? clean : (DEMO_ALLOWED[key].has(clean) ? clean : '');
+  };
+  const safeCatsGated     = paid ? safeCats : (safeCats.split(',').filter(c => DEMO_ALLOWED.cats.has(c)).join(',') || null);
+  const safeRaceGated     = demoFilter(race,     'race');
+  const safeBodytypeGated = demoFilter(bodytype, 'bodytype');
+  const safeRoleGated     = demoFilter(role,     'role');
+  const safeStyleGated    = demoFilter(style,    'style');
 
   if (cfg.isPaid()) {
     const valid = await cfg.checkLicense();
