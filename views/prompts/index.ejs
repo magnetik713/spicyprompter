@@ -58,7 +58,7 @@
 <div class="page-header">
   <h1>Prompt Library</h1>
   <% if (!paid) { %>
-  <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)"><%= promptTotal %> / 50 prompts &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></span>
+  <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)"><%= promptTotal %> / 100 prompts &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></span>
   <% } %>
   <div style="display:flex;gap:8px">
     <button id="select-toggle" class="btn btn-secondary" onclick="toggleSelect()">Select</button>
@@ -359,7 +359,11 @@ async function queueSelected(btn) {
     rows = await r.json();
   } catch(e) { btn.textContent = '✗ failed'; btn.disabled = false; return; }
   let ok = 0, fail = 0;
-  const toQueue = rows.filter(r => r.positive && !r.image_path);
+  const withImage = rows.filter(r => r.positive && r.image_path);
+  const withoutImage = rows.filter(r => r.positive && !r.image_path);
+  let overwrite = false;
+  if (withImage.length) overwrite = confirm(withImage.length + ' of ' + rows.length + ' selected prompt' + (rows.length !== 1 ? 's' : '') + ' already have images. Regenerate and overwrite them?');
+  const toQueue = overwrite ? [...withoutImage, ...withImage] : withoutImage;
   const skipped = rows.length - toQueue.length;
   for (const row of toQueue) {
     btn.textContent = '⚡ ' + (ok + fail + 1) + '/' + toQueue.length;

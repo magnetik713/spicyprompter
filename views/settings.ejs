@@ -86,6 +86,52 @@
 
 
     <div class="settings-section">
+      <h2>Generation Parameters</h2>
+
+      <div class="field">
+        <label>Temperature &mdash; <span id="temp-display"><%= config.llm_temperature || '1.0' %></span></label>
+        <input type="range" name="llm_temperature" min="0.1" max="2.0" step="0.05"
+          value="<%= config.llm_temperature || '1.0' %>"
+          oninput="document.getElementById('temp-display').textContent=parseFloat(this.value).toFixed(2)">
+        <div class="hint">Creativity/randomness. 0.1&nbsp;=&nbsp;focused, 2.0&nbsp;=&nbsp;chaotic. Default: 1.0</div>
+      </div>
+
+      <div class="field">
+        <label>Top-p &mdash; <span id="topp-display"><%= (config.llm_top_p && parseFloat(config.llm_top_p) > 0) ? config.llm_top_p : 'off' %></span></label>
+        <input type="range" name="llm_top_p" min="0" max="1.0" step="0.05"
+          value="<%= config.llm_top_p || '0' %>"
+          oninput="document.getElementById('topp-display').textContent=parseFloat(this.value)>0?parseFloat(this.value).toFixed(2):'off'">
+        <div class="hint">Nucleus sampling. 0&nbsp;=&nbsp;off (recommended when using temperature). Limits token pool to top probability mass.</div>
+      </div>
+
+      <div class="field">
+        <label>Repetition Penalty &mdash; <span id="reppen-display"><%= config.llm_repetition_penalty || '1.1' %></span></label>
+        <input type="range" name="llm_repetition_penalty" min="1.0" max="1.5" step="0.05"
+          value="<%= config.llm_repetition_penalty || '1.1' %>"
+          oninput="document.getElementById('reppen-display').textContent=parseFloat(this.value).toFixed(2)">
+        <div class="hint">Reduces repeated words/phrases. 1.0&nbsp;=&nbsp;none, 1.1&nbsp;=&nbsp;light (recommended), 1.5&nbsp;=&nbsp;heavy.</div>
+      </div>
+
+      <div class="field">
+        <label>Max Tokens</label>
+        <input type="number" name="llm_max_tokens" min="50" max="1000" step="10"
+          value="<%= config.llm_max_tokens || '300' %>" style="width:120px">
+        <div class="hint">Maximum output length. ComfyUI prompt sweet spot: 150&ndash;350. Default: 300</div>
+      </div>
+
+      <div class="field" style="display:flex;align-items:flex-start;gap:10px;margin-top:16px">
+        <input type="checkbox" name="llm_raw_output" id="llm-raw-output"
+          style="width:auto;cursor:pointer;margin-top:2px;accent-color:var(--accent)"
+          <%= config.llm_raw_output === 'true' ? 'checked' : '' %>>
+        <div>
+          <label for="llm-raw-output" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:0">Enforce raw output (no preamble)</label>
+          <div class="hint" style="margin-top:3px">Appends stricter instructions to the system prompt to prevent &ldquo;Here is your prompt:&rdquo; preambles.</div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="settings-section">
       <h2>ComfyUI</h2>
 
       <details style="margin-bottom:20px;border:1px solid var(--border);border-radius:4px;padding:0">
@@ -172,14 +218,12 @@
   <% } else if (query && query.license === 'error') { %>
   <div style="padding:8px 12px;background:rgba(200,60,60,.08);border:1px solid rgba(200,60,60,.25);border-radius:4px;color:#e07070;font-size:12px;margin-bottom:10px">Could not verify license. Check your internet connection and try again.</div>
   <% } %>
-  <form method="POST" action="/prompts/settings/license" style="display:flex;gap:8px;align-items:flex-end">
-    <div class="field" style="flex:1">
-      <label>License Key</label>
-      <input type="text" name="license_key" placeholder="PROMPT-XXXX-XXXX-XXXX" style="width:100%;font-family:monospace">
-    </div>
-    <button type="submit" class="btn btn-primary">Activate</button>
+  <label class="field" style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:5px;font-family:var(--font-mono)">License Key</label>
+  <form method="POST" action="/prompts/settings/license" style="display:flex;gap:8px">
+    <input type="text" name="license_key" placeholder="PROMPT-XXXX-XXXX-XXXX" style="flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--radius);font-family:monospace;font-size:13px">
+    <button type="submit" class="btn btn-primary" style="white-space:nowrap">Activate</button>
   </form>
-  <p style="font-size:11px;color:var(--dim);margin-top:8px">Purchase a license to unlock full panel control, library features, and all category filters.</p>
+  <p style="font-size:11px;color:var(--dim);margin-top:8px">Purchase a license to unlock full panel control, library features, and all category filters. &mdash; <a href="https://spicyprompter.gumroad.com/l/meenyg/SPICY49" target="_blank" style="color:var(--accent)">Buy on Gumroad &rarr;</a></p>
   <% } %>
 </div>
 
