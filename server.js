@@ -6,7 +6,7 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3014;
 
-['uploads/images', 'uploads/workflows'].forEach(dir => {
+['uploads/images'].forEach(dir => {
   fs.mkdirSync(path.join(__dirname, dir), { recursive: true });
 });
 
@@ -18,10 +18,17 @@ app.use(methodOverride('_method'));
 app.use('/prompts/public', express.static(path.join(__dirname, 'public')));
 app.use('/prompts/uploads', express.static(path.join(__dirname, 'uploads')));
 
+const cfg = require('./config');
 const promptsRouter = require('./routes/prompts');
-const workflowsRouter = require('./routes/workflows');
+const settingsRouter = require('./routes/settings');
 
-app.use('/prompts/workflows', workflowsRouter);
+app.use((req, res, next) => { res.locals.isPaid = cfg.isPaid(); next(); });
+app.use('/prompts/settings', settingsRouter);
+if (process.env.IMAGE_GEN) {
+  const imagegenRouter = require('./routes/imagegen');
+  app.use('/prompts/imagegen', imagegenRouter);
+}
+app.get('/', (req, res) => res.redirect('/prompts'));
 app.use('/prompts', promptsRouter);
 
 app.use((req, res) => {
@@ -29,7 +36,7 @@ app.use((req, res) => {
 });
 
 if (require.main === module) {
-  app.listen(PORT, '127.0.0.1', () => console.log(`Prompt library on port ${PORT}`));
+  app.listen(PORT, '0.0.0.0', () => console.log(`Prompt library on port ${PORT}`));
 }
 
 module.exports = app;

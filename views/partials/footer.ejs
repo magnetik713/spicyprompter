@@ -1,4 +1,14 @@
-</main>
+  </main>
+</div>
+<script>
+  const _p = window.location.pathname;
+  document.querySelectorAll('.sidebar-link').forEach(function(a) {
+    const dp = a.dataset.path;
+    if (dp === '/prompts' ? _p === '/prompts' || _p === '/prompts/' : _p.startsWith(dp)) {
+      a.classList.add('active');
+    }
+  });
+</script>
 <script src="/prompts/public/copy.js"></script>
 <script src="/prompts/public/workflow-parse.js"></script>
 <script src="/prompts/public/prompt-form.js"></script>

@@ -165,12 +165,12 @@ router.get('/generate/run', async (req, res) => {
 
   if (!cfg.isPaid()) {
     const promptCount = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
-    if (promptCount >= 50) {
+    if (promptCount >= 100) {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
-      res.write('data: ' + JSON.stringify({ type: 'limit', msg: 'Free tier limit reached (50 prompts). Purchase a license to generate unlimited prompts.' }) + '\n\n');
+      res.write('data: ' + JSON.stringify({ type: 'limit', msg: 'Free tier limit reached (100 prompts). Purchase a license to generate unlimited prompts.' }) + '\n\n');
       return res.end();
     }
   }
@@ -184,7 +184,10 @@ router.get('/generate/run', async (req, res) => {
     const clean = (val || '').replace(/[^a-z_]/g, '');
     return paid ? clean : (DEMO_ALLOWED[key].has(clean) ? clean : '');
   };
-  const safeCatsGated     = paid ? safeCats : (safeCats.split(',').filter(c => DEMO_ALLOWED.cats.has(c)).join(',') || null);
+  const DEMO_CATS_ARR = [...DEMO_ALLOWED.cats];
+  const safeCatsGated = paid ? safeCats : safeCats
+    ? (safeCats.split(',').filter(c => DEMO_ALLOWED.cats.has(c)).join(',') || null)
+    : DEMO_CATS_ARR[Math.floor(Math.random() * DEMO_CATS_ARR.length)];
   const safeRaceGated     = demoFilter(race,     'race');
   const safeBodytypeGated = demoFilter(bodytype, 'bodytype');
   const safeRoleGated     = demoFilter(role,     'role');
@@ -211,6 +214,16 @@ router.get('/generate/run', async (req, res) => {
   if (safeBodytypeGated) args.push('--bodytype', safeBodytypeGated);
   if (safeRoleGated)     args.push('--role',     safeRoleGated);
   if (safeStyleGated)    args.push('--style',    safeStyleGated);
+  const llmTemp   = cfg.get('llm_temperature');
+  const llmTopP   = cfg.get('llm_top_p');
+  const llmRepPen = cfg.get('llm_repetition_penalty');
+  const llmMaxTok = cfg.get('llm_max_tokens');
+  const llmRaw    = cfg.get('llm_raw_output');
+  if (llmTemp)                                 args.push('--temperature',        llmTemp);
+  if (llmTopP && parseFloat(llmTopP) > 0)      args.push('--top_p',              llmTopP);
+  if (llmRepPen && parseFloat(llmRepPen) > 1)  args.push('--repetition_penalty', llmRepPen);
+  if (llmMaxTok)                               args.push('--max_tokens',         llmMaxTok);
+  if (llmRaw === 'true')                       args.push('--raw_output');
 
   const send = (data) => res.write('data: ' + JSON.stringify(data) + '\n\n');
   send({ type: 'start', args: args.join(' ') });

@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+<div class="page-header">
+  <h1><%= title %></h1>
+  <a href="/prompts/categories" class="btn btn-secondary">← Back</a>
+</div>
+<style>
+  .cat-form label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; margin-top:16px }
+  .cat-form input[type=text], .cat-form textarea { width:100%; box-sizing:border-box; padding:8px 10px; background:var(--input-bg,#1a1a1a); border:1px solid var(--border); color:var(--text); border-radius:4px; font-size:14px; font-family:inherit }
+  .cat-form textarea { min-height:80px; resize:vertical }
+  .cat-form .hint { font-size:11px; color:var(--muted); margin-top:3px }
+</style>
+<form method="POST" action="<%= cat.id ? '/prompts/categories/' + cat.id : '/prompts/categories' %>" class="cat-form" style="max-width:800px">
+  <% if (!cat.id) { %>
+  <label>Slug (name) — used as --category flag, letters/numbers/underscore only</label>
+  <input type="text" name="name" value="<%= cat.name || '' %>" required pattern="[a-zA-Z0-9_]+" placeholder="e.g. nurse_roleplay">
+  <% } else { %>
+  <p style="font-family:monospace;font-size:18px;margin-bottom:0"><code><%= cat.name %></code></p>
+  <% } %>
+
+  <label>Display Label</label>
+  <input type="text" name="label" value="<%= cat.label || '' %>" required placeholder="e.g. Nurse Roleplay — hospital, uniform, explicit">
+
+  <label>Emphasis — key instruction sent to LLM for every prompt in this category</label>
+  <textarea name="emphasis" required placeholder="Describe the core scenario, what to focus on, specific acts to include..."><%= cat.emphasis || '' %></textarea>
+
+  <label>Subjects — pipe-separated list (leave blank to use defaults)</label>
+  <input type="text" name="subjects" value="<%= cat.subjects || '' %>" placeholder="woman in her 20s|two women|man and woman">
+  <div class="hint">One per option, separated by |</div>
+
+  <label>Settings — pipe-separated list</label>
+  <input type="text" name="settings" value="<%= cat.settings || '' %>" placeholder="bedroom|hotel room|studio">
+
+  <label>Clothing — pipe-separated list</label>
+  <input type="text" name="clothing" value="<%= cat.clothing || '' %>" placeholder="fully nude|in lingerie|topless">
+
+  <label>Styles — pipe-separated list</label>
+  <input type="text" name="styles" value="<%= cat.styles || '' %>" placeholder="candid photography|editorial photography|intimate photography">
+
+  <label>Lighting — pipe-separated list</label>
+  <input type="text" name="lighting" value="<%= cat.lighting || '' %>" placeholder="natural window light|candlelight|studio softbox lighting">
+
+  <div style="margin-top:24px">
+    <button type="submit" class="btn btn-primary"><%= cat.id ? 'Save Changes' : 'Create Category' %></button>
+  </div>
+</form>
+<%- include('../partials/footer') %>
