@@ -1,6 +1,6 @@
 {
   "name": "comfy-prompts",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
