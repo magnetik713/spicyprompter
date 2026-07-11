@@ -2,18 +2,19 @@
 
 Batch AI prompt generator for image workflows. Connect any OpenAI-compatible LLM, randomize categories, generate hundreds of prompts, and pipe them straight into ComfyUI.
 
-![version](https://img.shields.io/badge/version-1.4.1-blue)
+![version](https://img.shields.io/badge/version-1.5.1-blue)
 
 ---
 
 ## Features
 
-- **Batch generation** — queue N prompts, watch them stream in real time
+- **Batch generation** — unlimited prompts per run *(paid)*; up to 250 total in demo (5 per run)
 - **Category system** — acts, scenes, themes, styles, roles, body types, races — each with curated subject/tag pools
 - **Random mode** — per-slot randomization across all categories; chosen value shown in log per prompt
 - **ComfyUI integration** — sends each prompt directly to your ComfyUI instance via API workflow
 - **LLM agnostic** — any OpenAI-compatible endpoint (Ollama, llama.cpp, LM Studio, OpenRouter, etc.)
 - **License gating** — demo mode with restricted category pool; full access with license key
+- **Conflict detection** — skips incompatible role/scene combinations before calling the LLM, eliminating wasted retries
 - **Sampling controls** — temperature, top-p, min-p, repetition penalty, max tokens
 
 ---
@@ -88,7 +89,7 @@ Random slots pick a fresh category each iteration and show the chosen value in t
 
 ## License
 
-Demo mode is active without a key — a curated subset of categories is available. Enter a license key in Settings to unlock all categories.
+Demo mode is active without a key — a curated subset of categories is available, with generation capped at 5 prompts per run (250 total). Enter a license key in Settings to unlock all categories and remove generation limits.
 
 ---
 
