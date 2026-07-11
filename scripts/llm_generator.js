@@ -19,10 +19,17 @@ const CAT_ARG      = getArg('--category', null);
 const SUBJECT_ARG  = getArg('--subject', null);
 const RACE_ARG     = getArg('--race', null);
 const BODYTYPE_ARG = getArg('--bodytype', null);
+const BODYTYPE_NAMES = BODYTYPE_ARG ? BODYTYPE_ARG.split(',').map(s => s.trim()).filter(Boolean) : [];
 const ROLE_ARG     = getArg('--role', null);
+const ROLE_RANDOM  = ROLE_ARG === 'random';
 const STYLE_ARG    = getArg('--style', null);
+const STYLE_RANDOM = !STYLE_ARG;
+const ACT_RANDOM   = hasFlag('--act_random');
+const SCENE_RANDOM = hasFlag('--scene_random');
+const THEME_RANDOM = hasFlag('--theme_random');
 const TEMPERATURE          = parseFloat(getArg('--temperature', '1.0'));
-const TOP_P                = getArg('--top_p', null);
+const TOP_P                = getArg("--top_p", null);
+const MIN_P                = getArg("--min_p", null);
 const REPETITION_PENALTY   = parseFloat(getArg('--repetition_penalty', '1.1'));
 const MAX_TOKENS           = parseInt(getArg('--max_tokens', '300'));
 const RAW_OUTPUT           = hasFlag('--raw_output');
@@ -79,6 +86,14 @@ const CATEGORIES = loadCategories();
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+function makePicker(arr) {
+  let pool = [];
+  return function() {
+    if (!pool.length) pool = [...arr].sort(() => Math.random() - 0.5);
+    return pool.pop();
+  };
+}
+
 function resolveCategory(name) {
   const cat = CATEGORIES[name];
   if (!cat) { console.error(`Unknown category: "${name}". Run --list to see options.`); process.exit(1); }
@@ -89,26 +104,45 @@ function resolveCategory(name) {
 // actCat    = position/act (oral, doggy, missionary…)
 // themeCat  = scenario/theme (bondage, pov, femdom…)
 // Priority: scene → act → theme → role → DEFAULTS for settings
-function buildSkeleton(actCat, sceneCat, themeCat) {
-  const roleCatData  = ROLE_ARG     ? CATEGORIES[ROLE_ARG]     : null;
-  const styleCatData = STYLE_ARG    ? CATEGORIES[STYLE_ARG]    : null;
+function padPool(pool, min = 8) {
+  if (!pool || pool.length >= min) return pool || DEFAULTS.settings;
+  return [...new Set([...pool, ...DEFAULTS.settings])];
+}
+
+function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, effectiveStyle = STYLE_ARG) {
+  const roleCatData  = effectiveRole  && effectiveRole  !== 'random' ? CATEGORIES[effectiveRole]  : null;
+  const styleCatData = effectiveStyle ? CATEGORIES[effectiveStyle] : null;
   const raceCatData  = RACE_ARG     ? CATEGORIES[RACE_ARG]     : null;
-  const bodyCatData  = BODYTYPE_ARG ? CATEGORIES[BODYTYPE_ARG] : null;
+  const bodyCatData  = BODYTYPE_NAMES.length ? CATEGORIES[BODYTYPE_NAMES[0]] : null;
   const S = {
-    subjects: bodyCatData?.subjects || actCat?.subjects   || sceneCat?.subjects  || DEFAULTS.subjects,
-    settings: sceneCat?.settings || actCat?.settings    || themeCat?.settings || roleCatData?.settings || DEFAULTS.settings,
+    subjects: bodyCatData?.subjects || roleCatData?.subjects || actCat?.subjects || sceneCat?.subjects || DEFAULTS.subjects,
+    settings: padPool(sceneCat?.settings || actCat?.settings || themeCat?.settings || roleCatData?.settings),
     lighting: styleCatData?.lighting || sceneCat?.lighting || actCat?.lighting || DEFAULTS.lighting,
     styles:   styleCatData?.styles   || sceneCat?.styles   || actCat?.styles   || DEFAULTS.styles,
     cameras:  DEFAULTS.cameras,
     clothing: roleCatData?.clothing || bodyCatData?.clothing || actCat?.clothing || sceneCat?.clothing || DEFAULTS.clothing,
   };
+  if (!buildSkeleton._pickers || buildSkeleton._lastSubjects !== S.subjects || buildSkeleton._lastSettings !== S.settings || buildSkeleton._lastStyle !== effectiveStyle) {
+    buildSkeleton._pickers = {
+      subject:  makePicker(S.subjects),
+      setting:  makePicker(S.settings),
+      lighting: makePicker(S.lighting),
+      style:    makePicker(S.styles),
+      camera:   makePicker(S.cameras),
+      clothing: makePicker(S.clothing),
+    };
+    buildSkeleton._lastSubjects = S.subjects;
+    buildSkeleton._lastSettings = S.settings;
+    buildSkeleton._lastStyle    = effectiveStyle;
+  }
+  const p = buildSkeleton._pickers;
   const skeleton = {
-    subject:  SUBJECT_ARG || pick(S.subjects),
-    setting:  pick(S.settings),
-    lighting: pick(S.lighting),
-    style:    pick(S.styles),
-    camera:   pick(S.cameras),
-    clothing: pick(S.clothing),
+    subject:  SUBJECT_ARG || p.subject(),
+    setting:  p.setting(),
+    lighting: p.lighting(),
+    style:    p.style(),
+    camera:   p.camera(),
+    clothing: p.clothing(),
   };
   if (RACE_ARG) {
     const raceLabel = RACE_LABELS[RACE_ARG] || RACE_ARG;
@@ -121,15 +155,15 @@ function buildSkeleton(actCat, sceneCat, themeCat) {
       skeleton.race = raceLabel;
     }
   }
-  if (BODYTYPE_ARG) skeleton.body_type = BODYTYPE_LABELS[BODYTYPE_ARG] || BODYTYPE_ARG;
-  if (ROLE_ARG) {
-    const roleCat = CATEGORIES[ROLE_ARG];
-    skeleton.role = roleCat?.label?.split(' —')[0] || ROLE_ARG;
+  if (BODYTYPE_NAMES.length) skeleton.body_type = BODYTYPE_NAMES.map(n => BODYTYPE_LABELS[n] || n).join(', ');
+  if (effectiveRole && effectiveRole !== 'random') {
+    const roleCat = CATEGORIES[effectiveRole];
+    skeleton.role = roleCat?.label?.split(' —')[0] || effectiveRole;
   }
   return skeleton;
 }
 
-const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, role, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. 80-140 words. Include: subject description (incorporating race, body type, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. Realistic photography ONLY — no anime, no illustration, no cartoon.`;
+const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, role, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. 150-200 words. Include: subject description (incorporating race, body type, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. Realistic photography ONLY — no anime, no illustration, no cartoon. GENDER RULE: the subject field defines all people in the scene and their gender. Men have exclusively male anatomy. Women have exclusively female anatomy. body_type descriptors apply only to women in the scene — never to men. Never mix or swap anatomy between genders.`;
 
 async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const skeletonStr = Object.entries(skeleton).map(([k,v]) => `${k}: ${v}`).join('\n');
@@ -140,10 +174,11 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   if (roleCat?.emphasis)   emphasisParts.push(`Role emphasis: ${roleCat.emphasis}`);
   const styleCat2 = STYLE_ARG    ? CATEGORIES[STYLE_ARG]    : null;
   const raceCat2  = RACE_ARG     ? CATEGORIES[RACE_ARG]     : null;
-  const bodyCat2  = BODYTYPE_ARG ? CATEGORIES[BODYTYPE_ARG] : null;
+  const bodyCat2  = BODYTYPE_NAMES.length ? CATEGORIES[BODYTYPE_NAMES[0]] : null;
+  const bodyEmphases = BODYTYPE_NAMES.map(n => CATEGORIES[n]?.emphasis).filter(Boolean);
   if (styleCat2?.emphasis) emphasisParts.push(`Style emphasis: ${styleCat2.emphasis}`);
   if (raceCat2?.emphasis)  emphasisParts.push(`Race emphasis: ${raceCat2.emphasis}`);
-  if (bodyCat2?.emphasis)  emphasisParts.push(`Body emphasis: ${bodyCat2.emphasis}`);
+  if (bodyEmphases.length) emphasisParts.push(`Body emphasis: ${bodyEmphases.join('; ')}`);
   const emphasisLine = emphasisParts.length ? '\n' + emphasisParts.join('\n') : '';
   const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, and theme. Expand into a rich, explicit prompt.`;
 
@@ -157,6 +192,7 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
     temperature: TEMPERATURE,
   };
   if (TOP_P && parseFloat(TOP_P) > 0) reqBody.top_p = parseFloat(TOP_P);
+  if (MIN_P && parseFloat(MIN_P) > 0) reqBody.min_p = parseFloat(MIN_P);
   if (REPETITION_PENALTY > 1.0) reqBody.repetition_penalty = REPETITION_PENALTY;
   const r = await fetch(`${LITELLM_URL}/chat/completions`, {
     method: 'POST',
@@ -196,17 +232,22 @@ async function main() {
   const sceneNames = catNames ? catNames.filter(n => CATEGORIES[n]?.type === 'scene') : [];
   const themeNames = catNames ? catNames.filter(n => CATEGORIES[n]?.type === 'theme') : [];
 
-  const roleCat = ROLE_ARG ? CATEGORIES[ROLE_ARG] : null;
-  if (ROLE_ARG && !roleCat) { console.error(`Unknown role: "${ROLE_ARG}"`); process.exit(1); }
+  const ALL_ROLES  = ROLE_RANDOM  ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'role')  : null;
+  const ALL_ACTS   = ACT_RANDOM   ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'act')   : null;
+  const ALL_SCENES = SCENE_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'scene') : null;
+  const ALL_THEMES = THEME_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'theme') : null;
+  const ALL_STYLES = STYLE_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'style') : null;
+  const roleCat = (ROLE_ARG && !ROLE_RANDOM) ? CATEGORIES[ROLE_ARG] : null;
+  if (ROLE_ARG && !ROLE_RANDOM && !roleCat) { console.error(`Unknown role: "${ROLE_ARG}"`); process.exit(1); }
 
   const parts = [`model=${MODEL}`];
-  if (actNames.length)   parts.push(`acts=${actNames.join(',')}`);
-  if (sceneNames.length) parts.push(`scenes=${sceneNames.join(',')}`);
-  if (themeNames.length) parts.push(`themes=${themeNames.join(',')}`);
+  if (actNames.length)   parts.push(`acts=${actNames.join(',')}`);   else if (ACT_RANDOM)   parts.push('act=random');
+  if (sceneNames.length) parts.push(`scenes=${sceneNames.join(',')}`); else if (SCENE_RANDOM) parts.push('scene=random');
+  if (themeNames.length) parts.push(`themes=${themeNames.join(',')}`); else if (THEME_RANDOM) parts.push('theme=random');
   if (RACE_ARG)          parts.push(`race=${RACE_ARG}`);
   if (BODYTYPE_ARG)      parts.push(`bodytype=${BODYTYPE_ARG}`);
-  if (ROLE_ARG)          parts.push(`role=${ROLE_ARG}`);
-  if (STYLE_ARG)         parts.push(`style=${STYLE_ARG}`);
+  if (ROLE_ARG)          parts.push(ROLE_RANDOM ? 'role=random' : `role=${ROLE_ARG}`);
+  parts.push(STYLE_ARG ? `style=${STYLE_ARG}` : 'style=random');
   if (SUBJECT_ARG)       parts.push(`subject=${SUBJECT_ARG}`);
   console.log(`Generating ${COUNT} prompts | ${parts.join(' | ')}`);
 
@@ -219,27 +260,52 @@ async function main() {
 
   let inserted = 0, failed = 0;
 
+  const ALLOW_CONFLICTS = hasFlag('--allow-conflicts');
+  let rerollsThisSlot = 0;
   for (let i = 0; i < COUNT; i++) {
-    const actName   = actNames.length   ? pick(actNames)   : null;
-    const sceneName = sceneNames.length ? pick(sceneNames) : null;
-    const themeName = themeNames.length ? pick(themeNames) : null;
+    const actName   = ALL_ACTS   ? ALL_ACTS[Math.floor(Math.random()   * ALL_ACTS.length)]   : (actNames.length   ? pick(actNames)   : null);
+    const sceneName = ALL_SCENES ? ALL_SCENES[Math.floor(Math.random() * ALL_SCENES.length)] : (sceneNames.length ? pick(sceneNames) : null);
+    const themeName = ALL_THEMES ? ALL_THEMES[Math.floor(Math.random() * ALL_THEMES.length)] : (themeNames.length ? pick(themeNames) : null);
     const actCat    = actName   ? CATEGORIES[actName]   : null;
     const sceneCat  = sceneName ? CATEGORIES[sceneName] : null;
     const themeCat  = themeName ? CATEGORIES[themeName] : null;
-    const skeleton  = buildSkeleton(actCat, sceneCat, themeCat);
+    const effectiveRole  = ROLE_RANDOM  ? ALL_ROLES[Math.floor(Math.random()  * ALL_ROLES.length)]  : ROLE_ARG;
+    const effectiveStyle = STYLE_RANDOM ? ALL_STYLES[Math.floor(Math.random() * ALL_STYLES.length)] : STYLE_ARG;
+
+    if (!ALLOW_CONFLICTS) {
+      const dominantSettings = (sceneCat?.settings || actCat?.settings || themeCat?.settings);
+      const roleCatForConflict = effectiveRole && effectiveRole !== 'random' ? CATEGORIES[effectiveRole] : null;
+      if (dominantSettings && roleCatForConflict?.settings) {
+        const overlap = dominantSettings.some(s => roleCatForConflict.settings.includes(s));
+        if (!overlap) {
+          if (!rerollsThisSlot) rerollsThisSlot = 0;
+          rerollsThisSlot++;
+          if (rerollsThisSlot <= 20) { i--; continue; }
+          process.stdout.write('(no compatible role found, skipping) ');
+          rerollsThisSlot = 0;
+          failed++;
+          continue;
+        }
+      }
+      rerollsThisSlot = 0;
+    }
+
+    const skeleton  = buildSkeleton(actCat, sceneCat, themeCat, effectiveRole, effectiveStyle);
     if (themeName) skeleton.theme = themeCat?.label?.split(' —')[0] || themeName;
 
+    const loopRoleCat  = effectiveRole  ? CATEGORIES[effectiveRole]  : null;
+    const loopStyleCat = effectiveStyle ? CATEGORIES[effectiveStyle] : null;
     const catTag = [actName, sceneName, themeName].filter(Boolean).map(n => `[${n}]`).join('');
-    const tags = [catTag, RACE_ARG ? `[${RACE_ARG}]` : '', BODYTYPE_ARG ? `[${BODYTYPE_ARG}]` : '', ROLE_ARG ? `[${ROLE_ARG}]` : ''].filter(Boolean).join('');
+    const tags = [catTag, RACE_ARG ? `[${RACE_ARG}]` : '', BODYTYPE_ARG ? `[${BODYTYPE_ARG}]` : '', effectiveRole ? `[${effectiveRole}]` : '', effectiveStyle ? `[${effectiveStyle}]` : ''].filter(Boolean).join('');
     process.stdout.write(`  [${i+1}/${COUNT}]${tags ? ' ' + tags : ''} ${skeleton.subject} / ${skeleton.setting}... `);
 
     try {
       let prompt = null;
       for (let attempt = 0; attempt < 3; attempt++) {
-        const candidate = await generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat);
+        const candidate = await generatePrompt(skeleton, actCat, sceneCat, themeCat, loopRoleCat);
         if (!candidate || candidate.length < 40) continue;
         if ((actName || sceneName) && !promptMatchesSetting(candidate, skeleton.setting)) {
-          process.stdout.write('(retry) ');
+          process.stdout.write('(retry: setting mismatch) ');
           continue;
         }
         prompt = candidate;
@@ -254,14 +320,14 @@ async function main() {
       if (themeName)    tagParts.push(themeName);
       if (RACE_ARG)     tagParts.push(RACE_ARG);
       if (BODYTYPE_ARG) tagParts.push(BODYTYPE_ARG);
-      if (ROLE_ARG)     tagParts.push(ROLE_ARG);
-      if (STYLE_ARG)    tagParts.push(STYLE_ARG);
+      if (effectiveRole) tagParts.push(effectiveRole);
+      if (effectiveStyle) tagParts.push(effectiveStyle);
       tagParts.push(skeleton.setting);
       insert.run({
         name,
         positive: prompt,
         tags: tagParts.join(','),
-        category: [actName, sceneName, themeName].filter(Boolean).join('+') || (ROLE_ARG ?? 'general'),
+        category: [actName, sceneName, themeName].filter(Boolean).join('+') || (effectiveRole ?? 'general'),
         notes: `model:${MODEL} skeleton:${JSON.stringify(skeleton)}`,
       });
       inserted++;

@@ -88,7 +88,7 @@
   <span class="gen-label">Count</span>
   
   <% if (paid) { %>
-  <input type="number" id="count" value="5" min="1" max="200" class="gen-input gen-num">
+  <input type="number" id="count" value="5" min="1" max="9999" class="gen-input gen-num">
   <% } else { %>
   <input type="number" id="count" value="5" min="1" max="5" class="gen-input gen-num">
   <span style="font-size:10px;color:var(--accent);margin-right:8px">&#128274; unlock in Settings</span>
@@ -115,7 +115,7 @@
   </button>
   <button class="cat-tab" data-cat="role" onclick="selectCat('role',this)">
     <span class="cat-tab-name">Role</span>
-    <span class="cat-tab-val" id="tabval-role">None</span>
+    <span class="cat-tab-val" id="tabval-role">Random</span>
   </button>
   <button class="cat-tab" data-cat="act" onclick="selectCat('act',this)">
     <span class="cat-tab-name">Act</span>
@@ -149,10 +149,9 @@
 
   <!-- Body Type -->
   <div id="cat-pane-bodytype" class="cat-pane">
-    <div class="opt-item"><input type="radio" name="bodytype" id="bt_none" value="" checked><label for="bt_none">Any</label></div>
     <% bodyTypeCategories.forEach(c => { %>
     <div class="opt-item">
-      <input type="radio" name="bodytype" id="bt_<%= c.name %>" value="<%= c.name %>">
+      <input type="checkbox" class="bt-check" id="bt_<%= c.name %>" value="<%= c.name %>">
       <label for="bt_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
     </div>
     <% }) %>
@@ -160,7 +159,8 @@
 
   <!-- Role -->
   <div id="cat-pane-role" class="cat-pane">
-    <div class="opt-item"><input type="radio" name="role" id="role_none" value="" checked><label for="role_none">None</label></div>
+    <div class="opt-item"><input type="radio" name="role" id="role_none" value=""><label for="role_none">None</label></div>
+    <div class="opt-item"><input type="radio" name="role" id="role_random" value="random" checked><label for="role_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% roleCategories.forEach(c => { %>
     <div class="opt-item">
       <input type="radio" name="role" id="role_<%= c.name %>" value="<%= c.name %>">
@@ -171,7 +171,8 @@
 
   <!-- Act -->
   <div id="cat-pane-act" class="cat-pane">
-    <div class="opt-item"><input type="radio" name="act" id="act_none" value="" checked><label for="act_none" style="color:var(--muted);font-style:italic">None / random</label></div>
+    <div class="opt-item"><input type="radio" name="act" id="act_none" value=""><label for="act_none" style="color:var(--muted);font-style:italic">None</label></div>
+    <div class="opt-item"><input type="radio" name="act" id="act_random" value="random" checked><label for="act_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% actCategories.forEach(c => { %>
     <div class="opt-item">
       <input type="radio" name="act" id="act_<%= c.id %>" value="<%= c.name %>">
@@ -182,7 +183,8 @@
 
   <!-- Scene -->
   <div id="cat-pane-scene" class="cat-pane">
-    <div class="opt-item"><input type="radio" name="scene" id="scene_none" value="" checked><label for="scene_none" style="color:var(--muted);font-style:italic">None / random</label></div>
+    <div class="opt-item"><input type="radio" name="scene" id="scene_none" value=""><label for="scene_none" style="color:var(--muted);font-style:italic">None</label></div>
+    <div class="opt-item"><input type="radio" name="scene" id="scene_random" value="random" checked><label for="scene_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% sceneCategories.forEach(c => { %>
     <div class="opt-item">
       <input type="radio" name="scene" id="scene_<%= c.id %>" value="<%= c.name %>">
@@ -193,7 +195,8 @@
 
   <!-- Theme -->
   <div id="cat-pane-theme" class="cat-pane">
-    <div class="opt-item"><input type="radio" name="theme" id="theme_none" value="" checked><label for="theme_none" style="color:var(--muted);font-style:italic">None / random</label></div>
+    <div class="opt-item"><input type="radio" name="theme" id="theme_none" value=""><label for="theme_none" style="color:var(--muted);font-style:italic">None</label></div>
+    <div class="opt-item"><input type="radio" name="theme" id="theme_random" value="random" checked><label for="theme_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% themeCategories.forEach(c => { %>
     <div class="opt-item">
       <input type="radio" name="theme" id="theme_<%= c.id %>" value="<%= c.name %>">
@@ -228,10 +231,10 @@ function selectCat(cat, btn) {
   document.getElementById('cat-pane-' + cat).classList.add('active');
 }
 
-var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'None', act:'Random', scene:'Random', theme:'Random', style:'Default' };
+var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random' };
 
 function syncTabVals() {
-  ['race','bodytype','role','act','scene','theme','style'].forEach(function(cat) {
+  ['race','role','act','scene','theme','style'].forEach(function(cat) {
     var checked = document.querySelector('input[name="' + cat + '"]:checked');
     var hasVal = !!(checked && checked.value !== '');
     var labelEl = checked ? checked.closest('.opt-item').querySelector('label') : null;
@@ -241,10 +244,29 @@ function syncTabVals() {
     var tab = document.querySelector('[data-cat="' + cat + '"]');
     if (tab) tab.classList.toggle('has-val', hasVal);
   });
+  var btChecked = Array.from(document.querySelectorAll('.bt-check:checked'));
+  var btEl = document.getElementById('tabval-bodytype');
+  var btTab = document.querySelector('[data-cat="bodytype"]');
+  if (btChecked.length === 0) {
+    if (btEl) btEl.textContent = 'Any';
+    if (btTab) btTab.classList.remove('has-val');
+  } else if (btChecked.length === 1) {
+    var lbl = btChecked[0].closest('.opt-item').querySelector('label');
+    if (btEl) btEl.textContent = (lbl.firstChild.nodeValue || lbl.textContent).trim();
+    if (btTab) btTab.classList.add('has-val');
+  } else {
+    if (btEl) btEl.textContent = btChecked.length + ' selected';
+    if (btTab) btTab.classList.add('has-val');
+  }
+}
+
+function clearBodytype() {
+  document.querySelectorAll('.bt-check').forEach(function(el) { el.checked = false; });
+  syncTabVals();
 }
 
 document.addEventListener('change', function(e) {
-  if (e.target.type === 'radio') {
+  if (e.target.type === 'radio' || e.target.classList.contains('bt-check')) {
     syncTabVals();
     if (e.target.name === 'act') checkActWarning();
   }
@@ -254,11 +276,11 @@ function startGenerate() {
   var act   = (document.querySelector('input[name="act"]:checked') || {}).value   || '';
   var scene = (document.querySelector('input[name="scene"]:checked') || {}).value || '';
   var theme = (document.querySelector('input[name="theme"]:checked') || {}).value || '';
-  var cat   = [act, scene, theme].filter(Boolean).join(',');
+
 
   var subject  = buildSubject();
   var race     = (document.querySelector('input[name="race"]:checked') || {}).value      || '';
-  var bodytype = (document.querySelector('input[name="bodytype"]:checked') || {}).value  || '';
+  var bodytype = Array.from(document.querySelectorAll('.bt-check:checked')).map(function(el){return el.value;}).join(',');
   var role     = (document.querySelector('input[name="role"]:checked') || {}).value      || '';
   var style    = (document.querySelector('input[name="style"]:checked') || {}).value     || '';
   var count    = document.getElementById('count').value;
@@ -272,7 +294,11 @@ function startGenerate() {
   btn.textContent = 'Generating…';
 
   var params = new URLSearchParams({ count: count, model: model });
-  if (cat)      params.set('cats',     cat);
+  var cleanCat = [act, scene, theme].filter(function(v) { return v && v !== 'random'; }).join(',');
+  if (cleanCat) params.set('cats', cleanCat);
+  if (act   === 'random') params.set('act_random',   '1');
+  if (scene === 'random') params.set('scene_random', '1');
+  if (theme === 'random') params.set('theme_random', '1');
   if (subject)  params.set('subject',  subject);
   if (race)     params.set('race',     race);
   if (bodytype) params.set('bodytype', bodytype);
@@ -321,8 +347,16 @@ function startGenerate() {
 
 async function queueRecent(n) {
   var btn = event.target;
+  var statusEl = document.getElementById('comfy-status');
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.id = 'comfy-status';
+    statusEl.style.cssText = 'margin-top:8px;font-size:11px;color:var(--muted)';
+    btn.parentNode.insertBefore(statusEl, btn.nextSibling);
+  }
   btn.textContent = 'Queuing…';
   btn.disabled = true;
+  var promptIds = [];
   try {
     var r = await fetch('/prompts/api/recent?n=' + n);
     var prompts = await r.json();
@@ -332,16 +366,59 @@ async function queueRecent(n) {
         var res = await fetch('/prompts/api/comfyui/queue', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt_text: prompts[i].positive })
+          body: JSON.stringify({ prompt_text: prompts[i].positive, prompt_db_id: prompts[i].id })
         });
         var d = await res.json();
-        if (d.ok) ok++; else fail++;
+        if (d.ok) { ok++; promptIds.push({ comfyId: d.prompt_id, dbId: prompts[i].id }); } else fail++;
       } catch(e) { fail++; }
     }
-    btn.textContent = '✓ Queued ' + ok + (fail ? ' (' + fail + ' failed)' : '');
+    btn.textContent = '⚡ Queue last ' + n + ' in ComfyUI';
+    btn.disabled = false;
+    statusEl.textContent = '✓ Queued ' + ok + (fail ? ' (' + fail + ' failed)' : '') + ' — opening library…';
+    if (ok > 0) setTimeout(function() { window.location.href = '/prompts'; }, 1200);
   } catch(e) {
-    btn.textContent = '✗ Error: ' + e.message;
+    btn.textContent = '⚡ Queue last ' + n + ' in ComfyUI';
+    btn.disabled = false;
+    statusEl.textContent = '✗ Error: ' + e.message;
   }
+}
+
+async function pollQueueStatus(jobs, statusEl) {
+  var done = 0, total = jobs.length;
+  var imgEl = document.getElementById('comfy-preview');
+  if (!imgEl) {
+    imgEl = document.createElement('img');
+    imgEl.id = 'comfy-preview';
+    imgEl.style.cssText = 'display:none;max-width:100%;margin-top:8px;border-radius:var(--radius)';
+    statusEl.parentNode.insertBefore(imgEl, statusEl.nextSibling);
+  }
+  var pending = jobs.slice();
+  async function tick() {
+    if (!pending.length) { statusEl.textContent = '✓ All ' + total + ' done'; return; }
+    var stillPending = [];
+    for (var j = 0; j < pending.length; j++) {
+      try {
+        var sr = await fetch('/prompts/api/comfyui/status?id=' + encodeURIComponent(pending[j].comfyId));
+        var s = await sr.json();
+        if (s.status === 'done' && s.filename) {
+          done++;
+          statusEl.textContent = done + '/' + total + ' done';
+          try {
+            var fr = await fetch('/prompts/api/comfyui/fetch-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt_db_id: pending[j].dbId, filename: s.filename })
+            });
+            var fd = await fr.json();
+            if (fd.image_path) { imgEl.src = '/prompts/' + fd.image_path; imgEl.style.display = 'block'; }
+          } catch(e) {}
+        } else { stillPending.push(pending[j]); }
+      } catch(e) { stillPending.push(pending[j]); }
+    }
+    pending = stillPending;
+    if (pending.length) setTimeout(tick, 3000); else statusEl.textContent = '✓ All ' + total + ' done';
+  }
+  setTimeout(tick, 3000);
 }
 
 function buildSubject() {
@@ -370,7 +447,7 @@ function checkActWarning() {
   var actEl = document.querySelector('input[name="act"]:checked');
   var act = actEl ? actEl.value : '';
   var box = document.getElementById('act-warning');
-  if (!box || !act) { if (box) box.style.display = 'none'; return; }
+  if (!box || !act || act === 'random') { if (box) box.style.display = 'none'; return; }
   if (SOLO_ACTS[act]) { box.style.display = 'none'; return; }
   if (GROUP_ACTS[act] && total < 3) {
     box.textContent = '⚠ "' + act + '" typically needs 3+ people — current subject: ' + (total || 'none');

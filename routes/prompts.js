@@ -126,11 +126,11 @@ const PROJ_DIR  = require('path').join(__dirname, '..');
 
 // Demo-mode allowed values per filter
 const DEMO_ALLOWED = {
-  race:     new Set(['asian','ebony','latina','russian']),
-  bodytype: new Set(['athletic','busty','curvy','petite']),
-  role:     new Set(['cheerleader','college','maid','role_girlfriend','teacher']),
-  cats:     new Set(['cowgirl','doggy_style','missionary','oral','beach','bedroom','office','shower','boudoir','glamour','interracial','lingerie','pov']),
-  style:    new Set(['film_grain','golden_hour','studio_flash']),
+  race:     new Set(['asian','ebony','latina','russian','french','scandinavian','brazilian','italian','korean','indian','persian']),
+  bodytype: new Set(['athletic','busty','curvy','petite','petite_teen','thick','milf','tattoos','mature','bbw','chubby','flat_chested']),
+  role:     new Set(['cheerleader','college','maid','role_girlfriend','teacher','cosplay','role_secretary','role_neighbor','role_trainer','role_stewardess']),
+  cats:     new Set(['cowgirl','doggy_style','missionary','oral','beach','bedroom','office','shower','boudoir','glamour','interracial','lingerie','pov','reverse_cowgirl','fingering','legs_up','spooning','standing','edge_of_bed','gym','car','outdoor','pool','dorm','massage','amateur','solo','oiled','stockings','voyeur']),
+  style:    new Set(['film_grain','golden_hour','studio_flash','natural_window','candlelight','low_key','ring_light','warm_indoor','blue_hour','overcast','harsh_sun']),
 };
 
 router.get('/generate', (req, res) => { try {
@@ -161,7 +161,7 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style } = req.query;
+  const { cats, count, model, subject, race, bodytype, role, style, act_random, scene_random, theme_random } = req.query;
 
   if (!cfg.isPaid()) {
     const promptCount = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
@@ -175,7 +175,7 @@ router.get('/generate/run', async (req, res) => {
     }
   }
 
-  const safeCount   = Math.min(cfg.isPaid() ? 200 : 5, Math.max(1, parseInt(count) || 5));
+  const safeCount   = cfg.isPaid() ? Math.max(1, parseInt(count) || 5) : Math.min(250, Math.max(1, parseInt(count) || 5));
   const safeModel   = (model || 'qwen3.6:35b-a3b').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
   const safeCats    = (cats || '').replace(/[^a-zA-Z0-9_,]/g, '');
   const safeSubject = (subject || '').replace(/[^a-zA-Z0-9 _,-]/g, '').trim();
@@ -185,13 +185,21 @@ router.get('/generate/run', async (req, res) => {
     return paid ? clean : (DEMO_ALLOWED[key].has(clean) ? clean : '');
   };
   const DEMO_CATS_ARR = [...DEMO_ALLOWED.cats];
+  const DEMO_STYLES_ARR = [...DEMO_ALLOWED.style];
+  const anyRandom = act_random === '1' || scene_random === '1' || theme_random === '1';
   const safeCatsGated = paid ? safeCats : safeCats
     ? (safeCats.split(',').filter(c => DEMO_ALLOWED.cats.has(c)).join(',') || null)
     : DEMO_CATS_ARR[Math.floor(Math.random() * DEMO_CATS_ARR.length)];
+  // For demo with random flags: merge specific cats + full demo pool so random picks stay within demo set
+  const demoCatsWithRandom = !paid && anyRandom
+    ? [...new Set([...(safeCatsGated ? safeCatsGated.split(',') : []), ...DEMO_CATS_ARR])].join(',')
+    : safeCatsGated;
   const safeRaceGated     = demoFilter(race,     'race');
-  const safeBodytypeGated = demoFilter(bodytype, 'bodytype');
+  const safeBodytype = (bodytype || "").replace(/[^a-z_,]/g, "");
+  const safeBodytypeGated = paid ? safeBodytype : safeBodytype.split(",").filter(c => DEMO_ALLOWED.bodytype.has(c)).join(",");
   const safeRoleGated     = demoFilter(role,     'role');
-  const safeStyleGated    = demoFilter(style,    'style');
+  const rawStyle = (style || '').replace(/[^a-z_]/g, '');
+  const safeStyleGated = paid ? rawStyle : (rawStyle ? (DEMO_ALLOWED.style.has(rawStyle) ? rawStyle : '') : DEMO_STYLES_ARR[Math.floor(Math.random() * DEMO_STYLES_ARR.length)]);
 
   if (cfg.isPaid()) {
     const valid = await cfg.checkLicense();
@@ -208,12 +216,17 @@ router.get('/generate/run', async (req, res) => {
   const llmUrl = cfg.get('llm_base_url');
   const llmKey = cfg.get('llm_api_key');
   const args = ['--count', String(safeCount), '--model', safeModel, '--url', llmUrl, '--key', llmKey];
-  if (safeCatsGated)     args.push('--category', safeCatsGated);
+  const effectiveCats = paid ? safeCatsGated : demoCatsWithRandom;
+  if (effectiveCats)     args.push('--category', effectiveCats);
   if (safeSubject)       args.push('--subject',  safeSubject);
   if (safeRaceGated)     args.push('--race',     safeRaceGated);
   if (safeBodytypeGated) args.push('--bodytype', safeBodytypeGated);
   if (safeRoleGated)     args.push('--role',     safeRoleGated);
   if (safeStyleGated)    args.push('--style',    safeStyleGated);
+  // only pass random flags for paid users — demo users get restricted cat pool above instead
+  if (paid && act_random   === '1') args.push('--act_random');
+  if (paid && scene_random === '1') args.push('--scene_random');
+  if (paid && theme_random === '1') args.push('--theme_random');
   const llmTemp   = cfg.get('llm_temperature');
   const llmTopP   = cfg.get('llm_top_p');
   const llmRepPen = cfg.get('llm_repetition_penalty');
@@ -221,6 +234,8 @@ router.get('/generate/run', async (req, res) => {
   const llmRaw    = cfg.get('llm_raw_output');
   if (llmTemp)                                 args.push('--temperature',        llmTemp);
   if (llmTopP && parseFloat(llmTopP) > 0)      args.push('--top_p',              llmTopP);
+  const llmMinP   = cfg.get('llm_min_p');
+  if (llmMinP && parseFloat(llmMinP) > 0)      args.push('--min_p',              llmMinP);
   if (llmRepPen && parseFloat(llmRepPen) > 1)  args.push('--repetition_penalty', llmRepPen);
   if (llmMaxTok)                               args.push('--max_tokens',         llmMaxTok);
   if (llmRaw === 'true')                       args.push('--raw_output');
@@ -465,8 +480,20 @@ router.get('/api/recent', (req, res) => {
 
 // ── Category Admin ─────────────────────────────────────────────────────────
 router.get('/categories', (req, res) => {
-  const categories = db.prepare('SELECT * FROM llm_categories ORDER BY name').all();
-  res.render('prompts/categories', { categories, title: 'Prompt Categories', paid: cfg.isPaid(), query: req.query });
+  const TYPE_ORDER = ['act','scene','theme','role','body_type','race','style'];
+  const TYPE_LABELS = { act:'Acts', scene:'Scenes', theme:'Themes', role:'Roles', body_type:'Body Types', race:'Race / Ethnicity', style:'Styles' };
+  const rows = db.prepare('SELECT * FROM llm_categories ORDER BY label').all();
+  const paid = cfg.isPaid();
+  const DEMO_TYPE_MAP = { race: 'race', body_type: 'bodytype', role: 'role', act: 'cats', scene: 'cats', theme: 'cats', style: 'style' };
+  const grouped = TYPE_ORDER.map(t => {
+    const all = rows.filter(r => r.type === t);
+    const demoKey = DEMO_TYPE_MAP[t];
+    const visible = paid ? all : all.filter(r => demoKey && DEMO_ALLOWED[demoKey] ? DEMO_ALLOWED[demoKey].has(r.name) : true);
+    return { type: t, label: TYPE_LABELS[t] || t, items: visible, hidden: all.length - visible.length };
+  }).filter(g => g.items.length);
+  const others = rows.filter(r => !TYPE_ORDER.includes(r.type));
+  if (others.length) grouped.push({ type: 'other', label: 'Other', items: others, hidden: 0 });
+  res.render('prompts/categories', { grouped, total: rows.length, title: 'Prompt Categories', paid, query: req.query });
 });
 
 router.get('/categories/new', (req, res) => {
