@@ -2,7 +2,7 @@ document.addEventListener('click', function (e) {
   if (!e.target.classList.contains('copy-btn')) return;
   const el = document.getElementById(e.target.dataset.target);
   if (!el) return;
-  const text = el.textContent.trim();
+  const text = (el.tagName === "TEXTAREA" ? el.value : el.textContent).trim();
   const btn = e.target;
   const others = document.querySelectorAll('.copy-btn');
 

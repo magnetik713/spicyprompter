@@ -20,6 +20,7 @@ router.post('/', (req, res) => {
   if (req.body.comfyui_model    !== undefined) cfg.set('comfyui_model',    (req.body.comfyui_model    || '').trim());
   if (req.body.llm_temperature)                cfg.set('llm_temperature',          req.body.llm_temperature.trim());
   if (req.body.llm_top_p !== undefined)        cfg.set('llm_top_p',                req.body.llm_top_p || '');
+  if (req.body.llm_min_p !== undefined)        cfg.set('llm_min_p',                req.body.llm_min_p || '');
   if (req.body.llm_repetition_penalty)         cfg.set('llm_repetition_penalty',   req.body.llm_repetition_penalty.trim());
   if (req.body.llm_max_tokens)                 cfg.set('llm_max_tokens',           req.body.llm_max_tokens.trim());
   cfg.set('llm_raw_output', req.body.llm_raw_output === 'on' ? 'true' : 'false');

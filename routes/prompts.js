@@ -335,6 +335,14 @@ router.post('/api/comfyui/queue', async (req, res) => {
     }
   }
 
+  // Randomize seed on every sampler node so each job produces a unique image
+  for (const node of Object.values(workflow)) {
+    if (node.class_type === 'KSampler' || node.class_type === 'KSamplerAdvanced') {
+      if (node.inputs.seed != null) node.inputs.seed = Math.floor(Math.random() * 2 ** 32);
+      if (node.inputs.noise_seed != null) node.inputs.noise_seed = Math.floor(Math.random() * 2 ** 32);
+    }
+  }
+
   try {
     const r = await fetch(`http://${comfyHost}:${comfyPort}/prompt`, {
       method: 'POST',
@@ -352,12 +360,12 @@ router.post('/api/comfyui/queue', async (req, res) => {
 });
 
 router.post('/api/comfyui/fetch-image', async (req, res) => {
-  const { prompt_db_id, filename } = req.body;
+  const { prompt_db_id, filename, subfolder, type } = req.body;
   if (!prompt_db_id || !filename) return res.status(400).json({ error: 'prompt_db_id and filename required' });
 
   const comfyHost = cfg.get('comfyui_host') || 'localhost';
   const comfyPort = cfg.get('comfyui_port') || '8188';
-  const url = `http://${comfyHost}:${comfyPort}/view?filename=${encodeURIComponent(filename)}`;
+  const url = `http://${comfyHost}:${comfyPort}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder||'')}&type=${type||'output'}`;
 
   try {
     const r = await fetch(url);
@@ -418,7 +426,9 @@ router.get('/api/comfyui/status', async (req, res) => {
       const job = h[id];
       const imgs = Object.values(job.outputs || {}).flatMap(o => o.images || []);
       const filename = imgs[0]?.filename || '';
-      if (job.status?.completed) return res.json({ status: 'done', filename });
+      const subfolder = imgs[0]?.subfolder || '';
+      const imgType = imgs[0]?.type || 'output';
+      if (job.status?.completed) return res.json({ status: 'done', filename, subfolder, type: imgType });
       return res.json({ status: 'error' });
     }
     return res.json({ status: 'unknown' });
@@ -465,11 +475,18 @@ router.post('/api/export', (req, res) => {
 
 router.get('/api/comfyui/pending', (req, res) => {
   const rows = db.prepare(
-    "SELECT id, comfy_prompt_id FROM prompts WHERE comfy_prompt_id IS NOT NULL AND (image_path IS NULL OR image_path = '')"
+    "SELECT id, comfy_prompt_id FROM prompts WHERE comfy_prompt_id IS NOT NULL"
   ).all();
   res.json(rows);
 });
 
+
+router.post('/api/save-positive', (req, res) => {
+  const { id, positive } = req.body;
+  if (!id) return res.status(400).json({ ok: false, error: 'Missing id' });
+  db.prepare('UPDATE prompts SET positive=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(positive || null, id);
+  res.json({ ok: true });
+});
 
 router.get('/api/recent', (req, res) => {
   const n = Math.min(200, Math.max(1, parseInt(req.query.n) || 20));
