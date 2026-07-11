@@ -2,7 +2,7 @@
 
 Batch AI prompt generator for image workflows. Connect any OpenAI-compatible LLM, randomize categories, generate hundreds of prompts, and pipe them straight into ComfyUI.
 
-![version](https://img.shields.io/badge/version-1.5.1-blue)
+![version](https://img.shields.io/badge/version-1.6.0-blue)
 
 ---
 
@@ -14,7 +14,8 @@ Batch AI prompt generator for image workflows. Connect any OpenAI-compatible LLM
 - **ComfyUI integration** — sends each prompt directly to your ComfyUI instance via API workflow
 - **LLM agnostic** — any OpenAI-compatible endpoint (Ollama, llama.cpp, LM Studio, OpenRouter, etc.)
 - **License gating** — demo mode with restricted category pool; full access with license key
-- **Conflict detection** — skips incompatible role/scene combinations before calling the LLM, eliminating wasted retries
+- **Cast enforcement** — solo/all-female subjects automatically block male-requiring acts from the random pool; form warns and blocks submission on incompatible act/subject selection
+- **Inline prompt editing** — edit the positive prompt directly on the detail page and save without leaving
 - **Sampling controls** — temperature, top-p, min-p, repetition penalty, max tokens
 
 ---
@@ -30,12 +31,12 @@ Batch AI prompt generator for image workflows. Connect any OpenAI-compatible LLM
 
 ## Install
 
-1. Download `spicyprompter-v1.4.1.zip` from [Releases](https://github.com/magnetik713/spicyprompter/releases)
+1. Download  from [Releases](https://github.com/magnetik713/spicyprompter/releases)
 2. Extract anywhere
-3. Run `install.bat` — installs dependencies, prompts for port (default `3014`)
-4. Browser opens to `http://localhost:3014/prompts`
+3. Run  — installs dependencies, prompts for port (default )
+4. Browser opens to 
 
-After first install, use `start.bat` to launch.
+After first install, use  to launch.
 
 ---
 
@@ -47,15 +48,15 @@ Go to **Settings** and configure:
 
 | Setting | Description |
 |---|---|
-| Base URL | Your LLM endpoint, e.g. `http://localhost:11434/v1` |
+| Base URL | Your LLM endpoint, e.g.  |
 | API Key | Leave blank for local, or paste your key |
-| Default Model | Model name, e.g. `qwen3:8b` |
+| Default Model | Model name, e.g.  |
 
 ### Generation Parameters
 
 | Setting | Default | Notes |
 |---|---|---|
-| Temperature | 1.0 | Higher = more creative |
+| Temperature | 1.2 | Higher = more creative |
 | Top-p | off | Nucleus sampling cutoff |
 | Min-p | off | Cuts tokens below fraction of top token probability. Try 0.05–0.1 with high temp |
 | Repetition Penalty | 1.1 | Discourages repeated phrasing |
@@ -66,8 +67,8 @@ Go to **Settings** and configure:
 
 | Setting | Description |
 |---|---|
-| Host | ComfyUI host, e.g. `localhost` |
-| Port | ComfyUI port, e.g. `8188` |
+| Host | ComfyUI host, e.g.  |
+| Port | ComfyUI port, e.g.  |
 | Workflow File | Upload an API-format workflow JSON |
 | Model | Checkpoint filename to inject into workflow |
 
@@ -80,10 +81,19 @@ Go to **Settings** and configure:
 - **Count** — number of prompts to generate
 - **Send to ComfyUI** — queue each prompt as it completes
 
+Default subject is **1 woman + 1 man**. For solo scenes, select a solo-compatible act (or leave act blank). The form blocks submission if the selected act requires multiple people but the subject is solo.
+
 Random slots pick a fresh category each iteration and show the chosen value in the log:
-```
-[1/10] [film_grain] [cowgirl] [bedroom] oiled...
-```
+
+
+Multiple conflicting body types (e.g. busty + flat-chested) are automatically distributed across people when the subject includes multiple individuals.
+
+---
+
+## Detail Page
+
+- Click the positive prompt text to edit it directly; hit **Save** to persist
+- **Regenerate** button queues the prompt to ComfyUI and shows live status: orange while running, green on completion, red on error
 
 ---
 
@@ -95,4 +105,4 @@ Demo mode is active without a key — a curated subset of categories is availabl
 
 ## Uninstall
 
-Run `uninstall.bat` or delete the folder. No registry entries, no system-wide installs (if portable Node was used).
+Run  or delete the folder. No registry entries, no system-wide installs (if portable Node was used).
