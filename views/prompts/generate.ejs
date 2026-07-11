@@ -73,6 +73,7 @@
   #act-warning { display:none; padding:6px 12px; border-radius:var(--radius); font-size:12px;
     background:rgba(250,180,50,.08); border:1px solid rgba(250,180,50,.3);
     color:#f5c842; margin-bottom:8px; }
+  #act-warning.blocked { background:rgba(192,57,43,.12); border-color:rgba(192,57,43,.4); color:#e74c3c; }
 </style>
 
 <div class="page-header">
@@ -84,11 +85,11 @@
   <span class="gen-label">Women</span>
   <input type="number" id="subj-w" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
   <span class="gen-label">Men</span>
-  <input type="number" id="subj-m" value="0" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
+  <input type="number" id="subj-m" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
   <span class="gen-label">Count</span>
   
   <% if (paid) { %>
-  <input type="number" id="count" value="5" min="1" max="9999" class="gen-input gen-num">
+  <input type="number" id="count" value="5" min="1" max="200" class="gen-input gen-num">
   <% } else { %>
   <input type="number" id="count" value="5" min="1" max="5" class="gen-input gen-num">
   <span style="font-size:10px;color:var(--accent);margin-right:8px">&#128274; unlock in Settings</span>
@@ -273,6 +274,7 @@ document.addEventListener('change', function(e) {
 });
 
 function startGenerate() {
+  if (checkActWarning()) return;
   var act   = (document.querySelector('input[name="act"]:checked') || {}).value   || '';
   var scene = (document.querySelector('input[name="scene"]:checked') || {}).value || '';
   var theme = (document.querySelector('input[name="theme"]:checked') || {}).value || '';
@@ -447,17 +449,18 @@ function checkActWarning() {
   var actEl = document.querySelector('input[name="act"]:checked');
   var act = actEl ? actEl.value : '';
   var box = document.getElementById('act-warning');
-  if (!box || !act || act === 'random') { if (box) box.style.display = 'none'; return; }
-  if (SOLO_ACTS[act]) { box.style.display = 'none'; return; }
-  if (GROUP_ACTS[act] && total < 3) {
-    box.textContent = '⚠ "' + act + '" typically needs 3+ people — current subject: ' + (total || 'none');
-    box.style.display = 'block'; return;
+  var genBtn = document.getElementById('gen-btn');
+  function clear() { if (box) { box.style.display = 'none'; box.classList.remove('blocked'); } if (genBtn) genBtn.disabled = false; return false; }
+  function block(msg) {
+    if (box) { box.textContent = '✗ ' + msg; box.style.display = 'block'; box.classList.add('blocked'); }
+    if (genBtn) genBtn.disabled = true;
+    return true;
   }
-  if (!GROUP_ACTS[act] && total < 2) {
-    box.textContent = '⚠ "' + act + '" requires a partner — current subject: ' + (total < 1 ? 'none' : '1 person');
-    box.style.display = 'block'; return;
-  }
-  box.style.display = 'none';
+  if (!box || !act || act === 'random') return clear();
+  if (SOLO_ACTS[act]) return clear();
+  if (GROUP_ACTS[act] && total < 3) return block('"' + act + '" requires 3+ people — add more subjects or choose a different act.');
+  if (!GROUP_ACTS[act] && total < 2) return block('"' + act + '" requires a partner — add a second subject or choose a solo act.');
+  return clear();
 }
 
 document.addEventListener('DOMContentLoaded', function() {

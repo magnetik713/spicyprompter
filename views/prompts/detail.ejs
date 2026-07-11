@@ -49,9 +49,12 @@
     <div class="section">
       <div class="section-label">
         Positive Prompt
-        <button class="copy-btn" data-target="positive-text">Copy</button>
+        <span style="display:flex;gap:6px;align-items:center">
+          <button class="copy-btn" data-target="positive-text">Copy</button>
+          <button class="copy-btn" id="save-prompt-btn" onclick="savePrompt()">Save</button>
+        </span>
       </div>
-      <div class="prompt-box positive" id="positive-text"><%= prompt.positive %></div>
+      <textarea class="prompt-box positive" id="positive-text" rows="8" style="resize:vertical;width:100%;background:transparent;font-family:var(--font-mono);font-size:13px;color:inherit;border:none;outline:none;padding:0;display:block"><%= prompt.positive %></textarea>
     </div>
     <% } %>
     <% if (prompt.negative) { %>
@@ -72,57 +75,111 @@
   </div>
 </div>
 
-<div id="regen-status" style="display:none;font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-top:8px;padding:0 0 8px 0"></div>
+<div id="regen-status" style="display:none;margin-top:10px">
+  <div style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:6px" id="regen-status-text"></div>
+  <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;width:100%">
+    <div id="regen-bar" style="height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width 0.4s ease"></div>
+  </div>
+</div>
+<style>
+#regen-btn.running { color:#e09a3a; border-color:#e09a3a; }
+#regen-btn.done    { color:#6db86d; border-color:#6db86d; }
+#regen-btn.err     { color:#c0392b; border-color:#c0392b; }
+</style>
 <script>
+function setProgress(pct, text) {
+  document.getElementById('regen-bar').style.width = pct + '%';
+  document.getElementById('regen-status-text').textContent = text;
+}
+
+async function savePrompt() {
+  const btn = document.getElementById('save-prompt-btn');
+  const text = document.getElementById('positive-text').value;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/prompts/api/save-positive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: '<%= prompt.id %>', positive: text })
+    });
+    const d = await r.json();
+    btn.textContent = d.ok ? 'Saved!' : 'Error';
+    setTimeout(() => { btn.textContent = 'Save'; btn.disabled = false; }, 1500);
+  } catch(e) {
+    btn.textContent = 'Error';
+    setTimeout(() => { btn.textContent = 'Save'; btn.disabled = false; }, 1500);
+  }
+}
+
 async function regenPrompt() {
   const btn = document.getElementById('regen-btn');
-  const status = document.getElementById('regen-status');
+  const wrap = document.getElementById('regen-status');
   if (!confirm('Regenerate this prompt? Existing image will be replaced.')) return;
   btn.disabled = true;
+  btn.classList.remove('running','done','err');
   btn.textContent = '⏳ Queuing…';
-  status.style.display = 'block';
-  status.textContent = 'Sending to ComfyUI…';
+  wrap.style.display = 'block';
+  setProgress(5, 'Sending to ComfyUI…');
   try {
     const r = await fetch('/prompts/api/comfyui/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt_text: <%= JSON.stringify(prompt.positive || '') %>, prompt_db_id: '<%= prompt.id %>' })
+      body: JSON.stringify({ prompt_text: document.getElementById('positive-text').value, prompt_db_id: '<%= prompt.id %>' })
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || 'Queue failed');
     btn.textContent = '#' + d.number;
-    status.textContent = 'Queued as #' + d.number + ' — polling…';
+    btn.classList.add('running');
+    setProgress(15, 'Queued as #' + d.number + ' — waiting…');
     pollRegen(d.prompt_id, 0);
   } catch(e) {
+    btn.classList.add('err');
     btn.textContent = '✗ Failed';
-    status.textContent = e.message;
-    setTimeout(() => { btn.textContent = '↺ Regenerate'; btn.disabled = false; status.style.display = 'none'; }, 3000);
+    setProgress(0, e.message);
+    setTimeout(() => { btn.textContent = '↺ Regenerate'; btn.classList.remove('err'); btn.disabled = false; wrap.style.display = 'none'; }, 3000);
   }
 }
 
 async function pollRegen(promptId, attempts) {
-  if (attempts > 180) { document.getElementById('regen-status').textContent = 'Timed out'; return; }
+  if (attempts > 180) { setProgress(0, 'Timed out'); return; }
   await new Promise(r => setTimeout(r, 2000));
   try {
     const r = await fetch('/prompts/api/comfyui/status?id=' + encodeURIComponent(promptId));
     const d = await r.json();
-    const status = document.getElementById('regen-status');
-    if (d.status === 'running') { status.textContent = 'Generating…'; pollRegen(promptId, attempts + 1); }
-    else if (d.status === 'pending') { pollRegen(promptId, attempts + 1); }
-    else if (d.status === 'done') {
-      status.textContent = 'Fetching image…';
+    if (d.status === 'running') {
+      var pct = Math.min(85, 20 + attempts * 3);
+      document.getElementById('regen-btn').classList.add('running');
+      document.getElementById('regen-btn').textContent = '▶';
+      setProgress(pct, 'Generating…');
+      pollRegen(promptId, attempts + 1);
+    } else if (d.status === 'pending') {
+      setProgress(15, 'Pending in queue…');
+      pollRegen(promptId, attempts + 1);
+    } else if (d.status === 'done') {
+      setProgress(90, 'Fetching image…');
       const fr = await fetch('/prompts/api/comfyui/fetch-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt_db_id: '<%= prompt.id %>', filename: d.filename })
+        body: JSON.stringify({ prompt_db_id: '<%= prompt.id %>', filename: d.filename, subfolder: d.subfolder || '', type: d.type || 'output' })
       });
       const fd = await fr.json();
       if (fd.image_url) {
         document.querySelector('.detail-hero img') && (document.querySelector('.detail-hero a img').src = fd.image_url);
-        status.textContent = 'Done! Reloading…';
+        const btn = document.getElementById('regen-btn');
+        btn.classList.remove('running'); btn.classList.add('done');
+        btn.textContent = '✓';
+        setProgress(100, 'Done! Reloading…');
         setTimeout(() => location.reload(), 1000);
       }
-    } else { status.textContent = 'Generation failed'; }
+    } else if (d.status === 'error') {
+      const btn = document.getElementById('regen-btn');
+      btn.classList.remove('running'); btn.classList.add('err');
+      btn.textContent = '✗';
+      setProgress(0, 'Generation failed');
+    } else {
+      pollRegen(promptId, attempts + 1);
+    }
   } catch(e) { pollRegen(promptId, attempts + 1); }
 }
 </script>

@@ -417,14 +417,14 @@ function downloadRowImg(e, btn) {
   a.click();
 }
 
-async function fetchComfyImage(btn, filename) {
+async function fetchComfyImage(btn, filename, subfolder, imgType) {
   var promptDbId = btn.dataset.id;
   if (!promptDbId) return;
   try {
     var r = await fetch('/prompts/api/comfyui/fetch-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt_db_id: promptDbId, filename: filename })
+      body: JSON.stringify({ prompt_db_id: promptDbId, filename: filename, subfolder: subfolder || '', type: imgType || 'output' })
     });
     var d = await r.json();
     if (d.image_url) {
@@ -466,7 +466,7 @@ async function pollComfy(btn, promptId, attempts) {
       btn.title = d.filename || 'Done';
       btn.disabled = false;
       if (d.filename && btn.dataset.id) {
-        fetchComfyImage(btn, d.filename);
+        fetchComfyImage(btn, d.filename, d.subfolder, d.type);
       }
     } else if (d.status === 'error') {
       btn.textContent = '✗'; btn.classList.remove('running'); btn.classList.add('err');
@@ -533,7 +533,7 @@ async function resumePending() {
           btn.classList.add('queued');
           btn.title = d.filename || 'Done';
           btn.disabled = false;
-          if (d.filename) fetchComfyImage(btn, d.filename);
+          if (d.filename) fetchComfyImage(btn, d.filename, d.subfolder, d.type);
         } else if (d.status === 'error') {
           btn.textContent = '✗'; btn.classList.add('err'); btn.title = 'Failed';
         } else {
