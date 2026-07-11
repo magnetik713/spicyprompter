@@ -4,3 +4,4 @@ uploads/workflows/
 prompts.db
 test.db
 *.log
+data/prompts.db
