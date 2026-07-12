@@ -197,3 +197,106 @@ body::before {
   z-index: 0;
   line-height: 1;
 }
+
+/* ── Mobile topbar / hamburger (hidden on desktop) ── */
+.mobile-topbar {
+  display: none;
+}
+.hamburger {
+  display: none;
+}
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 99;
+}
+
+/* ── Mobile breakpoint ── */
+@media (max-width: 700px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar hides by default; slides in when .sidebar-open is toggled */
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 200px;
+    height: 100vh;
+    z-index: 100;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.7);
+  }
+  .app-layout.sidebar-open .sidebar {
+    display: flex;
+  }
+  .app-layout.sidebar-open .sidebar-overlay {
+    display: block;
+  }
+
+  .app-main {
+    padding: 12px 14px;
+  }
+
+  /* Mobile top bar */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 0 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .mobile-brand img {
+    height: 28px;
+    width: auto;
+    mix-blend-mode: screen;
+    display: block;
+  }
+  .hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 4px;
+    flex-shrink: 0;
+  }
+  .hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 1px;
+  }
+
+  /* Form layout */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Option items: 2-col instead of 4 */
+  .opt-item {
+    width: 50%;
+  }
+
+  /* Category tabs: scrollable instead of clipped */
+  .cat-tab-row {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cat-tab {
+    flex: 0 0 auto;
+    min-width: 62px;
+  }
+
+  /* Buttons: easier to tap */
+  .btn {
+    padding: 9px 18px;
+    font-size: 13px;
+  }
+}

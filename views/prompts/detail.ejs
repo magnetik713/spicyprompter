@@ -2,17 +2,23 @@
 <div class="breadcrumb"><a href="/prompts">Library</a> &rsaquo; <%= prompt.name %></div>
 <div class="page-header">
   <h1><%= prompt.name %></h1>
-  <div style="display:flex;gap:8px">
+  <div style="display:flex;gap:8px;align-items:center">
+    <% if (!prompt.starred) { %>
     <a href="/prompts/<%= prompt.id %>/edit" class="btn btn-secondary">Edit</a>
+    <% } %>
     <% if (prompt.image_path) { %>
     <a href="/prompts/<%= prompt.image_path %>" download class="btn btn-secondary">Download</a>
     <% } %>
-    <% if (paid && prompt.positive) { %>
+    <% if (paid && prompt.positive && !prompt.starred) { %>
     <button id="regen-btn" class="btn btn-secondary" onclick="regenPrompt()">&#x21BA; Regenerate</button>
     <% } %>
+    <% if (!prompt.starred) { %>
     <form action="/prompts/<%= prompt.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this prompt?')">
       <button type="submit" class="btn btn-danger">Delete</button>
     </form>
+    <% } else { %>
+    <span style="font-size:12px;color:#d4a853">&#9733; Locked</span>
+    <% } %>
   </div>
 </div>
 <div class="detail-layout">
@@ -51,10 +57,10 @@
         Positive Prompt
         <span style="display:flex;gap:6px;align-items:center">
           <button class="copy-btn" data-target="positive-text">Copy</button>
-          <button class="copy-btn" id="save-prompt-btn" onclick="savePrompt()">Save</button>
+          <% if (!prompt.starred) { %><button class="copy-btn" id="save-prompt-btn" onclick="savePrompt()">Save</button><% } %>
         </span>
       </div>
-      <textarea class="prompt-box positive" id="positive-text" rows="8" style="resize:vertical;width:100%;background:transparent;font-family:var(--font-mono);font-size:13px;color:inherit;border:none;outline:none;padding:0;display:block"><%= prompt.positive %></textarea>
+      <textarea class="prompt-box positive" id="positive-text" rows="8" style="resize:vertical;width:100%;background:transparent;font-family:var(--font-mono);font-size:13px;color:inherit;border:none;outline:none;padding:0;display:block"<% if (prompt.starred) { %> readonly<% } %>><%= prompt.positive %></textarea>
     </div>
     <% } %>
     <% if (prompt.negative) { %>

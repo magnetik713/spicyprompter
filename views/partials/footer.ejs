@@ -7,6 +7,10 @@
     if (dp === '/prompts' ? _p === '/prompts' || _p === '/prompts/' : _p.startsWith(dp)) {
       a.classList.add('active');
     }
+    // Close sidebar on nav tap (mobile)
+    a.addEventListener('click', function() {
+      document.querySelector('.app-layout').classList.remove('sidebar-open');
+    });
   });
 </script>
 <script src="/prompts/public/copy.js"></script>

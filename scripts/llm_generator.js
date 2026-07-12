@@ -30,9 +30,11 @@ const THEME_RANDOM = hasFlag('--theme_random');
 const TEMPERATURE          = parseFloat(getArg('--temperature', '1.2'));
 const TOP_P                = getArg("--top_p", null);
 const MIN_P                = getArg("--min_p", null);
-const REPETITION_PENALTY   = parseFloat(getArg('--repetition_penalty', '1.1'));
+const REPETITION_PENALTY   = parseFloat(getArg('--repetition_penalty', '1.0'));
 const MAX_TOKENS           = parseInt(getArg('--max_tokens', '300'));
+const PROMPT_WORDS         = parseInt(getArg('--prompt_words', '150'), 10);
 const RAW_OUTPUT           = hasFlag('--raw_output');
+const ALLOW_TOYS           = hasFlag('--allow_toys');
 
 const RACE_LABELS = {
   asian: 'Asian', ebony: 'Black', latina: 'Latina',
@@ -48,7 +50,7 @@ const BODYTYPE_LABELS = {
   bbw: 'BBW', busty: 'busty', petite: 'petite', petite_teen: 'petite teen',
   milf: 'MILF', mature: 'mature', pregnant: 'pregnant', tattoos: 'tattooed',
   athletic: 'athletic', amazon: 'amazon', curvy: 'curvy', thick: 'thick',
-  chubby: 'chubby', flat_chested: 'flat-chested',
+  chubby: 'chubby', flat_chested: 'flat-chested', piercings: 'pierced',
 };
 
 const DEFAULTS = {
@@ -73,6 +75,9 @@ function loadCategories() {
         type:     r.type || 'scene',
         emphasis: r.emphasis,
         subjects: r.subjects ? r.subjects.split('|') : null,
+        solo_compatible: r.solo_compatible === 1,
+        ff_only:         r.ff_only === 1,
+        multi_required:  r.multi_required === 1,
         settings: r.settings ? r.settings.split('|') : null,
         clothing: r.clothing ? r.clothing.split('|') : null,
         styles:   r.styles   ? r.styles.split('|')   : null,
@@ -94,6 +99,71 @@ function makePicker(arr) {
   };
 }
 
+const SCENE_SETTING_MAP = {
+  pool:         'swimming pool',
+  beach:        'beach',
+  bedroom:      'hotel room',
+  kitchen:      'kitchen',
+  shower:       'bathroom',
+  outdoor:      'outdoor park',
+  gym:          'gym',
+  office:       'office',
+  car:          'car',
+  dressing_room:'dressing room',
+  dungeon:      'dungeon',
+  nightclub:    'nightclub',
+  stripclub:    'strip club stage',
+  forest:       'forest clearing',
+  rooftop:      'rooftop',
+  library:      'library',
+  dorm:         'dorm room',
+  livingroom:   'living room sofa',
+  massage:      'massage room',
+  sauna:        'sauna',
+  spa:          'spa',
+  public:       'public street',
+  barn:         'barn',
+  airplane:     'airplane lavatory',
+  limo:         'limousine backseat',
+  yacht:        'yacht deck',
+  cabin:        'cabin',
+};
+
+const SCENE_LIGHTING_MAP = {
+  // outdoor
+  pool:         ['golden hour sunlight','soft overcast daylight','blue hour'],
+  beach:        ['golden hour sunlight','soft overcast daylight','blue hour'],
+  outdoor:      ['golden hour sunlight','soft overcast daylight','blue hour'],
+  forest:       ['soft overcast daylight','golden hour sunlight'],
+  rooftop:      ['golden hour sunlight','blue hour','neon signs at night'],
+  barn:         ['golden hour sunlight','soft overcast daylight','natural window light'],
+  yacht:        ['golden hour sunlight','soft overcast daylight','blue hour'],
+  // indoor warm
+  cabin:        ['candlelight','natural window light'],
+  bedroom:      ['candlelight','natural window light','studio softbox lighting'],
+  livingroom:   ['candlelight','natural window light','studio softbox lighting'],
+  massage:      ['candlelight','natural window light'],
+  sauna:        ['candlelight','natural window light'],
+  spa:          ['candlelight','natural window light','studio softbox lighting'],
+  // indoor bright
+  kitchen:      ['natural window light','studio softbox lighting'],
+  shower:       ['natural window light','studio softbox lighting'],
+  dorm:         ['natural window light','studio softbox lighting'],
+  office:       ['natural window light','studio softbox lighting'],
+  library:      ['natural window light','studio softbox lighting'],
+  gym:          ['natural window light','studio softbox lighting'],
+  dressing_room:['natural window light','studio softbox lighting'],
+  // dark / neon
+  dungeon:      ['candlelight'],
+  nightclub:    ['neon signs at night'],
+  stripclub:    ['neon signs at night','studio softbox lighting'],
+  // mobile
+  car:          ['golden hour sunlight','blue hour','natural window light'],
+  limo:         ['blue hour','neon signs at night'],
+  airplane:     ['natural window light','soft overcast daylight'],
+  public:       ['golden hour sunlight','soft overcast daylight','blue hour','neon signs at night'],
+};
+
 function resolveCategory(name) {
   const cat = CATEGORIES[name];
   if (!cat) { console.error(`Unknown category: "${name}". Run --list to see options.`); process.exit(1); }
@@ -114,6 +184,20 @@ const MALE_ACT_RE = /\bman\b|\bmen\b|\bhim\b|\bhis\b/i;
 function isSoloFemale(subject) {
   const s = (subject || '').toLowerCase();
   return !MALE_ACT_RE.test(s) && !/two\s+\w+|three\s+\w+|\band\b/.test(s) && s.length > 0;
+}
+
+function hasMalePresent(subject) {
+  return /\bman\b|\bmen\b|\bmale\b/i.test(subject || '');
+}
+
+function personCount(subject) {
+  const s = (subject || '').toLowerCase();
+  if (/\bthree\b|\bthreesome\b/.test(s)) return 3;
+  if (/\btwo\b/.test(s) && /\band\b/.test(s)) return 3;
+  if (/\btwo\b|\bcouple\b/.test(s)) return 2;
+  if (/\band a\b|\band the\b|\band \w/.test(s)) return 2;
+  if (/\bwomen\b|\bmen\b/.test(s)) return 2;
+  return 1;
 }
 
 function getPersonLabels(subject) {
@@ -188,7 +272,7 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
   return skeleton;
 }
 
-const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, role, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. 150-200 words. Include: subject description (incorporating race, body type, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. Realistic photography ONLY — no anime, no illustration, no cartoon. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure or toy use. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy.`;
+const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, role, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. Realistic photography ONLY — no anime, no illustration, no cartoon. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy.`;
 
 async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const skeletonStr = Object.entries(skeleton).map(([k,v]) => `${k}: ${v}`).join('\n');
@@ -224,14 +308,20 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
     if (hasMultipleFemales) {
       castOverride = '\nCAST OVERRIDE (ABSOLUTE): Scene is all-female — no male characters exist. Adapt all acts to be performed between the women only.';
     } else {
-      castOverride = '\nCAST OVERRIDE (ABSOLUTE): Subject is a solo woman — no male characters exist. Adapt any partnered act to solo self-pleasure or toy use.';
+      castOverride = '\nCAST OVERRIDE (ABSOLUTE): Subject is a solo woman — no male characters exist. Adapt any partnered act to solo self-pleasure'+(ALLOW_TOYS?' or toy use':'')+'.';
     }
   }
-  const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, and theme. Expand into a rich, explicit prompt.`;
+  // Cumshot/finish rule: when act involves external finish and subject has a woman
+  const FINISH_ACTS = /facial|cum_play|bukakke|creampie|breeding/i;
+  const hasWomanSubject = /\bwoman\b|\bwomen\b|\bgirl\b/i.test(skeleton.subject || '');
+  const isFinishAct = actCat && (FINISH_ACTS.test(actCat.name || '') || FINISH_ACTS.test(actCat.emphasis || ''));
+  const cumRule = (isFinishAct && hasWomanSubject) ? '\nCUMSHOT RULE (ABSOLUTE): The finish is always received by the woman. Never on the man.' : '';
+  const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}${cumRule}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, and theme. Expand into a rich, explicit prompt.`;
 
+  const baseInstruction = '\n\nSTRICTLY FORBIDDEN: Do not include any explanation, reasoning, commentary, or meta-text. Output ONLY the image prompt text. No sentences about incompatibility, adaptations, or scene logic.';
   const systemContent = RAW_OUTPUT
-    ? SYSTEM + '\n\nSTRICTLY FORBIDDEN: any preamble, quotes, markdown, or explanation. Begin directly with the image description.'
-    : SYSTEM;
+    ? SYSTEM + baseInstruction + ' Begin directly with the image description, no preamble.'
+    : SYSTEM + baseInstruction;
     const reqBody = {
     model: MODEL,
     messages: [{ role: 'system', content: systemContent }, { role: 'user', content: userMsg }],
@@ -249,7 +339,21 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   if (!r.ok) throw new Error(`LiteLLM error ${r.status}: ${await r.text()}`);
   const data = await r.json();
   const raw = data.choices?.[0]?.message?.content ?? '';
-  return raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  return stripMetaCommentary(cleaned);
+}
+
+function stripMetaCommentary(text) {
+  return text
+    .replace(/[^.!?]*\bincompatible\b[^.!?]*[.!?]\s*/gi, '')
+    .replace(/[^.!?]*\bcannot be performed\b[^.!?]*[.!?]\s*/gi, '')
+    .replace(/[^.!?]*\badapting the act\b[^.!?]*[.!?]\s*/gi, '')
+    .replace(/Thus,?\s+[^.!?]*adapting[^.!?]*[.!?]\s*/gi, '')
+    .replace(/However,?\s+the act[^.!?]*[.!?]\s*/gi, '')
+    .replace(/However,?\s+[^.!?]*incompatib[^.!?]*[.!?]\s*/gi, '')
+    .replace(/Note(?:\s+that)?:?[^.!?]*[.!?]\s*/gi, '')
+    .replace(/Please note[^.!?]*[.!?]\s*/gi, '')
+    .trim();
 }
 
 function settingKeywords(setting) {
@@ -281,11 +385,27 @@ async function main() {
 
   const ALL_ROLES  = ROLE_RANDOM  ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'role')  : null;
   const ALL_ACTS_FULL = ACT_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'act') : null;
-  const ALL_ACTS = ALL_ACTS_FULL && SUBJECT_ARG && isSoloFemale(SUBJECT_ARG)
-    ? ALL_ACTS_FULL.filter(k => !MALE_ACT_RE.test(CATEGORIES[k].emphasis || ''))
-    : ALL_ACTS_FULL;
+  const ALL_ACTS = (() => {
+    if (!ALL_ACTS_FULL || !SUBJECT_ARG) return ALL_ACTS_FULL;
+    return ALL_ACTS_FULL.filter(k => {
+      const cat = CATEGORIES[k];
+      if (isSoloFemale(SUBJECT_ARG) && !cat.solo_compatible) return false;
+      if (cat.ff_only && hasMalePresent(SUBJECT_ARG)) return false;
+      if (cat.multi_required && personCount(SUBJECT_ARG) < 3) return false;
+      return true;
+    });
+  })();
   const ALL_SCENES = SCENE_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'scene') : null;
-  const ALL_THEMES = THEME_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'theme') : null;
+  const ALL_THEMES_FULL = THEME_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'theme') : null;
+  const ALL_THEMES = (() => {
+    if (!ALL_THEMES_FULL || !SUBJECT_ARG) return ALL_THEMES_FULL;
+    return ALL_THEMES_FULL.filter(k => {
+      const cat = CATEGORIES[k];
+      if (isSoloFemale(SUBJECT_ARG) && !cat.solo_compatible) return false;
+      if (cat.multi_required && personCount(SUBJECT_ARG) < 3) return false;
+      return true;
+    });
+  })();
   const ALL_STYLES = STYLE_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'style') : null;
   const roleCat = (ROLE_ARG && !ROLE_RANDOM) ? CATEGORIES[ROLE_ARG] : null;
   if (ROLE_ARG && !ROLE_RANDOM && !roleCat) { console.error(`Unknown role: "${ROLE_ARG}"`); process.exit(1); }
@@ -321,29 +441,66 @@ async function main() {
     const effectiveStyle = STYLE_RANDOM ? ALL_STYLES[Math.floor(Math.random() * ALL_STYLES.length)] : STYLE_ARG;
 
     const skeleton  = buildSkeleton(actCat, sceneCat, themeCat, effectiveRole, effectiveStyle);
+    if (sceneName && SCENE_SETTING_MAP[sceneName]) skeleton.setting = SCENE_SETTING_MAP[sceneName];
+    if (sceneName && SCENE_LIGHTING_MAP[sceneName]) {
+      const opts = SCENE_LIGHTING_MAP[sceneName];
+      skeleton.lighting = opts[Math.floor(Math.random() * opts.length)];
+    }
     if (themeName) skeleton.theme = themeCat?.label?.split(' —')[0] || themeName;
 
-    // Re-roll act if randomly chosen subject is solo female but act requires males
+    // Re-roll act if incompatible with subject (solo, ff_only, multi_required)
     let resolvedActName = actName;
     let resolvedActCat  = actCat;
-    if (ALL_ACTS_FULL && resolvedActName && isSoloFemale(skeleton.subject) && MALE_ACT_RE.test(resolvedActCat?.emphasis || '')) {
-      const compatible = ALL_ACTS_FULL.filter(k => !MALE_ACT_RE.test(CATEGORIES[k].emphasis || ''));
-      if (compatible.length) {
-        resolvedActName = compatible[Math.floor(Math.random() * compatible.length)];
-        resolvedActCat  = CATEGORIES[resolvedActName];
+    if (ALL_ACTS_FULL && resolvedActName) {
+      const subj = skeleton.subject;
+      const actIncompat =
+        (isSoloFemale(subj) && !resolvedActCat?.solo_compatible) ||
+        (resolvedActCat?.ff_only && hasMalePresent(subj)) ||
+        (resolvedActCat?.multi_required && personCount(subj) < 3);
+      if (actIncompat) {
+        const compatible = ALL_ACTS_FULL.filter(k => {
+          const cat = CATEGORIES[k];
+          if (isSoloFemale(subj) && !cat.solo_compatible) return false;
+          if (cat.ff_only && hasMalePresent(subj)) return false;
+          if (cat.multi_required && personCount(subj) < 3) return false;
+          return true;
+        });
+        if (compatible.length) {
+          resolvedActName = compatible[Math.floor(Math.random() * compatible.length)];
+          resolvedActCat  = CATEGORIES[resolvedActName];
+        }
       }
     }
+    // Re-roll theme if solo subject but theme is not solo compatible
+    let resolvedThemeName = themeName;
+    if (ALL_THEMES_FULL && resolvedThemeName) {
+      const subj = skeleton.subject;
+      const themeIncompat =
+        (isSoloFemale(subj) && !CATEGORIES[resolvedThemeName]?.solo_compatible) ||
+        (CATEGORIES[resolvedThemeName]?.multi_required && personCount(subj) < 3);
+      if (themeIncompat) {
+        const compatThemes = ALL_THEMES_FULL.filter(k => {
+          const cat = CATEGORIES[k];
+          if (isSoloFemale(subj) && !cat.solo_compatible) return false;
+          if (cat.multi_required && personCount(subj) < 3) return false;
+          return true;
+        });
+        if (compatThemes.length) resolvedThemeName = compatThemes[Math.floor(Math.random() * compatThemes.length)];
+      }
+    }
+    const resolvedThemeCat = resolvedThemeName ? CATEGORIES[resolvedThemeName] : null;
+    if (resolvedThemeName && resolvedThemeName !== themeName) skeleton.theme = resolvedThemeCat?.label?.split(' —')[0] || resolvedThemeName;
 
     const loopRoleCat  = effectiveRole  ? CATEGORIES[effectiveRole]  : null;
     const loopStyleCat = effectiveStyle ? CATEGORIES[effectiveStyle] : null;
-    const catTag = [resolvedActName, sceneName, themeName].filter(Boolean).map(n => `[${n}]`).join('');
+    const catTag = [resolvedActName, sceneName, resolvedThemeName].filter(Boolean).map(n => `[${n}]`).join('');
     const tags = [catTag, RACE_ARG ? `[${RACE_ARG}]` : '', BODYTYPE_ARG ? `[${BODYTYPE_ARG}]` : '', effectiveRole ? `[${effectiveRole}]` : '', effectiveStyle ? `[${effectiveStyle}]` : ''].filter(Boolean).join('');
     process.stdout.write(`  [${i+1}/${COUNT}]${tags ? ' ' + tags : ''} ${skeleton.subject} / ${skeleton.setting}... `);
 
     try {
       let prompt = null;
       for (let attempt = 0; attempt < 3; attempt++) {
-        const candidate = await generatePrompt(skeleton, resolvedActCat, sceneCat, themeCat, loopRoleCat);
+        const candidate = await generatePrompt(skeleton, resolvedActCat, sceneCat, resolvedThemeCat, loopRoleCat);
         if (!candidate || candidate.length < 40) continue;
         prompt = candidate;
         break;
@@ -354,7 +511,7 @@ async function main() {
       const tagParts = [];
       if (resolvedActName) tagParts.push(resolvedActName);
       if (sceneName)    tagParts.push(sceneName);
-      if (themeName)    tagParts.push(themeName);
+      if (resolvedThemeName) tagParts.push(resolvedThemeName);
       if (RACE_ARG)     tagParts.push(RACE_ARG);
       if (BODYTYPE_ARG) tagParts.push(BODYTYPE_ARG);
       if (effectiveRole) tagParts.push(effectiveRole);
@@ -364,7 +521,7 @@ async function main() {
         name,
         positive: prompt,
         tags: tagParts.join(','),
-        category: [actName, sceneName, themeName].filter(Boolean).join('+') || (effectiveRole ?? 'general'),
+        category: [actName, sceneName, resolvedThemeName].filter(Boolean).join('+') || (effectiveRole ?? 'general'),
         notes: `model:${MODEL} skeleton:${JSON.stringify(skeleton)}`,
       });
       inserted++;

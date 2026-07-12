@@ -615,7 +615,7 @@ function watchJob(id) {
   es.addEventListener('progress', e => {
     if (jobDone) return;
     const d = JSON.parse(e.data);
-    setStatus('Step ' + d.value + ' / ' + d.max, 'running');
+    setStatus('Step ' + (d.value + 1) + ' / ' + d.max, 'running');
   });
 
   es.addEventListener('preview', e => {
