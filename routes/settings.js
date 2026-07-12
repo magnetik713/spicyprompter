@@ -17,13 +17,23 @@ router.post('/', (req, res) => {
   if (comfyui_port)      cfg.set('comfyui_port',      comfyui_port.trim());
   if (req.body.comfyui_workflow !== undefined) cfg.set('comfyui_workflow', (req.body.comfyui_workflow || '').trim());
   if (req.body.comfyui_node_id  !== undefined) cfg.set('comfyui_node_id',  (req.body.comfyui_node_id  || '').trim());
+  if (req.body.comfyui_neg_node_id !== undefined) cfg.set('comfyui_neg_node_id', (req.body.comfyui_neg_node_id || '').trim());
   if (req.body.comfyui_model    !== undefined) cfg.set('comfyui_model',    (req.body.comfyui_model    || '').trim());
+  if (req.body.comfyui_prompt_suffix !== undefined) cfg.set('comfyui_prompt_suffix', req.body.comfyui_prompt_suffix || '');
+  if (req.body.comfyui_neg_default   !== undefined) cfg.set('comfyui_neg_default',   req.body.comfyui_neg_default   || '');
+  if (req.body.comfyui_steps    !== undefined) cfg.set('comfyui_steps',    (req.body.comfyui_steps    || '').trim());
+  if (req.body.comfyui_cfg      !== undefined) cfg.set('comfyui_cfg',      (req.body.comfyui_cfg      || '').trim());
+  if (req.body.comfyui_guidance !== undefined) cfg.set('comfyui_guidance', (req.body.comfyui_guidance || '').trim());
+  if (req.body.comfyui_sampler  !== undefined) cfg.set('comfyui_sampler',  (req.body.comfyui_sampler  || '').trim());
   if (req.body.llm_temperature)                cfg.set('llm_temperature',          req.body.llm_temperature.trim());
   if (req.body.llm_top_p !== undefined)        cfg.set('llm_top_p',                req.body.llm_top_p || '');
   if (req.body.llm_min_p !== undefined)        cfg.set('llm_min_p',                req.body.llm_min_p || '');
   if (req.body.llm_repetition_penalty)         cfg.set('llm_repetition_penalty',   req.body.llm_repetition_penalty.trim());
   if (req.body.llm_max_tokens)                 cfg.set('llm_max_tokens',           req.body.llm_max_tokens.trim());
+  if (req.body.llm_prompt_words)               cfg.set('llm_prompt_words',         req.body.llm_prompt_words.trim());
   cfg.set('llm_raw_output', req.body.llm_raw_output === 'on' ? 'true' : 'false');
+  cfg.set('llm_allow_toys', req.body.llm_allow_toys === 'on' ? 'true' : 'false');
+  cfg.set('llm_ollama_params', req.body.llm_ollama_params === 'on' ? 'true' : 'false');
   res.redirect('/prompts/settings?saved=1');
 });
 

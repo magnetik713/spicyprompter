@@ -74,6 +74,10 @@
     background:rgba(250,180,50,.08); border:1px solid rgba(250,180,50,.3);
     color:#f5c842; margin-bottom:8px; }
   #act-warning.blocked { background:rgba(192,57,43,.12); border-color:rgba(192,57,43,.4); color:#e74c3c; }
+  #act-warning.warn    { background:rgba(250,180,50,.08); border-color:rgba(250,180,50,.3); color:#f5c842; }
+  #bt-warning { display:none; margin-top:6px; padding:6px 12px; border-radius:var(--radius); font-size:12px;
+    background:rgba(250,180,50,.08); border:1px solid rgba(250,180,50,.3); color:#f5c842; }
+  #bt-warning.info { background:rgba(96,165,250,.08); border-color:rgba(96,165,250,.3); color:#60a5fa; }
 </style>
 
 <div class="page-header">
@@ -103,6 +107,7 @@
 <% } %>
 
 <div id="act-warning"></div>
+<div id="bt-warning"></div>
 
 
 <div class="cat-tab-row">
@@ -223,6 +228,11 @@
 <% } %>
 
 <div id="output-box"></div>
+
+<div id="comfy-neg-wrap" style="margin-top:10px;display:none">
+  <label style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-family:var(--font);display:block;margin-bottom:4px">Negative Prompt <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px">(ComfyUI only)</span></label>
+  <textarea id="neg-prompt" rows="2" placeholder="e.g. blurry, low quality, watermark" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-size:12px;color:var(--text);font-family:var(--font-mono);resize:vertical"></textarea>
+</div>
 
 <script>
 function selectCat(cat, btn) {
@@ -368,7 +378,7 @@ async function queueRecent(n) {
         var res = await fetch('/prompts/api/comfyui/queue', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt_text: prompts[i].positive, prompt_db_id: prompts[i].id })
+          body: JSON.stringify({ prompt_text: prompts[i].positive, prompt_db_id: prompts[i].id, negative_text: (document.getElementById('neg-prompt').value || '') })
         });
         var d = await res.json();
         if (d.ok) { ok++; promptIds.push({ comfyId: d.prompt_id, dbId: prompts[i].id }); } else fail++;
@@ -437,9 +447,10 @@ function previewSubj() {
   var el = document.getElementById('subj-preview');
   if (el) { var s = buildSubject(); el.textContent = s ? '"' + s + '"' : ''; }
   checkActWarning();
+  checkBodyTypeWarning();
 }
 
-var SOLO_ACTS  = { joi:1, squirting:1 };
+var SOLO_ACTS  = { joi:1, squirting:1, fingering:1, masturbation:1, posing:1, spread:1, stripping:1, edging:1, shower:1 };
 var GROUP_ACTS = { bukakke:1, dp:1 };
 
 function checkActWarning() {
@@ -450,22 +461,56 @@ function checkActWarning() {
   var act = actEl ? actEl.value : '';
   var box = document.getElementById('act-warning');
   var genBtn = document.getElementById('gen-btn');
-  function clear() { if (box) { box.style.display = 'none'; box.classList.remove('blocked'); } if (genBtn) genBtn.disabled = false; return false; }
+  function clear() { if (box) { box.style.display = 'none'; box.classList.remove('blocked','warn'); } if (genBtn) genBtn.disabled = false; return false; }
   function block(msg) {
-    if (box) { box.textContent = '✗ ' + msg; box.style.display = 'block'; box.classList.add('blocked'); }
+    if (box) { box.textContent = '\u2717 ' + msg; box.style.display = 'block'; box.classList.remove('warn'); box.classList.add('blocked'); }
     if (genBtn) genBtn.disabled = true;
     return true;
+  }
+  function warn(msg) {
+    if (box) { box.textContent = '\u26a0 ' + msg; box.style.display = 'block'; box.classList.remove('blocked'); box.classList.add('warn'); }
+    if (genBtn) genBtn.disabled = false;
+    return false;
   }
   if (!box || !act || act === 'random') return clear();
   if (SOLO_ACTS[act]) return clear();
   if (GROUP_ACTS[act] && total < 3) return block('"' + act + '" requires 3+ people — add more subjects or choose a different act.');
-  if (!GROUP_ACTS[act] && total < 2) return block('"' + act + '" requires a partner — add a second subject or choose a solo act.');
+  if (!GROUP_ACTS[act] && total < 2) return warn('"' + act + '" requires a partner — the LLM will adapt for solo, but results may vary.');
   return clear();
+}
+
+var BT_CONFLICT_GROUPS = [
+  ['busty','flat_chested'],
+  ['slim','bbw','chubby','plus_size','thick'],
+  ['amazon','petite','short_stack'],
+  ['petite_teen','mature','milf'],
+];
+
+function checkBodyTypeWarning() {
+  var selected = Array.from(document.querySelectorAll('.bt-check:checked')).map(function(el){return el.value;});
+  var box = document.getElementById('bt-warning');
+  var w = Math.max(0, parseInt((document.getElementById('subj-w')||{}).value)||0);
+  if (!box || selected.length < 2) { if (box) box.style.display='none'; return; }
+  for (var g = 0; g < BT_CONFLICT_GROUPS.length; g++) {
+    var hits = selected.filter(function(s){ return BT_CONFLICT_GROUPS[g].indexOf(s) !== -1; });
+    if (hits.length > 1) {
+      if (w >= hits.length) {
+        box.textContent = '\u2139 ' + hits.join(' + ') + ' will be distributed across the ' + w + ' women.';
+        box.className = 'info'; box.style.display = 'block';
+      } else {
+        box.textContent = '\u26a0 Conflicting body types: ' + hits.join(' + ') + ' — add more women or remove one.';
+        box.className = ''; box.style.display = 'block';
+      }
+      return;
+    }
+  }
+  box.style.display = 'none';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
   previewSubj();
   syncTabVals();
+  document.getElementById('cat-pane-bodytype').addEventListener('change', checkBodyTypeWarning);
 });
 </script>
 <%- include('../partials/footer') %>

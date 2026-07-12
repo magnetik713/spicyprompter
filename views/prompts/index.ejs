@@ -180,7 +180,7 @@
     <input type="checkbox" class="row-check" value="<%= p.id %>" onchange="onCheck(this)">
     <div class="row-actions">
       <button class="row-btn star <%= p.starred ? 'on' : '' %>" data-id="<%= p.id %>" onclick="toggleStar(event,this)" title="Star">★</button>
-      <button class="row-btn comfy" data-id="<%= p.id %>" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="queueComfy(event,this)" title="Send to ComfyUI">⚡</button>
+      <button class="row-btn comfy" data-id="<%= p.id %>" data-starred="<%= p.starred ? '1' : '' %>" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="queueComfy(event,this)" title="<%= p.starred ? 'Starred — locked' : 'Send to ComfyUI' %>">⚡</button>
       <button class="row-btn copy" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="copyPrompt(event,this)" title="Copy">Copy</button>
       <button class="row-btn dl<%= p.image_path ? ' has-img' : '' %>" data-src="<%= p.image_path ? '/prompts/' + p.image_path : '' %>" onclick="downloadRowImg(event,this)" title="Download image">&#x2B07;</button>
     </div>
@@ -351,6 +351,8 @@ async function queueSelected(btn) {
     });
     rows = await r.json();
   } catch(e) { btn.textContent = '✗ failed'; btn.disabled = false; return; }
+  const locked = rows.filter(r => r.starred).length;
+  rows = rows.filter(r => !r.starred);
   let ok = 0, fail = 0;
   const withImage = rows.filter(r => r.positive && r.image_path);
   const withoutImage = rows.filter(r => r.positive && !r.image_path);
@@ -374,12 +376,13 @@ async function queueSelected(btn) {
       } else { fail++; if (comfyBtn) { comfyBtn.textContent = '✗'; comfyBtn.classList.add('err'); } }
     } catch(e) { fail++; }
   }
-  btn.textContent = '✓ ' + ok + ' queued' + (fail ? ' (' + fail + ' failed)' : '') + (skipped ? ' (' + skipped + ' skipped, have image)' : '');
-  setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 4000);
+  btn.textContent = '✓ ' + ok + ' queued' + (fail ? ' (' + fail + ' failed)' : '') + (skipped ? ' (' + skipped + ' skipped, have image)' : '') + (locked ? ' (' + locked + ' locked)' : '');
+  setTimeout(() => { btn.textContent = orig; btn.disabled = false; selectNone(); }, 4000);
 }
 
 async function queueComfy(e, btn) {
   e.preventDefault(); e.stopPropagation();
+  if (btn.dataset.starred === '1') return;
   var text = btn.dataset.text;
   btn.textContent = '⏳';
   btn.disabled = true;

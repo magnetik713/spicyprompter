@@ -117,14 +117,32 @@
         <input type="range" name="llm_repetition_penalty" min="1.0" max="1.5" step="0.05"
           value="<%= config.llm_repetition_penalty || '1.1' %>"
           oninput="document.getElementById('reppen-display').textContent=parseFloat(this.value).toFixed(2)">
-        <div class="hint">Reduces repeated words/phrases. 1.0&nbsp;=&nbsp;none, 1.1&nbsp;=&nbsp;light (recommended), 1.5&nbsp;=&nbsp;heavy.</div>
+        <div class="hint">Reduces repeated words/phrases. 1.0&nbsp;=&nbsp;none, 1.1&nbsp;=&nbsp;light (recommended), 1.5&nbsp;=&nbsp;heavy. <strong>Ollama/local only</strong> &mdash; disable below for cloud APIs.</div>
+      </div>
+
+      <div class="field" style="display:flex;align-items:flex-start;gap:10px">
+        <input type="checkbox" name="llm_ollama_params" id="llm-ollama-params"
+          style="width:auto;cursor:pointer;margin-top:2px;accent-color:var(--accent)"
+          <%= config.llm_ollama_params !== 'false' ? 'checked' : '' %>>
+        <div>
+          <label for="llm-ollama-params" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:0">Send Ollama-only params (repetition_penalty)</label>
+          <div class="hint" style="margin-top:3px">Enabled by default for local Ollama models. Disable when using OpenAI, Anthropic, Google, or other cloud APIs that reject this parameter.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Prompt Length &mdash; <span id="pwords-display"><%= config.llm_prompt_words || '150' %></span> words</label>
+        <input type="range" name="llm_prompt_words" min="60" max="250" step="10"
+          value="<%= config.llm_prompt_words || '150' %>"
+          oninput="document.getElementById('pwords-display').textContent=this.value">
+        <div class="hint">Target word count for generated prompts. Lower = finishes cleanly. Higher = more detail. Max Tokens should be at least 1.5&times; this value.</div>
       </div>
 
       <div class="field">
         <label>Max Tokens</label>
         <input type="number" name="llm_max_tokens" min="50" max="1000" step="10"
           value="<%= config.llm_max_tokens || '300' %>" style="width:120px">
-        <div class="hint">Maximum output length. ComfyUI prompt sweet spot: 150&ndash;350. Default: 300</div>
+        <div class="hint">Maximum output length. Set to at least 1.5&times; your prompt length target. Default: 300</div>
       </div>
 
       <div class="field" style="display:flex;align-items:flex-start;gap:10px;margin-top:16px">
@@ -134,6 +152,16 @@
         <div>
           <label for="llm-raw-output" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:0">Enforce raw output (no preamble)</label>
           <div class="hint" style="margin-top:3px">Appends stricter instructions to the system prompt to prevent &ldquo;Here is your prompt:&rdquo; preambles.</div>
+        </div>
+      </div>
+
+      <div class="field" style="display:flex;align-items:flex-start;gap:10px;margin-top:12px">
+        <input type="checkbox" name="llm_allow_toys" id="llm-allow-toys"
+          style="width:auto;cursor:pointer;margin-top:2px;accent-color:var(--accent)"
+          <%= config.llm_allow_toys === 'true' ? 'checked' : '' %>>
+        <div>
+          <label for="llm-allow-toys" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:0">Allow toys/props in solo scenes</label>
+          <div class="hint" style="margin-top:3px">When enabled, solo acts may include tasteful prop use. Disable to restrict solo scenes to self-pleasure only.</div>
         </div>
       </div>
     </div>
@@ -197,6 +225,48 @@
         <label>Prompt Node ID <span style="font-weight:400;text-transform:none;letter-spacing:0">(advanced)</span></label>
         <input type="text" name="comfyui_node_id" value="<%= config.comfyui_node_id %>" placeholder="auto-detect" style="width:120px">
         <div class="hint">Leave blank — auto-detects the prompt input node in your workflow. Only set this if you have multiple text inputs and auto-detect picks the wrong one.</div>
+      </div>
+
+      <div class="field">
+        <label>Negative Node ID <span style="font-weight:400;text-transform:none;letter-spacing:0">(advanced)</span></label>
+        <input type="text" name="comfyui_neg_node_id" value="<%= config.comfyui_neg_node_id || '' %>" placeholder="auto-detect" style="width:120px">
+        <div class="hint">Leave blank &mdash; auto-detects the second CLIPTextEncode node as the negative input. Only set if auto-detect picks the wrong one. No effect if workflow has no negative node.</div>
+      </div>
+
+      <div class="field">
+        <label>Prompt Suffix</label>
+        <textarea name="comfyui_prompt_suffix" rows="3" style="resize:vertical;width:100%" placeholder="anatomically correct, perfect anatomy, five fingers, well-formed hands"><%= config.comfyui_prompt_suffix || '' %></textarea>
+        <div class="hint">Appended to every positive prompt before sending to ComfyUI. Works on all models including Flux. Use for anatomy anchors: <code>anatomically correct, perfect anatomy, five fingers</code></div>
+      </div>
+
+      <div class="field">
+        <label>Default Negative Prompt</label>
+        <textarea name="comfyui_neg_default" rows="3" style="resize:vertical;width:100%" placeholder="extra limbs, extra fingers, bad anatomy, deformed, mutated"><%= config.comfyui_neg_default || '' %></textarea>
+        <div class="hint">Sent as the negative prompt for every job. No effect on models that ignore negative prompts (Flux, etc.). Suggested: <code>extra limbs, extra fingers, fused fingers, missing fingers, bad anatomy, deformed, mutated, disfigured</code></div>
+      </div>
+
+      <div class="field">
+        <label>Steps Override</label>
+        <input type="number" name="comfyui_steps" value="<%= config.comfyui_steps || '' %>" placeholder="workflow default" min="0" max="150" style="width:120px">
+        <div class="hint">Overrides step count in your workflow's KSampler. Leave blank to use workflow default.</div>
+      </div>
+
+      <div class="field">
+        <label>CFG Scale Override</label>
+        <input type="number" name="comfyui_cfg" value="<%= config.comfyui_cfg || '' %>" placeholder="workflow default" min="0" max="30" step="0.5" style="width:120px">
+        <div class="hint">Overrides CFG scale in KSampler. Leave blank to use workflow default.</div>
+      </div>
+
+      <div class="field">
+        <label>Guidance Override <span style="font-weight:400;text-transform:none;letter-spacing:0">(Flux)</span></label>
+        <input type="number" name="comfyui_guidance" value="<%= config.comfyui_guidance || '' %>" placeholder="workflow default" min="0" max="20" step="0.5" style="width:120px">
+        <div class="hint">Overrides FluxGuidance node value. Model-specific &mdash; Flux.1-dev: 3&ndash;4 &bull; Flux.2 Klein: 1.2&ndash;1.5. Leave blank for workflow default.</div>
+      </div>
+
+      <div class="field">
+        <label>Sampler Override</label>
+        <input type="text" name="comfyui_sampler" value="<%= config.comfyui_sampler || '' %>" placeholder="workflow default" style="width:200px" autocomplete="off">
+        <div class="hint">Overrides the sampler in KSampler. Leave blank for workflow default.<br>Common: <code>euler</code> &bull; <code>euler_ancestral</code> &bull; <code>dpmpp_2m</code> &bull; <code>dpmpp_2m_sde</code> &bull; <code>dpmpp_3m_sde</code> &bull; <code>res_2s</code> (anatomy fix, Flux.2 Klein) &bull; <code>res_multistep</code></div>
       </div>
     </div>
 

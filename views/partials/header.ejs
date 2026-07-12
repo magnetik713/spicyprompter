@@ -8,6 +8,7 @@
 </head>
 <body>
 <div class="app-layout">
+  <div class="sidebar-overlay" onclick="document.querySelector('.app-layout').classList.remove('sidebar-open')"></div>
   <aside class="sidebar">
     <a href="/prompts" class="sidebar-brand">
       <img src="/prompts/public/logo.png" alt="SpicyPrompter">
@@ -20,3 +21,11 @@
     </nav>
   </aside>
   <main class="app-main">
+    <div class="mobile-topbar">
+      <button class="hamburger" onclick="document.querySelector('.app-layout').classList.toggle('sidebar-open')" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="/prompts" class="mobile-brand">
+        <img src="/prompts/public/logo.png" alt="SpicyPrompter">
+      </a>
+    </div>

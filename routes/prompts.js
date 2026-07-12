@@ -236,8 +236,13 @@ router.get('/generate/run', async (req, res) => {
   if (llmTopP && parseFloat(llmTopP) > 0)      args.push('--top_p',              llmTopP);
   const llmMinP   = cfg.get('llm_min_p');
   if (llmMinP && parseFloat(llmMinP) > 0)      args.push('--min_p',              llmMinP);
-  if (llmRepPen && parseFloat(llmRepPen) > 1)  args.push('--repetition_penalty', llmRepPen);
+  const llmOllamaParams = cfg.get('llm_ollama_params');
+  if (llmOllamaParams && llmOllamaParams !== 'false' && llmRepPen && parseFloat(llmRepPen) > 1)  args.push('--repetition_penalty', llmRepPen);
   if (llmMaxTok)                               args.push('--max_tokens',         llmMaxTok);
+  const llmPromptWords = cfg.get('llm_prompt_words');
+  if (llmPromptWords)                          args.push('--prompt_words',       llmPromptWords);
+  const llmAllowToys = cfg.get('llm_allow_toys');
+  if (llmAllowToys === 'true')                 args.push('--allow_toys');
   if (llmRaw === 'true')                       args.push('--raw_output');
 
   const send = (data) => res.write('data: ' + JSON.stringify(data) + '\n\n');
@@ -299,8 +304,12 @@ router.get('/api/comfyui/workflows', (req, res) => {
 });
 
 router.post('/api/comfyui/queue', async (req, res) => {
-  const { prompt_text } = req.body;
+  const { prompt_text, negative_text } = req.body;
   if (!prompt_text) return res.status(400).json({ error: 'prompt_text required' });
+  if (req.body.prompt_db_id) {
+    const starCheck = db.prepare('SELECT starred FROM prompts WHERE id=?').get(req.body.prompt_db_id);
+    if (starCheck?.starred) return res.status(403).json({ ok: false, error: 'Prompt is starred and locked — unstar to regenerate.' });
+  }
 
   const comfyHost    = cfg.get('comfyui_host')     || 'localhost';
   const comfyPort    = cfg.get('comfyui_port')     || '8188';
@@ -324,7 +333,26 @@ router.post('/api/comfyui/queue', async (req, res) => {
     return res.status(400).json({ error: `Prompt node not found. Set Node ID in Settings.` });
   }
 
-  workflow[nodeId].inputs.text = prompt_text;
+  const promptSuffix = (cfg.get('comfyui_prompt_suffix') || '').trim();
+  workflow[nodeId].inputs.text = promptSuffix ? prompt_text + ', ' + promptSuffix : prompt_text;
+
+  // Inject negative prompt — use per-request value or fall back to default
+  const negText = (negative_text && negative_text.trim()) ? negative_text.trim() : (cfg.get('comfyui_neg_default') || '').trim();
+  if (negText) {
+    let negNodeId = cfg.get('comfyui_neg_node_id') || '';
+    if (!negNodeId) {
+      let foundPos = false;
+      for (const [id, node] of Object.entries(workflow)) {
+        if (node.class_type === 'CLIPTextEncode') {
+          if (!foundPos) { foundPos = true; continue; }
+          negNodeId = id; break;
+        }
+      }
+    }
+    if (negNodeId && workflow[negNodeId]) {
+      workflow[negNodeId].inputs.text = negText;
+    }
+  }
 
   // Inject model name if configured
   const modelName = cfg.get('comfyui_model') || '';
@@ -335,11 +363,24 @@ router.post('/api/comfyui/queue', async (req, res) => {
     }
   }
 
-  // Randomize seed on every sampler node so each job produces a unique image
+  // Randomize seed; optionally override steps/cfg on every sampler node
+  const stepsOverride = parseInt(cfg.get('comfyui_steps') || '');
+  const cfgOverride   = parseFloat(cfg.get('comfyui_cfg') || '');
   for (const node of Object.values(workflow)) {
     if (node.class_type === 'KSampler' || node.class_type === 'KSamplerAdvanced') {
       if (node.inputs.seed != null) node.inputs.seed = Math.floor(Math.random() * 2 ** 32);
       if (node.inputs.noise_seed != null) node.inputs.noise_seed = Math.floor(Math.random() * 2 ** 32);
+      if (stepsOverride && node.inputs.steps != null) node.inputs.steps = stepsOverride;
+      if (cfgOverride   && node.inputs.cfg   != null) node.inputs.cfg   = cfgOverride;
+      const samplerOverride = (cfg.get('comfyui_sampler') || '').trim();
+      if (samplerOverride && node.inputs.sampler_name != null) node.inputs.sampler_name = samplerOverride;
+    }
+  }
+  // Override FluxGuidance node if configured
+  const guidanceOverride = parseFloat(cfg.get('comfyui_guidance') || '');
+  if (guidanceOverride) {
+    for (const node of Object.values(workflow)) {
+      if (node.class_type === 'FluxGuidance') { node.inputs.guidance = guidanceOverride; break; }
     }
   }
 
@@ -441,7 +482,7 @@ router.post('/api/prompts/texts', (req, res) => {
   const ids = [].concat(req.body.ids || []).map(Number).filter(Boolean);
   if (!ids.length) return res.json([]);
   const placeholders = ids.map(() => '?').join(',');
-  const rows = db.prepare('SELECT id, positive, image_path FROM prompts WHERE id IN (' + placeholders + ')').all(...ids);
+  const rows = db.prepare('SELECT id, positive, image_path, starred FROM prompts WHERE id IN (' + placeholders + ')').all(...ids);
   res.json(rows);
 });
 
@@ -484,6 +525,8 @@ router.get('/api/comfyui/pending', (req, res) => {
 router.post('/api/save-positive', (req, res) => {
   const { id, positive } = req.body;
   if (!id) return res.status(400).json({ ok: false, error: 'Missing id' });
+  const starRow = db.prepare('SELECT starred FROM prompts WHERE id=?').get(id);
+  if (starRow?.starred) return res.status(403).json({ ok: false, error: 'Prompt is starred and locked.' });
   db.prepare('UPDATE prompts SET positive=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(positive || null, id);
   res.json({ ok: true });
 });
@@ -567,6 +610,7 @@ router.get('/:id', (req, res) => {
 router.put('/:id', upload.single('image'), (req, res) => {
   const existing = db.prepare('SELECT * FROM prompts WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).render('404', { title: 'Not Found' });
+  if (existing.starred) return res.redirect(`/prompts/${req.params.id}?locked=1`);
   const { name, workflow_id, base_model, positive, negative, loras, trigger_words, tags, notes, seed, width, height, guidance, steps, cfg_scale, sampler } = req.body;
   const image_path = req.file ? `uploads/images/${req.file.filename}` : existing.image_path;
   db.prepare(`
@@ -583,6 +627,8 @@ router.put('/:id', upload.single('image'), (req, res) => {
 });
 
 router.post('/:id/delete', (req, res) => {
+  const row = db.prepare('SELECT starred FROM prompts WHERE id=?').get(req.params.id);
+  if (row?.starred) return res.redirect(`/prompts/${req.params.id}?locked=1`);
   db.prepare('DELETE FROM prompts WHERE id = ?').run(req.params.id);
   res.redirect('/prompts');
 });
@@ -592,7 +638,7 @@ router.post("/batch-delete", (req, res) => {
   const ids = [].concat(req.body.ids || []).map(Number).filter(Boolean);
   if (ids.length) {
     const placeholders = ids.map(() => "?").join(",");
-    db.prepare("DELETE FROM prompts WHERE id IN (" + placeholders + ")").run(...ids);
+    db.prepare("DELETE FROM prompts WHERE id IN (" + placeholders + ") AND starred = 0").run(...ids);
   }
   res.redirect("/prompts?" + new URLSearchParams(req.body._back || "").toString());
 });
