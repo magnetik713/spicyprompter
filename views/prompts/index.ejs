@@ -53,6 +53,41 @@
   .sort-btn { padding:4px 12px; border-radius:var(--radius); font-size:12px; background:var(--bg2); color:var(--dim); border:1px solid var(--border); cursor:pointer; text-decoration:none; }
   .sort-btn:hover { color:var(--text); text-decoration:none; }
   .sort-btn.active { color:var(--accent); border-color:var(--accent); }
+
+  .png-drop-zone {
+    border: 2px dashed var(--border2); border-radius: var(--radius);
+    padding: 18px 24px; margin-bottom: 12px; text-align: center;
+    color: var(--dim); font-size: 13px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+    background: var(--bg2);
+  }
+  .png-drop-zone.dragover { border-color: var(--accent); background: var(--bg3); color: var(--text); }
+  .png-drop-zone input[type=file] { display: none; }
+
+  .import-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .import-modal-overlay.open { display: flex; }
+  .import-modal {
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius);
+    padding: 28px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;
+  }
+  .import-modal h3 { margin: 0 0 16px; font-size: 15px; }
+  .import-modal label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .import-modal textarea {
+    width: 100%; box-sizing: border-box; background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); border-radius: var(--radius); padding: 8px; font-size: 12px;
+    font-family: var(--font-mono, monospace); resize: vertical; margin-bottom: 12px;
+  }
+  .import-modal .row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .import-modal .row label { margin: 0; font-size: 13px; color: var(--text); }
+  .import-modal input[type=text] {
+    flex: 1; background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); border-radius: var(--radius); padding: 6px 8px; font-size: 12px;
+  }
+  .import-modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  .import-no-data { color: var(--muted); font-size: 13px; }
 </style>
 
 <div class="page-header">
@@ -91,6 +126,39 @@
   <button type="submit" class="btn btn-secondary">Search</button>
   <% if (q) { %><a href="/prompts" class="btn btn-secondary">Clear</a><% } %>
 </form>
+
+
+<div id="png-drop-zone" class="png-drop-zone" onclick="document.getElementById('png-file-input').click()">
+  <input type="file" id="png-file-input" accept="image/png">
+  Drop a PNG here to import its prompt &amp; workflow &mdash; <u>or click to browse</u>
+</div>
+
+<div id="import-modal-overlay" class="import-modal-overlay">
+  <div class="import-modal">
+    <h3>Import from image</h3>
+    <div id="import-no-data" class="import-no-data" style="display:none">No prompt or workflow metadata found in this image.</div>
+    <div id="import-format-note" style="display:none;font-size:12px;padding:8px 10px;border-radius:4px;margin-bottom:10px;background:rgba(224,154,58,0.12);color:#e09a3a;border:1px solid rgba(224,154,58,0.25)"></div>
+    <div id="import-prompt-section">
+      <label>Positive prompt</label>
+      <textarea id="import-positive" rows="5"></textarea>
+      <label>Negative prompt</label>
+      <textarea id="import-negative" rows="3"></textarea>
+    </div>
+    <div id="import-workflow-section" style="display:none">
+      <div id="import-wf-hint" style="display:none;font-size:11px;color:var(--muted);margin-bottom:8px;font-family:var(--font-mono,monospace)"></div>
+      <div class="row">
+        <label style="white-space:nowrap">Workflow name</label>
+        <input type="text" id="import-wf-name" value="Imported from image">
+      </div>
+    </div>
+    <div id="import-wf-saved-note" style="display:none;font-size:12px;color:#6db86d;margin-bottom:8px"></div>
+    <div class="actions" style="flex-wrap:wrap;gap:8px">
+      <button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+      <button id="import-adapt-btn" class="btn btn-secondary" style="display:none" onclick="adaptPrompt()">Adapt for my workflow</button>
+      <button id="import-save-btn" class="btn btn-primary" onclick="saveImport()">Import prompt</button>
+    </div>
+  </div>
+</div>
 
 <%
   function catUrl(c) {
@@ -181,16 +249,18 @@
     <div class="row-actions">
       <button class="row-btn star <%= p.starred ? 'on' : '' %>" data-id="<%= p.id %>" onclick="toggleStar(event,this)" title="Star">★</button>
       <button class="row-btn comfy" data-id="<%= p.id %>" data-starred="<%= p.starred ? '1' : '' %>" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="queueComfy(event,this)" title="<%= p.starred ? 'Starred — locked' : 'Send to ComfyUI' %>">⚡</button>
-      <button class="row-btn copy" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="copyPrompt(event,this)" title="Copy">Copy</button>
+      <button class="row-btn copy" data-text="<%- (p.positive||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/\n/g,' ') %>" onclick="copyPrompt(event,this)" title="Copy prompt text to clipboard">Copy</button>
       <button class="row-btn dl<%= p.image_path ? ' has-img' : '' %>" data-src="<%= p.image_path ? '/prompts/' + p.image_path : '' %>" onclick="downloadRowImg(event,this)" title="Download image">&#x2B07;</button>
+      <% if (p.workflow_json_path) { %><button class="row-btn has-img" data-src="/prompts/<%= p.workflow_json_path %>" onclick="downloadRowWf(event,this)" title="Download workflow JSON">&#x29B9;</button><% } %>
     </div>
     <a href="/prompts/<%= p.id %>" class="prompt-row" style="flex:1" id="row-<%= p.id %>">
-      <div class="row-thumb">
+      <div class="row-thumb" style="position:relative">
         <% if (p.image_path) { %>
           <img src="/prompts/<%= p.image_path %>" alt="">
         <% } else { %>
           ✦
         <% } %>
+        <% if (p.tags && p.tags.includes('imported') && !p.workflow_json_path) { %><span style="position:absolute;top:2px;right:2px;font-size:9px;background:rgba(224,154,58,0.85);color:#000;border-radius:2px;padding:1px 3px;line-height:1.4" title="Imported without ComfyUI workflow — regenerating uses Settings workflow">EXT</span><% } %>
       </div>
       <div class="row-body">
         <div class="row-name"><%= p.positive || p.name %></div>
@@ -372,7 +442,7 @@ async function queueSelected(btn) {
       const d = await r.json();
       if (d.ok) {
         ok++;
-        if (comfyBtn) { comfyBtn.textContent = '#' + d.number; comfyBtn.title = 'Queued as #' + d.number; pollComfy(comfyBtn, d.prompt_id, 0); }
+        if (comfyBtn) { comfyBtn.textContent = '#' + (d.number + 1); comfyBtn.title = 'Queued as #' + (d.number + 1); pollComfy(comfyBtn, d.prompt_id, 0); }
       } else { fail++; if (comfyBtn) { comfyBtn.textContent = '✗'; comfyBtn.classList.add('err'); } }
     } catch(e) { fail++; }
   }
@@ -401,8 +471,8 @@ async function queueComfy(e, btn) {
       setTimeout(function() { btn.textContent = '⚡'; btn.classList.remove('err'); btn.disabled = false; }, 3000);
       return;
     }
-    btn.textContent = '#' + d.number;
-    btn.title = 'Queued as #' + d.number;
+    btn.textContent = '#' + (d.number + 1);
+    btn.title = 'Queued as #' + (d.number + 1);
     pollComfy(btn, d.prompt_id, 0);
   } catch(ex) {
     btn.textContent = '✗'; btn.classList.add('err');
@@ -411,6 +481,15 @@ async function queueComfy(e, btn) {
 }
 
 function downloadRowImg(e, btn) {
+  e.preventDefault(); e.stopPropagation();
+  var src = btn.dataset.src;
+  if (!src) return;
+  var a = document.createElement("a");
+  a.href = src;
+  a.download = src.split("/").pop();
+  a.click();
+}
+function downloadRowWf(e, btn) {
   e.preventDefault(); e.stopPropagation();
   var src = btn.dataset.src;
   if (!src) return;
@@ -519,6 +598,196 @@ function fallbackCopy(text, cb) {
   document.body.removeChild(ta);
 }
 
+
+// ── PNG Import ──────────────────────────────────────────────────────────────
+let _importWorkflowJson = null;
+let _importWfMeta = {};
+let _importSourceFilename = '';
+let _importImagePath = null;
+let _importSourceFormat = 'unknown';
+let _adaptStatus = null;
+
+const dropZone = document.getElementById('png-drop-zone');
+const fileInput = document.getElementById('png-file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'image/png') handlePngImport(file);
+  else alert('Drop a PNG file.');
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handlePngImport(fileInput.files[0]);
+  fileInput.value = '';
+});
+
+async function handlePngImport(file) {
+  const saveBtn = document.getElementById('import-save-btn');
+  saveBtn.textContent = 'Parsing…';
+  saveBtn.disabled = true;
+  document.getElementById('import-modal-overlay').classList.add('open');
+  document.getElementById('import-no-data').style.display = 'none';
+  document.getElementById('import-prompt-section').style.display = 'block';
+  document.getElementById('import-workflow-section').style.display = 'none';
+  document.getElementById('import-wf-saved-note').style.display = 'none';
+  _importWorkflowJson = null;
+
+  const fd = new FormData();
+  fd.append('image', file);
+  try {
+    const r = await fetch('/prompts/api/import-png', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.error) { alert(d.error); closeImportModal(); return; }
+
+    if (!d.has_prompt && !d.has_workflow) {
+      document.getElementById('import-prompt-section').style.display = 'none';
+      document.getElementById('import-no-data').style.display = 'block';
+      saveBtn.style.display = 'none';
+    } else {
+      document.getElementById('import-positive').value = d.positive || '';
+      document.getElementById('import-negative').value = d.negative || '';
+      _importImagePath = d.image_path || null;
+      _importSourceFormat = d.source_format || 'unknown';
+      const fmtNote = document.getElementById('import-format-note');
+      // Show adapt button for non-ComfyUI imports
+      if (d.source_format !== 'comfyui' && d.has_prompt) {
+        fetch('/prompts/api/adapt-status').then(r=>r.json()).then(s=>{
+          _adaptStatus = s;
+          const btn = document.getElementById('import-adapt-btn');
+          if (btn) {
+            btn.style.display = '';
+            const wt = s.workflow_type !== 'unknown' ? s.workflow_type.toUpperCase() : 'my workflow';
+            btn.textContent = 'Adapt for ' + wt;
+          }
+        }).catch(()=>{});
+      } else {
+        const btn = document.getElementById('import-adapt-btn'); if (btn) btn.style.display = 'none';
+      }
+      if (d.source_format === 'a1111') {
+        fmtNote.textContent = '⚠ A1111/SD format — no ComfyUI workflow embedded. Regenerating will use your Settings workflow.';
+        fmtNote.style.display = 'block';
+      } else if (d.source_format === 'unknown') {
+        fmtNote.textContent = '⚠ No workflow metadata found. Regenerating will use your Settings workflow.';
+        fmtNote.style.display = 'block';
+      } else {
+        fmtNote.style.display = 'none';
+      }
+      _importWfMeta = d.wf_meta || {};
+      if (d.has_workflow) {
+        _importWorkflowJson = d.workflow_json;
+        _importSourceFilename = d.source_filename || '';
+        document.getElementById('import-workflow-section').style.display = 'block';
+        document.getElementById('import-wf-name').value = d.suggested_name || '';
+        // Show model/settings hint
+        const hints = [];
+        if (d.wf_meta && d.wf_meta.model) hints.push(d.wf_meta.model);
+        if (d.wf_meta && d.wf_meta.sampler) hints.push(d.wf_meta.sampler);
+        if (d.wf_meta && d.wf_meta.steps) hints.push(d.wf_meta.steps + ' steps');
+        if (d.wf_meta && d.wf_meta.cfg != null && d.wf_meta.cfg !== 1) hints.push('CFG ' + d.wf_meta.cfg);
+        if (d.wf_meta && d.wf_meta.guidance != null) hints.push('guidance ' + d.wf_meta.guidance);
+        const hint = document.getElementById('import-wf-hint');
+        if (hint) { hint.textContent = hints.length ? hints.join(' · ') : ''; hint.style.display = hints.length ? 'block' : 'none'; }
+      }
+      saveBtn.style.display = '';
+    }
+    saveBtn.textContent = 'Import prompt';
+    saveBtn.disabled = false;
+  } catch(e) {
+    alert('Parse failed: ' + e.message);
+    closeImportModal();
+  }
+}
+
+async function adaptPrompt() {
+  const btn = document.getElementById('import-adapt-btn');
+  const positive = document.getElementById('import-positive').value.trim();
+  const negative = document.getElementById('import-negative').value.trim();
+  if (!_adaptStatus) return;
+
+  const useLlm = _adaptStatus.llm_type !== 'none';
+  if (_adaptStatus.llm_type === 'local') {
+    if (!confirm('Your adaptation LLM is local. Running it alongside ComfyUI may cause out-of-memory errors. Unload your ComfyUI model first if you run into issues.\n\nContinue?')) return;
+  } else if (_adaptStatus.llm_type === 'none') {
+    if (!confirm('No LLM configured — will apply rule-based cleanup only (strips A1111 syntax, moves negatives). Continue?')) return;
+  }
+
+  btn.textContent = 'Adapting…';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/prompts/api/adapt-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positive, negative, use_llm: useLlm })
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error('Adapt failed');
+    document.getElementById('import-positive').value = d.positive || positive;
+    document.getElementById('import-negative').value = d.negative || negative;
+    const fmtNote = document.getElementById('import-format-note');
+    if (d.method === 'llm') {
+      if (fmtNote) { fmtNote.textContent = '✓ AI-adapted for ' + (d.workflow_type || 'your workflow'); fmtNote.style.background = 'rgba(109,184,109,0.12)'; fmtNote.style.color = '#6db86d'; fmtNote.style.borderColor = 'rgba(109,184,109,0.25)'; fmtNote.style.display = 'block'; }
+    } else {
+      if (fmtNote) { fmtNote.textContent = '⚠ LLM unavailable — rule-based cleanup only. Set up Prompt Adaptation in Settings for full rewrite.'; fmtNote.style.background = 'rgba(224,154,58,0.12)'; fmtNote.style.color = '#e09a3a'; fmtNote.style.borderColor = 'rgba(224,154,58,0.25)'; fmtNote.style.display = 'block'; }
+    }
+    btn.style.display = 'none';
+  } catch(e) {
+    btn.textContent = 'Adapt for my workflow';
+    btn.disabled = false;
+    alert('Adapt failed: ' + e.message);
+  }
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal-overlay').classList.remove('open');
+  _importWorkflowJson = null;
+  _importWfMeta = {};
+  _importSourceFilename = '';
+  _importImagePath = null;
+  _importSourceFormat = 'unknown';
+  const fn = document.getElementById('import-format-note'); if (fn) fn.style.display = 'none';
+  const ab = document.getElementById('import-adapt-btn'); if (ab) { ab.style.display = 'none'; ab.disabled = false; ab.textContent = 'Adapt for my workflow'; }
+  _adaptStatus = null;
+}
+
+async function saveImport() {
+  const positive = document.getElementById('import-positive').value.trim();
+  const negative = document.getElementById('import-negative').value.trim();
+  const wfName = document.getElementById('import-wf-name').value.trim();
+  const saveBtn = document.getElementById('import-save-btn');
+
+  saveBtn.textContent = 'Saving…';
+  saveBtn.disabled = true;
+  try {
+    const r = await fetch('/prompts/api/import-png/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        positive, negative,
+        save_workflow: !!_importWorkflowJson,
+        workflow_json: _importWorkflowJson,
+        workflow_name: wfName,
+        source_filename: _importSourceFilename,
+        wf_meta: _importWfMeta,
+        image_path: _importImagePath
+      })
+    });
+    const d = await r.json();
+    if (!d.ok) { alert(d.error || 'Save failed'); saveBtn.textContent = 'Import prompt'; saveBtn.disabled = false; return; }
+    window.location.href = '/prompts/' + d.id;
+  } catch(e) {
+    alert('Save failed: ' + e.message);
+    saveBtn.textContent = 'Import prompt';
+    saveBtn.disabled = false;
+  }
+}
+
+document.getElementById('import-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeImportModal();
+});
+
 // Resume polling for any prompts that were queued but page was navigated away
 async function resumePending() {
   try {
@@ -562,5 +831,8 @@ document.querySelectorAll('.row-btn.comfy').forEach(function(btn) {
   }
 });
 resumePending();
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) window.location.reload();
+});
 </script>
 <%- include('../partials/footer') %>

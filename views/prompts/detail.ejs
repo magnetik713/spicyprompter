@@ -10,7 +10,10 @@
     <a href="/prompts/<%= prompt.image_path %>" download class="btn btn-secondary">Download</a>
     <% } %>
     <% if (paid && prompt.positive && !prompt.starred) { %>
-    <button id="regen-btn" class="btn btn-secondary" onclick="regenPrompt()">&#x21BA; Regenerate</button>
+    <button id="regen-btn" class="btn btn-secondary" onclick="regenPrompt(false)" title="Regenerate using your currently configured workflow in Settings">&#x21BA; Regenerate</button>
+    <% if (prompt.workflow_json_path) { %><button id="regen-orig-btn" class="btn btn-secondary" onclick="regenPrompt(true)" title="Regenerate using this prompt's original embedded workflow" style="font-size:12px">&#x21BA; Original</button><% } else if (prompt.tags && prompt.tags.includes('imported')) { %><span style="font-size:11px;color:#e09a3a;align-self:center" title="Imported without a ComfyUI workflow — regenerating uses your Settings workflow">⚠ external workflow</span><% } %>
+<% if (prompt.tags && prompt.tags.includes('imported') && !prompt.workflow_json_path) { %><button type="button" class="btn btn-secondary" onclick="adaptDetail()" id="adapt-detail-btn" style="font-size:12px">✦ Adapt</button><% } %>
+
     <% } %>
     <% if (!prompt.starred) { %>
     <form action="/prompts/<%= prompt.id %>/delete" method="POST" style="display:inline" onsubmit="return confirm('Delete this prompt?')">
@@ -21,6 +24,56 @@
     <% } %>
   </div>
 </div>
+
+<% if (!prompt.workflow_json_path && wfMeta && (wfMeta.steps || wfMeta.cfg || wfMeta.sampler || wfMeta.seed)) { %><div style="font-size:11px;color:var(--muted);margin:6px 0 4px;padding:5px 10px;background:var(--bg2,rgba(255,255,255,0.03));border-radius:4px;border:1px solid var(--border,rgba(255,255,255,0.06))">📷 Imported:<%if(wfMeta.steps){%> Steps <%= wfMeta.steps %><%}%><%if(wfMeta.cfg!=null){%> · CFG <%= wfMeta.cfg %><%}%><%if(wfMeta.sampler){%> · Sampler <%= wfMeta.sampler %><%}%><%if(wfMeta.seed){%> · Seed <%= wfMeta.seed %><%}%><%if(wfMeta.width&&wfMeta.height){%> · <%= wfMeta.width %>×<%= wfMeta.height %><%}%></div><% } %>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:11px;margin:8px 0 12px;padding:8px 12px;background:var(--bg2,rgba(255,255,255,0.04));border-radius:4px;border:1px solid var(--border,rgba(255,255,255,0.08))">
+  <% if (wfMeta && wfMeta.width && wfMeta.height) { %><span style="color:var(--muted)">📐 <%= wfMeta.width %>×<%= wfMeta.height %></span><% } %>
+  <label style="color:var(--muted);display:flex;align-items:center;gap:4px">Steps
+    <input type="number" id="regen-steps" value="<%= prompt.workflow_json_path && wfMeta && wfMeta.steps ? wfMeta.steps : '' %>" placeholder="default" min="1" max="150" step="1" style="width:64px;font-size:11px;padding:2px 4px">
+  </label>
+  <label style="color:var(--muted);display:flex;align-items:center;gap:4px">CFG
+    <input type="number" id="regen-cfg" value="<%= prompt.workflow_json_path && wfMeta && wfMeta.cfg != null ? wfMeta.cfg : '' %>" placeholder="default" min="0" max="30" step="0.1" style="width:64px;font-size:11px;padding:2px 4px">
+  </label>
+  <label style="color:var(--muted);display:flex;align-items:center;gap:4px">Sampler
+    <select id="regen-sampler" style="width:140px;font-size:11px;padding:2px 4px;background:var(--bg2,#1a1a1a);color:inherit;border:1px solid var(--border,rgba(255,255,255,0.15));border-radius:3px">
+      <option value="">default</option>
+      <option>euler</option><option>euler_ancestral</option><option>euler_cfg_pp</option><option>euler_ancestral_cfg_pp</option>
+      <option>heun</option><option>heunpp2</option><option>dpm_2</option><option>dpm_2_ancestral</option>
+      <option>lms</option><option>dpm_fast</option><option>dpm_adaptive</option>
+      <option>dpmpp_2s_ancestral</option><option>dpmpp_sde</option><option>dpmpp_sde_gpu</option>
+      <option>dpmpp_2m</option><option>dpmpp_2m_cfg_pp</option><option>dpmpp_2m_sde</option><option>dpmpp_2m_sde_gpu</option>
+      <option>dpmpp_2m_sde_heun</option><option>dpmpp_3m_sde</option><option>dpmpp_3m_sde_gpu</option>
+      <option>ddpm</option><option>ddim</option><option>lcm</option><option>uni_pc</option><option>uni_pc_bh2</option>
+      <option>deis</option><option>ipndm</option><option>sa_solver</option><option>er_sde</option>
+      <option>res_multistep</option><option>res_multistep_ancestral</option>
+    </select>
+  </label>
+  <script>
+    (function(){ var s=document.getElementById('regen-sampler'), v='<%= prompt.workflow_json_path && wfMeta && wfMeta.sampler ? wfMeta.sampler : "" %>'; s.value = v; if(v && s.selectedIndex < 0) { var o=document.createElement('option'); o.value=v; o.textContent=v; s.appendChild(o); s.value=v; } })();
+  </script>
+  <label style="color:var(--muted);display:flex;align-items:center;gap:4px">Denoise
+    <input type="number" id="regen-denoise" value="<%= prompt.workflow_json_path && wfMeta && wfMeta.denoise != null ? wfMeta.denoise : '' %>" placeholder="default" min="0" max="1" step="0.01" style="width:64px;font-size:11px;padding:2px 4px">
+  </label>
+  <label style="color:var(--muted);display:flex;align-items:center;gap:4px">Seed
+    <input type="number" id="regen-seed" value="<%= prompt.workflow_json_path && wfMeta && wfMeta.seed ? wfMeta.seed : '' %>" placeholder="random" min="0" style="width:110px;font-family:monospace;font-size:11px;padding:2px 4px">
+  </label>
+</div>
+
+<div id="adapt-result" style="display:none;margin:0 0 12px;padding:12px;border-radius:6px;background:var(--bg2,rgba(255,255,255,0.05));border:1px solid var(--border,rgba(255,255,255,0.12))">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Adapted prompt — review and accept or discard:</div>
+  <div id="adapt-warn" style="display:none;font-size:11px;color:#e09a3a;margin-bottom:8px;padding:4px 8px;background:rgba(224,154,58,0.1);border-radius:3px"></div>
+  <label style="font-size:11px;color:var(--muted)">Positive</label>
+  <div id="adapt-pos-preview" style="white-space:pre-wrap;font-size:13px;margin:4px 0 10px;padding:8px;background:var(--bg,rgba(0,0,0,0.2));border-radius:4px;max-height:200px;overflow-y:auto"></div>
+  <div id="adapt-neg-wrap" style="display:none">
+    <label style="font-size:11px;color:var(--muted)">Negative</label>
+    <div id="adapt-neg-preview" style="white-space:pre-wrap;font-size:12px;color:var(--muted);margin:4px 0 10px;padding:8px;background:var(--bg,rgba(0,0,0,0.2));border-radius:4px;max-height:100px;overflow-y:auto"></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-primary" onclick="acceptAdapt()">Accept &amp; save</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('adapt-result').style.display='none'">Discard</button>
+  </div>
+</div>
+
 <div class="detail-layout">
   <div class="detail-hero">
     <% if (prompt.image_path) { %>
@@ -42,6 +95,7 @@
         <% if (prompt.seed) { %><li><span class="label">Seed</span><%= prompt.seed %></li><% } %>
         <% if (prompt.loras) { %><li><span class="label">LoRAs</span><%= prompt.loras %></li><% } %>
         <% if (prompt.trigger_words) { %><li><span class="label">Trigger Words</span><%= prompt.trigger_words %></li><% } %>
+
       </ul>
       <% if (prompt.tags) { %>
       <div class="card-tags">
@@ -118,8 +172,8 @@ async function savePrompt() {
   }
 }
 
-async function regenPrompt() {
-  const btn = document.getElementById('regen-btn');
+async function regenPrompt(useOriginalWorkflow) {
+  const btn = useOriginalWorkflow ? document.getElementById('regen-orig-btn') : document.getElementById('regen-btn');
   const wrap = document.getElementById('regen-status');
   if (!confirm('Regenerate this prompt? Existing image will be replaced.')) return;
   btn.disabled = true;
@@ -127,27 +181,39 @@ async function regenPrompt() {
   btn.textContent = '⏳ Queuing…';
   wrap.style.display = 'block';
   setProgress(5, 'Sending to ComfyUI…');
+  const regenSteps   = document.getElementById('regen-steps')?.value.trim();
+  const regenCfg     = document.getElementById('regen-cfg')?.value.trim();
+  const regenSampler = document.getElementById('regen-sampler')?.value.trim();
+  const regenDenoise = document.getElementById('regen-denoise')?.value.trim();
+  const regenSeed    = document.getElementById('regen-seed')?.value.trim();
+  const body = { prompt_text: document.getElementById('positive-text').value, prompt_db_id: '<%= prompt.id %>', ...(useOriginalWorkflow ? { use_prompt_workflow: true } : {}),
+    ...(regenSteps   ? { regen_steps:   regenSteps   } : {}),
+    ...(regenCfg     ? { regen_cfg:     regenCfg     } : {}),
+    ...(regenSampler ? { regen_sampler: regenSampler } : {}),
+    ...(regenDenoise ? { regen_denoise: regenDenoise } : {}),
+    ...(regenSeed    ? { regen_seed:    regenSeed    } : {}),
+  };
   try {
     const r = await fetch('/prompts/api/comfyui/queue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt_text: document.getElementById('positive-text').value, prompt_db_id: '<%= prompt.id %>' })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || 'Queue failed');
     btn.textContent = '#' + d.number;
     btn.classList.add('running');
     setProgress(15, 'Queued as #' + d.number + ' — waiting…');
-    pollRegen(d.prompt_id, 0);
+    pollRegen(d.prompt_id, 0, btn);
   } catch(e) {
     btn.classList.add('err');
     btn.textContent = '✗ Failed';
     setProgress(0, e.message);
-    setTimeout(() => { btn.textContent = '↺ Regenerate'; btn.classList.remove('err'); btn.disabled = false; wrap.style.display = 'none'; }, 3000);
+    setTimeout(() => { btn.textContent = useOriginalWorkflow ? '↺ Original' : '↺ Regenerate'; btn.classList.remove('err'); btn.disabled = false; wrap.style.display = 'none'; }, 3000);
   }
 }
 
-async function pollRegen(promptId, attempts) {
+async function pollRegen(promptId, attempts, activeBtn) {
   if (attempts > 180) { setProgress(0, 'Timed out'); return; }
   await new Promise(r => setTimeout(r, 2000));
   try {
@@ -155,13 +221,13 @@ async function pollRegen(promptId, attempts) {
     const d = await r.json();
     if (d.status === 'running') {
       var pct = Math.min(85, 20 + attempts * 3);
-      document.getElementById('regen-btn').classList.add('running');
-      document.getElementById('regen-btn').textContent = '▶';
+      (activeBtn || document.getElementById('regen-btn')).classList.add('running');
+      (activeBtn || document.getElementById('regen-btn')).textContent = '▶';
       setProgress(pct, 'Generating…');
-      pollRegen(promptId, attempts + 1);
+      pollRegen(promptId, attempts + 1, activeBtn);
     } else if (d.status === 'pending') {
       setProgress(15, 'Pending in queue…');
-      pollRegen(promptId, attempts + 1);
+      pollRegen(promptId, attempts + 1, activeBtn);
     } else if (d.status === 'done') {
       setProgress(90, 'Fetching image…');
       const fr = await fetch('/prompts/api/comfyui/fetch-image', {
@@ -172,21 +238,66 @@ async function pollRegen(promptId, attempts) {
       const fd = await fr.json();
       if (fd.image_url) {
         document.querySelector('.detail-hero img') && (document.querySelector('.detail-hero a img').src = fd.image_url);
-        const btn = document.getElementById('regen-btn');
+        const btn = activeBtn || document.getElementById('regen-btn');
         btn.classList.remove('running'); btn.classList.add('done');
         btn.textContent = '✓';
         setProgress(100, 'Done! Reloading…');
         setTimeout(() => location.reload(), 1000);
       }
     } else if (d.status === 'error') {
-      const btn = document.getElementById('regen-btn');
+      const btn = activeBtn || document.getElementById('regen-btn');
       btn.classList.remove('running'); btn.classList.add('err');
       btn.textContent = '✗';
       setProgress(0, 'Generation failed');
     } else {
-      pollRegen(promptId, attempts + 1);
+      pollRegen(promptId, attempts + 1, activeBtn);
     }
-  } catch(e) { pollRegen(promptId, attempts + 1); }
+  } catch(e) { pollRegen(promptId, attempts + 1, activeBtn); }
 }
+let _adaptedPositive = null, _adaptedNegative = null;
+
+async function adaptDetail() {
+  const btn = document.getElementById('adapt-detail-btn');
+  const positive = document.getElementById('positive-text')?.value?.trim() || '';
+  const negative = document.getElementById('negative-text')?.textContent?.trim() || '';
+  if (!positive) return;
+  btn.disabled = true; btn.textContent = 'Adapting…';
+  const resultEl = document.getElementById('adapt-result');
+  resultEl.style.display = 'none';
+  try {
+    const r = await fetch('/prompts/api/adapt-prompt', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positive, negative, use_llm: true }),
+    });
+    const d = await r.json();
+    if (!d.ok) { alert('Adapt failed: ' + (d.error || 'unknown')); return; }
+    _adaptedPositive = d.positive;
+    _adaptedNegative = d.negative || '';
+    document.getElementById('adapt-pos-preview').textContent = d.positive;
+    const negWrap = document.getElementById('adapt-neg-wrap');
+    const negPrev = document.getElementById('adapt-neg-preview');
+    if (d.negative) { negPrev.textContent = d.negative; negWrap.style.display = 'block'; }
+    else { negWrap.style.display = 'none'; }
+    const warnEl = document.getElementById('adapt-warn');
+    if (d.method === 'rule') {
+      warnEl.textContent = '⚠ LLM unavailable — rule-based cleanup only. Configure Prompt Adaptation in Settings for full rewrite.';
+      warnEl.style.display = 'block';
+    } else { warnEl.style.display = 'none'; }
+    resultEl.style.display = 'block';
+  } catch(e) { alert('Error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = '✦ Adapt'; }
+}
+
+async function acceptAdapt() {
+  if (!_adaptedPositive) return;
+  const r = await fetch('/prompts/api/save-adapted', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: <%= prompt.id %>, positive: _adaptedPositive, negative: _adaptedNegative }),
+  });
+  const d = await r.json();
+  if (d.ok) window.location.reload();
+  else alert('Save failed: ' + d.error);
+}
+
 </script>
 <%- include('../partials/footer') %>

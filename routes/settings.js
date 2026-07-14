@@ -13,6 +13,9 @@ router.post('/', (req, res) => {
   if (llm_base_url)      cfg.set('llm_base_url',      llm_base_url.trim());
   if (llm_api_key !== undefined) cfg.set('llm_api_key', llm_api_key.trim());
   if (llm_default_model) cfg.set('llm_default_model', llm_default_model.trim());
+  if (req.body.adapt_llm_base_url !== undefined) cfg.set('adapt_llm_base_url', (req.body.adapt_llm_base_url || '').trim());
+  if (req.body.adapt_llm_api_key !== undefined)  cfg.set('adapt_llm_api_key',  (req.body.adapt_llm_api_key  || '').trim());
+  if (req.body.adapt_llm_model   !== undefined)  cfg.set('adapt_llm_model',    (req.body.adapt_llm_model    || '').trim());
   if (comfyui_host)      cfg.set('comfyui_host',      comfyui_host.trim());
   if (comfyui_port)      cfg.set('comfyui_port',      comfyui_port.trim());
   if (req.body.comfyui_workflow !== undefined) cfg.set('comfyui_workflow', (req.body.comfyui_workflow || '').trim());
@@ -23,6 +26,7 @@ router.post('/', (req, res) => {
   if (req.body.comfyui_neg_default   !== undefined) cfg.set('comfyui_neg_default',   req.body.comfyui_neg_default   || '');
   if (req.body.comfyui_steps    !== undefined) cfg.set('comfyui_steps',    (req.body.comfyui_steps    || '').trim());
   if (req.body.comfyui_cfg      !== undefined) cfg.set('comfyui_cfg',      (req.body.comfyui_cfg      || '').trim());
+  if (req.body.comfyui_denoise   !== undefined) cfg.set('comfyui_denoise',   (req.body.comfyui_denoise   || '').trim());
   if (req.body.comfyui_guidance !== undefined) cfg.set('comfyui_guidance', (req.body.comfyui_guidance || '').trim());
   if (req.body.comfyui_sampler  !== undefined) cfg.set('comfyui_sampler',  (req.body.comfyui_sampler  || '').trim());
   if (req.body.llm_temperature)                cfg.set('llm_temperature',          req.body.llm_temperature.trim());
@@ -40,18 +44,39 @@ router.post('/', (req, res) => {
 router.post('/test', async (req, res) => {
   const { url, key } = req.body;
   try {
+    const isAnthropic = (url || '').includes('anthropic.com');
+    if (isAnthropic) {
+      // Anthropic has no /models — send a minimal messages call
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': (key || '').trim(), 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 }),
+        signal: AbortSignal.timeout(8000),
+      });
+      const d = await r.json();
+      if (!r.ok) return res.json({ ok: false, error: d.error?.message || `HTTP ${r.status}` });
+      return res.json({ ok: true, models: ['claude-haiku-4-5-20251001', 'claude-sonnet-5', 'claude-opus-4-8'] });
+    }
     const headers = {};
     if (key && key.trim()) headers['Authorization'] = `Bearer ${key.trim()}`;
     const r = await fetch(`${url.trim()}/models`, {
       headers,
       signal: AbortSignal.timeout(6000),
     });
-    if (!r.ok) return res.json({ ok: false, error: `HTTP ${r.status}` });
+    if (!r.ok) {
+      const errBody = await r.json().catch(() => ({}));
+      const detail = errBody.error?.message || errBody.message || '';
+      return res.json({ ok: false, error: `HTTP ${r.status}${detail ? ': ' + detail : ''}` });
+    }
     const data = await r.json();
     const models = (data.data || data.models || []).map(m => m.id || m.name || m).filter(Boolean);
     res.json({ ok: true, models });
   } catch (e) {
-    res.json({ ok: false, error: e.message });
+    let msg = e.message || 'Unknown error';
+    if (msg.includes('ECONNREFUSED')) msg = 'Connection refused — is your inference server running?';
+    else if (msg.includes('ENOTFOUND')) msg = 'Host not found — check the URL';
+    else if (msg.includes('abort') || msg.includes('timeout')) msg = 'Timed out — server too slow or unreachable';
+    res.json({ ok: false, error: msg });
   }
 });
 
