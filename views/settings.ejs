@@ -62,7 +62,7 @@
       <div class="field">
         <label>Base URL</label>
         <input type="text" name="llm_base_url" value="<%= config.llm_base_url %>" placeholder="http://localhost:11434/v1">
-        <div class="hint">Include /v1. Ollama: :11434/v1 &nbsp;·&nbsp; llama-server: :8080/v1 &nbsp;·&nbsp; LM Studio: :1234/v1</div>
+        <div class="hint">Include /v1. Ollama: :11434/v1 &nbsp;·&nbsp; llama-server: :8080/v1 or :11438/v1 &nbsp;·&nbsp; LM Studio: :1234/v1 &nbsp;·&nbsp; OpenAI: api.openai.com/v1 &nbsp;·&nbsp; Grok: api.x.ai/v1</div>
       </div>
 
       <div class="field">
@@ -168,6 +168,34 @@
 
 
     <div class="settings-section">
+      <h2>Prompt Adaptation</h2>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 16px">Used when adapting imported prompts to your workflow style. Leave blank to fall back to the LLM Inference settings above — but if your main LLM is local, a separate cloud API key here avoids GPU memory conflicts.</p>
+
+      <div class="field">
+        <label>Adaptation Base URL</label>
+        <input type="text" id="adapt-url-input" name="adapt_llm_base_url" value="<%= config.adapt_llm_base_url || '' %>" placeholder="https://api.openai.com/v1  (or blank to use LLM Inference)">
+        <div class="hint">Include /v1. OpenAI: api.openai.com/v1 &nbsp;·&nbsp; Grok: api.x.ai/v1 &nbsp;·&nbsp; Ollama: :11434/v1 &nbsp;·&nbsp; llama-server: :11438/v1 &nbsp;&middot;&nbsp; Claude: api.anthropic.com (no /v1)</div>
+      </div>
+
+      <div class="field">
+        <label>Adaptation API Key</label>
+        <input type="text" id="adapt-key-input" name="adapt_llm_api_key" value="<%= config.adapt_llm_api_key || '' %>" placeholder="sk-... or xai-... or ollama">
+      </div>
+
+      <div class="field">
+        <label>Adaptation Model</label>
+        <input type="text" id="adapt-model-input" name="adapt_llm_model" value="<%= config.adapt_llm_model || '' %>" placeholder="grok-3-mini  or  gpt-4o-mini">
+        <div class="hint">Lightweight model recommended. Click a chip below after testing to auto-fill.</div>
+      </div>
+
+      <div class="test-row">
+        <button type="button" class="btn btn-secondary" onclick="testAdaptConnection()">Test Connection</button>
+        <span id="adapt-test-result"></span>
+      </div>
+      <div id="adapt-model-list"></div>
+    </div>
+
+    <div class="settings-section">
       <h2>ComfyUI</h2>
 
       <details style="margin-bottom:20px;border:1px solid var(--border);border-radius:4px;padding:0">
@@ -212,6 +240,12 @@
           Set your model in the <strong>Model</strong> field below &mdash; no JSON editing needed.<br>
           To use your own: export from ComfyUI with <em>Save (API Format)</em> (enable Dev Mode first), then upload here.
         </div>
+        <div id="trigger-words-row" style="display:none;margin-top:8px;align-items:center;gap:6px;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--muted);white-space:nowrap">Trigger words:</label>
+          <input type="text" id="trigger-words-input" placeholder="e.g. r3alism, realismbloom" style="flex:1;min-width:160px;font-size:12px">
+          <button type="button" class="btn btn-secondary" style="font-size:12px" onclick="saveTriggerWords()">Save</button>
+          <span id="trigger-words-status" style="font-size:11px;color:var(--muted)"></span>
+        </div>
       </div>
 
       <div class="field">
@@ -253,8 +287,14 @@
 
       <div class="field">
         <label>CFG Scale Override</label>
-        <input type="number" name="comfyui_cfg" value="<%= config.comfyui_cfg || '' %>" placeholder="workflow default" min="0" max="30" step="0.5" style="width:120px">
+        <input type="number" name="comfyui_cfg" value="<%= config.comfyui_cfg || '' %>" placeholder="workflow default" min="0" max="30" step="0.1" style="width:120px">
         <div class="hint">Overrides CFG scale in KSampler. Leave blank to use workflow default.</div>
+      </div>
+
+      <div class="field">
+        <label>Denoise Override</label>
+        <input type="number" name="comfyui_denoise" value="<%= config.comfyui_denoise || '' %>" placeholder="workflow default" min="0" max="1" step="0.01" style="width:120px">
+        <div class="hint">Overrides denoise in KSampler (0.0–1.0). Leave blank to use workflow default. 1.0 = full generation.</div>
       </div>
 
       <div class="field">
@@ -345,6 +385,45 @@ async function testConnection() {
   }
 }
 
+async function testAdaptConnection() {
+  const url = document.getElementById('adapt-url-input').value.trim()
+             || document.querySelector('input[name="llm_base_url"]').value.trim();
+  const key = document.getElementById('adapt-key-input').value.trim()
+             || document.querySelector('input[name="llm_api_key"]').value.trim();
+  const el = document.getElementById('adapt-test-result');
+  const ml = document.getElementById('adapt-model-list');
+  el.textContent = 'Testing…';
+  el.className = '';
+  ml.innerHTML = '';
+  try {
+    const r = await fetch('/prompts/settings/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, key }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      el.textContent = 'Connected';
+      el.className = 'ok';
+      if (d.models.length) {
+        d.models.forEach(m => {
+          const chip = document.createElement('span');
+          chip.className = 'model-chip';
+          chip.textContent = m;
+          chip.onclick = () => { document.getElementById('adapt-model-input').value = m; };
+          ml.appendChild(chip);
+        });
+      }
+    } else {
+      el.textContent = 'Failed: ' + d.error;
+      el.className = 'err';
+    }
+  } catch (e) {
+    el.textContent = 'Error: ' + e.message;
+    el.className = 'err';
+  }
+}
+
 async function loadModels() {
   try {
     const r = await fetch('/prompts/api/comfyui/models');
@@ -367,7 +446,38 @@ async function loadWorkflows(selectVal) {
       files.map(f => '<option value="' + f + '"' + (f === current ? ' selected' : '') + '>' + f + '</option>').join('');
   } catch(e) {}
 }
-loadWorkflows();
+loadWorkflows().then(loadTriggerWords);
+
+document.getElementById('comfy-wf').addEventListener('change', loadTriggerWords);
+
+async function loadTriggerWords() {
+  const filename = document.getElementById('comfy-wf').value;
+  const row = document.getElementById('trigger-words-row');
+  if (!filename) { row.style.display = 'none'; return; }
+  row.style.display = 'flex';
+  document.getElementById('trigger-words-status').textContent = '';
+  try {
+    const r = await fetch('/prompts/api/comfyui/workflow-meta?filename=' + encodeURIComponent(filename));
+    const d = await r.json();
+    document.getElementById('trigger-words-input').value = d.trigger_words || '';
+  } catch(e) {}
+}
+
+async function saveTriggerWords() {
+  const filename = document.getElementById('comfy-wf').value;
+  if (!filename) return;
+  const trigger_words = document.getElementById('trigger-words-input').value;
+  const status = document.getElementById('trigger-words-status');
+  try {
+    await fetch('/prompts/api/comfyui/workflow-meta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, trigger_words })
+    });
+    status.textContent = 'Saved';
+    setTimeout(() => { status.textContent = ''; }, 2000);
+  } catch(e) { status.textContent = 'Error'; }
+}
 
 async function uploadWorkflow(input) {
   const file = input.files[0];

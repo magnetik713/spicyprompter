@@ -45,10 +45,10 @@ h1, h2, h3 { font-weight: 700; font-family: var(--font); letter-spacing: 0.04em;
 }
 .sidebar-brand {
   display: block;
-  padding: 14px 12px 10px;
+  padding: 18px 16px 14px;
   border-bottom: 1px solid var(--border);
 }
-.sidebar-brand img { height: 34px; width: auto; mix-blend-mode: screen; }
+.sidebar-brand img { height: 52px; width: auto; mix-blend-mode: screen; }
 .sidebar-nav { display: flex; flex-direction: column; padding: 10px 0; }
 .sidebar-link {
   display: block;

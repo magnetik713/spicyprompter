@@ -4,6 +4,8 @@ const path = require('path');
 const db = require('../db');
 // Add comfy_prompt_id column if not exists
 try { db.prepare('ALTER TABLE prompts ADD COLUMN comfy_prompt_id TEXT').run(); } catch(e) {}
+try { db.prepare('ALTER TABLE workflows ADD COLUMN guidance REAL').run(); } catch(e) {}
+try { db.prepare('ALTER TABLE prompts ADD COLUMN workflow_json_path TEXT').run(); } catch(e) {}
 
 const cfg = require('../config');
 
@@ -273,12 +275,66 @@ router.post('/api/comfyui/upload-workflow', (req, res) => {
     filename: (req, file, cb) => cb(null, file.originalname)
   });
   multer({ storage, fileFilter: (req, f, cb) => cb(null, f.originalname.endsWith('.json')) })
-    .single('workflow')(req, res, (err) => {
+    .single('workflow')(req, res, async (err) => {
       if (err || !req.file) return res.status(400).json({ error: err ? err.message : 'No file' });
-      res.json({ filename: req.file.filename });
+      // Auto-scan LoRA metadata for trigger words
+      try {
+        const comfyHost = cfg.get('comfyui_host') || 'localhost';
+        const comfyPort = cfg.get('comfyui_port') || '8188';
+        const wfContent = JSON.parse(fs2.readFileSync(req.file.path, 'utf8'));
+        const loraNodes = Object.values(wfContent).filter(n => n.class_type === 'LoraLoader');
+        const allTriggers = [];
+        for (const n of loraNodes) {
+          const loraName = n.inputs && n.inputs.lora_name;
+          if (!loraName) continue;
+          try {
+            const r = await fetch('http://' + comfyHost + ':' + comfyPort + '/view_metadata/loras?filename=' + encodeURIComponent(loraName));
+            const md = await r.json();
+            let tagFreq = md.ss_tag_frequency || '{}';
+            if (typeof tagFreq === 'string') tagFreq = JSON.parse(tagFreq);
+            for (const folder of Object.keys(tagFreq)) {
+              const parts = folder.split('_');
+              if (parts.length > 1) {
+                const trigger = parts.slice(1).join('_');
+                if (!allTriggers.includes(trigger)) allTriggers.push(trigger);
+              }
+            }
+          } catch(e) {}
+        }
+        if (allTriggers.length > 0) {
+          wfContent['_spicy'] = { trigger_words: allTriggers.join(', ') };
+          fs2.writeFileSync(req.file.path, JSON.stringify(wfContent, null, 2));
+        }
+        res.json({ filename: req.file.filename, trigger_words: allTriggers.join(', ') || null });
+      } catch(e) {
+        res.json({ filename: req.file.filename });
+      }
     });
 });
 
+
+router.get('/api/comfyui/workflow-meta', (req, res) => {
+  const fname = (req.query.filename || '').replace(/[/\\]/g, '').replace(/\.\./g, '');
+  if (!fname || !fname.endsWith('.json')) return res.status(400).json({ error: 'Invalid filename' });
+  const wfPath = require('path').join(__dirname, '../uploads/workflows', fname);
+  try {
+    const wf = JSON.parse(require('fs').readFileSync(wfPath, 'utf8'));
+    res.json({ trigger_words: (wf['_spicy'] && wf['_spicy'].trigger_words) || '' });
+  } catch(e) { res.json({ trigger_words: '' }); }
+});
+
+router.post('/api/comfyui/workflow-meta', (req, res) => {
+  const fname = (req.body.filename || '').replace(/[/\\]/g, '').replace(/\.\./g, '');
+  if (!fname || !fname.endsWith('.json')) return res.status(400).json({ error: 'Invalid filename' });
+  const wfPath = require('path').join(__dirname, '../uploads/workflows', fname);
+  try {
+    const wf = JSON.parse(require('fs').readFileSync(wfPath, 'utf8'));
+    const tw = (req.body.trigger_words || '').trim();
+    if (tw) { wf['_spicy'] = { trigger_words: tw }; } else { delete wf['_spicy']; }
+    require('fs').writeFileSync(wfPath, JSON.stringify(wf, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
 router.get('/api/comfyui/models', async (req, res) => {
   const comfyHost = cfg.get('comfyui_host') || 'localhost';
@@ -313,14 +369,33 @@ router.post('/api/comfyui/queue', async (req, res) => {
 
   const comfyHost    = cfg.get('comfyui_host')     || 'localhost';
   const comfyPort    = cfg.get('comfyui_port')     || '8188';
-  const workflowFile = cfg.get('comfyui_workflow');
-  if (!workflowFile) return res.status(400).json({ error: 'No workflow set. Configure one in Settings → ComfyUI.' });
+  // Optional workflow_id override — use prompt's linked workflow instead of configured default
+  let workflowFile, wfPath;
+  const overrideId = req.body.workflow_id ? parseInt(req.body.workflow_id) : null;
+  const usePromptWf = req.body.use_prompt_workflow && req.body.prompt_db_id;
+  if (usePromptWf) {
+    const pRow = db.prepare('SELECT workflow_json_path FROM prompts WHERE id = ?').get(parseInt(req.body.prompt_db_id));
+    if (!pRow || !pRow.workflow_json_path) return res.status(400).json({ error: 'No workflow linked to this prompt.' });
+    wfPath = require('path').join(__dirname, '..', pRow.workflow_json_path);
+  } else if (overrideId) {
+    const wfRow = db.prepare('SELECT workflow_json_path FROM workflows WHERE id = ?').get(overrideId);
+    if (!wfRow || !wfRow.workflow_json_path) return res.status(400).json({ error: 'Linked workflow not found.' });
+    wfPath = require('path').join(__dirname, '..', wfRow.workflow_json_path);
+  } else {
+    workflowFile = cfg.get('comfyui_workflow');
+    if (!workflowFile) return res.status(400).json({ error: 'No workflow set. Configure one in Settings → ComfyUI.' });
+    wfPath = require('path').join(__dirname, '../uploads/workflows', workflowFile);
+  }
 
-  const fs2    = require('fs');
-  const wfPath = require('path').join(__dirname, '../uploads/workflows', workflowFile);
+  const fs2 = require('fs');
   let workflow;
   try { workflow = JSON.parse(fs2.readFileSync(wfPath, 'utf8')); }
-  catch (e) { return res.status(400).json({ error: `Workflow file not found: ${workflowFile}` }); }
+  catch (e) { return res.status(400).json({ error: 'Workflow file not found: ' + (workflowFile || wfPath) }); }
+
+  // Extract and strip _spicy metadata (ComfyUI rejects unknown top-level keys)
+  const spicyMeta = workflow['_spicy'] || {};
+  const triggerWords = (spicyMeta.trigger_words || '').trim();
+  delete workflow['_spicy'];
 
   // Find target node: configured ID or first CLIPTextEncode
   let nodeId = cfg.get('comfyui_node_id') || '';
@@ -334,7 +409,8 @@ router.post('/api/comfyui/queue', async (req, res) => {
   }
 
   const promptSuffix = (cfg.get('comfyui_prompt_suffix') || '').trim();
-  workflow[nodeId].inputs.text = promptSuffix ? prompt_text + ', ' + promptSuffix : prompt_text;
+  const fullPrompt = triggerWords ? triggerWords + ', ' + prompt_text : prompt_text;
+  workflow[nodeId].inputs.text = promptSuffix ? fullPrompt + ', ' + promptSuffix : fullPrompt;
 
   // Inject negative prompt — use per-request value or fall back to default
   const negText = (negative_text && negative_text.trim()) ? negative_text.trim() : (cfg.get('comfyui_neg_default') || '').trim();
@@ -363,17 +439,24 @@ router.post('/api/comfyui/queue', async (req, res) => {
     }
   }
 
-  // Randomize seed; optionally override steps/cfg on every sampler node
-  const stepsOverride = parseInt(cfg.get('comfyui_steps') || '');
-  const cfgOverride   = parseFloat(cfg.get('comfyui_cfg') || '');
+  // Randomize seed; apply overrides — per-request (from detail page) take priority over global settings
+  const stepsOverride   = parseInt(req.body.regen_steps || '') || parseInt(cfg.get('comfyui_steps') || '') || 0;
+  const cfgOverride     = req.body.regen_cfg   !== undefined && req.body.regen_cfg   !== '' ? parseFloat(req.body.regen_cfg)   : parseFloat(cfg.get('comfyui_cfg') || '') || 0;
+  const denoiseRaw      = req.body.regen_denoise !== undefined && req.body.regen_denoise !== '' ? req.body.regen_denoise : cfg.get('comfyui_denoise');
+  const denoiseOverride = denoiseRaw !== '' && denoiseRaw != null ? parseFloat(denoiseRaw) : NaN;
+  const samplerOverride = (req.body.regen_sampler || cfg.get('comfyui_sampler') || '').trim();
   for (const node of Object.values(workflow)) {
     if (node.class_type === 'KSampler' || node.class_type === 'KSamplerAdvanced') {
-      if (node.inputs.seed != null) node.inputs.seed = Math.floor(Math.random() * 2 ** 32);
-      if (node.inputs.noise_seed != null) node.inputs.noise_seed = Math.floor(Math.random() * 2 ** 32);
-      if (stepsOverride && node.inputs.steps != null) node.inputs.steps = stepsOverride;
-      if (cfgOverride   && node.inputs.cfg   != null) node.inputs.cfg   = cfgOverride;
-      const samplerOverride = (cfg.get('comfyui_sampler') || '').trim();
+      const fixedSeed = req.body.regen_seed ? parseInt(req.body.regen_seed) : null;
+      if (node.inputs.seed != null) node.inputs.seed = fixedSeed !== null ? fixedSeed : Math.floor(Math.random() * 2 ** 32);
+      if (node.inputs.noise_seed != null) node.inputs.noise_seed = fixedSeed !== null ? fixedSeed : Math.floor(Math.random() * 2 ** 32);
       if (samplerOverride && node.inputs.sampler_name != null) node.inputs.sampler_name = samplerOverride;
+      const isPrimaryPass = node.inputs.denoise == null || node.inputs.denoise >= 0.99;
+      if (isPrimaryPass) {
+        if (stepsOverride && node.inputs.steps != null) node.inputs.steps = stepsOverride;
+        if (cfgOverride   && node.inputs.cfg   != null) node.inputs.cfg   = cfgOverride;
+        if (!isNaN(denoiseOverride) && node.inputs.denoise != null) node.inputs.denoise = denoiseOverride;
+      }
     }
   }
   // Override FluxGuidance node if configured
@@ -417,6 +500,19 @@ router.post('/api/comfyui/fetch-image', async (req, res) => {
     require('fs').writeFileSync(savePath, buf);
     const image_path = `uploads/images/${saveName}`;
 
+    // Extract and save workflow from embedded PNG metadata
+    let autoWfPath = null;
+    try {
+      const chunks = parsePngTextChunks(buf);
+      if (chunks.prompt) {
+        JSON.parse(chunks.prompt); // validate
+        const wfFname = Date.now() + '-comfy-' + filename.replace(/[^a-zA-Z0-9._-]/g, '_') + '.json';
+        const wfFpath = path.join(__dirname, '../uploads/workflows/generated', wfFname);
+        require('fs').writeFileSync(wfFpath, chunks.prompt);
+        autoWfPath = 'uploads/workflows/generated/' + wfFname;
+      }
+    } catch(e) { /* non-fatal */ }
+
     // Pull seed + dimensions from ComfyUI history
     let seed = null, width = null, height = null;
     try {
@@ -437,9 +533,13 @@ router.post('/api/comfyui/fetch-image', async (req, res) => {
       }
     } catch (e) { /* non-fatal */ }
 
-    db.prepare(
-      'UPDATE prompts SET image_path=?, seed=?, width=?, height=?, comfy_prompt_id=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=?'
-    ).run(image_path, seed, width, height, prompt_db_id);
+    const updateCols = autoWfPath
+      ? 'UPDATE prompts SET image_path=?, seed=?, width=?, height=?, workflow_json_path=?, comfy_prompt_id=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=?'
+      : 'UPDATE prompts SET image_path=?, seed=?, width=?, height=?, comfy_prompt_id=NULL, updated_at=CURRENT_TIMESTAMP WHERE id=?';
+    const updateArgs = autoWfPath
+      ? [image_path, seed, width, height, autoWfPath, prompt_db_id]
+      : [image_path, seed, width, height, prompt_db_id];
+    db.prepare(updateCols).run(...updateArgs);
 
     res.json({ ok: true, image_url: '/prompts/' + image_path, seed, width, height });
   } catch (e) {
@@ -531,6 +631,15 @@ router.post('/api/save-positive', (req, res) => {
   res.json({ ok: true });
 });
 
+router.post('/api/save-adapted', (req, res) => {
+  const { id, positive, negative } = req.body;
+  if (!id) return res.status(400).json({ ok: false, error: 'Missing id' });
+  const starRow = db.prepare('SELECT starred FROM prompts WHERE id=?').get(id);
+  if (starRow?.starred) return res.status(403).json({ ok: false, error: 'Prompt is starred and locked.' });
+  db.prepare('UPDATE prompts SET positive=?, negative=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(positive || null, negative || null, id);
+  res.json({ ok: true });
+});
+
 router.get('/api/recent', (req, res) => {
   const n = Math.min(200, Math.max(1, parseInt(req.query.n) || 20));
   const rows = db.prepare('SELECT id, positive FROM prompts ORDER BY created_at DESC LIMIT ?').all(n);
@@ -604,7 +713,29 @@ router.get('/:id', (req, res) => {
     WHERE p.id = ?
   `).get(req.params.id);
   if (!prompt) return res.status(404).render('404', { title: 'Not Found' });
-  res.render('prompts/detail', { prompt, title: prompt.name, paid: cfg.isPaid() });
+  let wfMeta = null;
+  if (prompt.workflow_json_path) {
+    try {
+      const wfRaw = require('fs').readFileSync(require('path').join(__dirname, '..', prompt.workflow_json_path), 'utf8');
+      const wfJson = JSON.parse(wfRaw);
+      const nodes = Array.isArray(wfJson.nodes) ? wfJson.nodes : Object.values(wfJson);
+      const sampler = nodes.find(n => n.class_type === 'KSampler' || n.class_type === 'KSamplerAdvanced' || (n.type && (n.type.includes('KSampler'))));
+      const inputs = sampler ? (sampler.inputs || (sampler.widgets_values ? { steps: sampler.widgets_values[0], cfg: sampler.widgets_values[2], sampler_name: sampler.widgets_values[4], scheduler: sampler.widgets_values[5] } : {})) : {};
+      wfMeta = {
+        steps: inputs.steps || prompt.steps || null,
+        cfg: inputs.cfg != null ? inputs.cfg : (prompt.cfg_scale || null),
+        sampler: inputs.sampler_name || inputs.sampler || prompt.sampler || null,
+        scheduler: inputs.scheduler || null,
+        denoise: inputs.denoise != null ? inputs.denoise : null,
+        seed: prompt.seed || null,
+        width: prompt.width || null,
+        height: prompt.height || null,
+      };
+    } catch(e) {}
+  } else if (prompt.seed || prompt.steps || prompt.width) {
+    wfMeta = { seed: prompt.seed, steps: prompt.steps, cfg: prompt.cfg_scale, sampler: prompt.sampler, width: prompt.width, height: prompt.height, scheduler: null, denoise: null };
+  }
+  res.render('prompts/detail', { prompt, wfMeta, title: prompt.name, paid: cfg.isPaid() });
 });
 
 router.put('/:id', upload.single('image'), (req, res) => {
@@ -641,6 +772,374 @@ router.post("/batch-delete", (req, res) => {
     db.prepare("DELETE FROM prompts WHERE id IN (" + placeholders + ") AND starred = 0").run(...ids);
   }
   res.redirect("/prompts?" + new URLSearchParams(req.body._back || "").toString());
+});
+
+
+// ── PNG Import ─────────────────────────────────────────────────────────────
+
+function parsePngTextChunks(buf) {
+  const SIG = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  if (buf.length < 8 || !buf.slice(0, 8).equals(SIG)) return {};
+  const result = {};
+  let pos = 8;
+  while (pos + 12 <= buf.length) {
+    const length = buf.readUInt32BE(pos);
+    const type = buf.slice(pos + 4, pos + 8).toString('ascii');
+    const data = buf.slice(pos + 8, pos + 8 + length);
+    pos += 12 + length;
+    if (type === 'tEXt') {
+      const nullIdx = data.indexOf(0);
+      if (nullIdx !== -1) {
+        const key = data.slice(0, nullIdx).toString('latin1');
+        const value = data.slice(nullIdx + 1).toString('latin1');
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+}
+
+function parseA1111Params(text) {
+  const negIdx = text.indexOf('\nNegative prompt:');
+  const positive = (negIdx !== -1 ? text.slice(0, negIdx) : text.split('\nSteps:')[0]).trim();
+  let negative = '';
+  if (negIdx !== -1) {
+    const afterNeg = text.slice(negIdx + '\nNegative prompt:'.length);
+    const stepsIdx = afterNeg.indexOf('\nSteps:');
+    negative = (stepsIdx !== -1 ? afterNeg.slice(0, stepsIdx) : afterNeg).trim();
+  }
+  // Parse generation params from the Steps: line
+  const metaLine = text.match(/\nSteps:(.+)/) ? text.match(/\nSteps:(.+)/)[0] : '';
+  const getParam = (key) => { const m = metaLine.match(new RegExp(key + ':\\s*([^,]+)')); return m ? m[1].trim() : null; };
+  const steps   = getParam('Steps')   ? parseInt(getParam('Steps'))   : null;
+  const cfg     = getParam('CFG scale') ? parseFloat(getParam('CFG scale')) : null;
+  const sampler = getParam('Sampler') || null;
+  const seed    = getParam('Seed')    ? parseInt(getParam('Seed'))    : null;
+  const sizeStr = getParam('Size');
+  const width   = sizeStr ? parseInt(sizeStr.split('x')[0]) : null;
+  const height  = sizeStr ? parseInt(sizeStr.split('x')[1]) : null;
+  return { positive, negative, steps, cfg, sampler, seed, width, height };
+}
+
+const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+
+
+// ── Prompt adaptation ────────────────────────────────────────────────────────
+
+function detectWorkflowType(wfJson) {
+  try {
+    const nodes = Object.values(wfJson);
+    if (nodes.some(n => n.class_type === 'FluxGuidance' || n.class_type === 'UNETLoader')) return 'flux';
+    if (nodes.some(n => n.class_type === 'CheckpointLoaderSimple')) {
+      const ckpt = nodes.find(n => n.class_type === 'CheckpointLoaderSimple');
+      const name = (ckpt?.inputs?.ckpt_name || '').toLowerCase();
+      if (name.includes('xl') || name.includes('sdxl')) return 'sdxl';
+      return 'sd15';
+    }
+    // Graph format fallback
+    if (wfJson.nodes && Array.isArray(wfJson.nodes)) {
+      const ns = wfJson.nodes;
+      if (ns.some(n => n.type === 'FluxGuidance' || n.type === 'UNETLoader')) return 'flux';
+      if (ns.some(n => n.type === 'CheckpointLoaderSimple')) {
+        const ckpt = ns.find(n => n.type === 'CheckpointLoaderSimple');
+        const name = (ckpt?.widgets_values?.[0] || '').toLowerCase();
+        if (name.includes('xl') || name.includes('sdxl')) return 'sdxl';
+        return 'sd15';
+      }
+    }
+  } catch(e) {}
+  return 'unknown';
+}
+
+function ruleBasedAdapt(positiveText, negativeText) {
+  let pos = positiveText || '';
+  const negParts = (negativeText || '').split(',').map(s => s.trim()).filter(Boolean);
+  // Extract inline negative weights: (word:-0.8) → add to negatives
+  pos = pos.replace(/\(([^)]+):-[\d.]+\)/g, (_, words) => { negParts.push(words.trim()); return ''; });
+  // Strip positive weights: (word:1.2) → word
+  pos = pos.replace(/\(([^)]+):[\d.]+\)/g, '$1');
+  // Strip bare emphasis parens: ((word)) → word
+  pos = pos.replace(/\(\(([^)]+)\)\)/g, '$1').replace(/\(([^)]+)\)/g, '$1');
+  // Strip square bracket de-emphasis
+  pos = pos.replace(/\[([^\]]+)\]/g, '$1');
+  // Strip LoRA refs
+  pos = pos.replace(/<lora:[^>]+>/gi, '');
+  // Clean up
+  pos = pos.replace(/,\s*,+/g, ',').replace(/^\s*,|,\s*$/g, '').replace(/\s+/g, ' ').trim();
+  return { positive: pos, negative: negParts.join(', ') };
+}
+
+router.get('/api/adapt-status', (req, res) => {
+  const adaptUrl = cfg.get('adapt_llm_base_url') || '';
+  const adaptKey = cfg.get('adapt_llm_api_key') || '';
+  const mainUrl  = cfg.get('llm_base_url') || '';
+  const mainKey  = cfg.get('llm_api_key') || '';
+
+  const effectiveUrl = adaptUrl || mainUrl;
+  const effectiveKey = adaptKey || mainKey;
+  const isLocal = !effectiveUrl || /localhost|127\.0\.0\.1/.test(effectiveUrl);
+  const hasLlm = !!(effectiveUrl && effectiveKey);
+  const llmType = !hasLlm ? 'none' : isLocal ? 'local' : 'frontier';
+
+  let workflowType = 'unknown';
+  const wfFile = cfg.get('comfyui_workflow');
+  if (wfFile) {
+    try {
+      const wfPath = require('path').join(__dirname, '../uploads/workflows', wfFile);
+      const wfJson = JSON.parse(require('fs').readFileSync(wfPath, 'utf8'));
+      workflowType = detectWorkflowType(wfJson);
+    } catch(e) {}
+  }
+
+  res.json({ llm_type: llmType, workflow_type: workflowType });
+});
+
+router.post('/api/adapt-prompt', async (req, res) => {
+  const { positive, negative, use_llm } = req.body;
+  const ruled = ruleBasedAdapt(positive, negative);
+
+  if (!use_llm) return res.json({ ok: true, positive: ruled.positive, negative: ruled.negative, method: 'rule' });
+
+  const adaptUrl = cfg.get('adapt_llm_base_url') || cfg.get('llm_base_url') || '';
+  const adaptKey = cfg.get('adapt_llm_api_key') || cfg.get('llm_api_key') || '';
+  const adaptModel = cfg.get('adapt_llm_model') || cfg.get('llm_default_model') || 'gpt-4o-mini';
+
+  if (!adaptUrl || !adaptKey) return res.json({ ok: true, positive: ruled.positive, negative: ruled.negative, method: 'rule' });
+
+  let workflowType = 'flux';
+  const wfFile = cfg.get('comfyui_workflow');
+  if (wfFile) {
+    try {
+      const wfPath = require('path').join(__dirname, '../uploads/workflows', wfFile);
+      workflowType = detectWorkflowType(JSON.parse(require('fs').readFileSync(wfPath, 'utf8')));
+    } catch(e) {}
+  }
+
+  const styleGuide = {
+    flux:    'natural language prose paragraphs. Flux uses a T5 encoder that understands sentences — avoid keyword lists.',
+    sdxl:    'detailed descriptive phrases separated by commas. Quality boosters like "masterpiece, best quality" work well.',
+    sd15:    'concise comma-separated keywords and tags. Keep it under 77 tokens.',
+    unknown: 'natural language prose.',
+  }[workflowType] || 'natural language prose.';
+
+  const systemPrompt = `You are a Stable Diffusion prompt engineer.
+Your job: take a structured prompt with labeled sections and rewrite it as a single unified description.
+
+Input format example:
+Subject: A tall woman with red hair. Scene: She stands in a park. Lighting: Golden hour.
+
+Correct output (positive field):
+A tall woman with long red hair stands in a sunlit park bathed in warm golden hour light.
+
+Wrong output (do NOT do this):
+Subject: A tall woman with red hair. Scene: She stands in a park. Lighting: Golden hour.
+
+Rewrite the given prompt in ${styleGuide}
+Rules:
+- Strip ALL section labels (Subject:, Scene:, Framing:, Details:, Body:, Expression:, Setting:, Lighting:, Photo Style:, Clothing:, Ass:, Breasts:, Cum:, and any other label:).
+- Merge everything into one flowing unified description — no headers, no colons used as labels.
+- Preserve every visual detail: appearance, pose, clothing, setting, lighting, mood, photo style.
+- Move negative/exclusionary concepts to the negative field.
+Respond with ONLY valid JSON: {"positive": "...", "negative": "..."}`;
+
+  try {
+    const isAnthropic = adaptUrl.includes('anthropic.com');
+    const userMsg = 'Positive: ' + ruled.positive + (ruled.negative ? '\nNegative: ' + ruled.negative : '');
+    let fetchUrl, fetchHeaders, fetchBody;
+    if (isAnthropic) {
+      fetchUrl = 'https://api.anthropic.com/v1/messages';
+      fetchHeaders = { 'Content-Type': 'application/json', 'x-api-key': adaptKey, 'anthropic-version': '2023-06-01' };
+      fetchBody = JSON.stringify({ model: adaptModel || 'claude-haiku-4-5-20251001', system: systemPrompt, messages: [{ role: 'user', content: userMsg }], max_tokens: 1200 });
+    } else {
+      fetchUrl = adaptUrl.replace(/\/$/, '') + '/chat/completions';
+      fetchHeaders = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adaptKey };
+      fetchBody = JSON.stringify({ model: adaptModel, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }], temperature: 0.3, max_tokens: 1200 });
+    }
+    const r = await fetch(fetchUrl, { method: 'POST', headers: fetchHeaders, body: fetchBody });
+    const d = await r.json();
+    const text = isAnthropic ? (d.content?.[0]?.text || '') : (d.choices?.[0]?.message?.content || '');
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${d.error?.message || d.type || ''}`);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return res.json({ ok: true, positive: parsed.positive || ruled.positive, negative: parsed.negative || ruled.negative, method: 'llm', workflow_type: workflowType });
+    }
+  } catch(e) { /* fall through to rule result */ }
+
+  res.json({ ok: true, positive: ruled.positive, negative: ruled.negative, method: 'rule' });
+});
+
+router.post('/api/import-png', memUpload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const chunks = parsePngTextChunks(req.file.buffer);
+  const originalFilename = req.file.originalname || '';
+  const fileBasename = originalFilename.replace(/\.png$/i, '').replace(/[_-]/g, ' ').trim();
+
+  let positive = '', negative = '', workflow_json = null;
+  let wfMeta = { sampler: null, scheduler: null, steps: null, cfg: null, denoise: null, model: null };
+
+  if (chunks.parameters) {
+    const p = parseA1111Params(chunks.parameters);
+    positive = p.positive;
+    negative = p.negative;
+    if (p.steps)   wfMeta.steps   = p.steps;
+    if (p.cfg)     wfMeta.cfg     = p.cfg;
+    if (p.sampler) wfMeta.sampler = p.sampler;
+    if (p.seed)    wfMeta.seed    = p.seed;
+    if (p.width)   wfMeta.width   = p.width;
+    if (p.height)  wfMeta.height  = p.height;
+  }
+
+  // chunks.prompt = API format (flat dict, class_type+inputs) — use for queueing
+  // chunks.workflow = graph format (nodes array, type+widgets_values) — use for display/settings
+  if (chunks.prompt) {
+    try {
+      const p = JSON.parse(chunks.prompt);
+      const nodes = Object.values(p);
+      const clips = nodes.filter(n => n.class_type === 'CLIPTextEncode');
+      const resolveText = (val) => {
+        if (typeof val === 'string') return val;
+        if (Array.isArray(val)) { // node reference [nodeId, outputIdx]
+          const refNode = p[val[0]];
+          if (refNode && refNode.class_type === 'CLIPTextEncode') return (refNode.inputs && typeof refNode.inputs.text === 'string') ? refNode.inputs.text : '';
+          if (refNode && refNode.inputs && typeof refNode.inputs.text === 'string') return refNode.inputs.text;
+          if (refNode && refNode.inputs && typeof refNode.inputs.text_g === 'string') return refNode.inputs.text_g;
+        }
+        return '';
+      };
+      if (!positive && clips.length > 0) positive = resolveText(clips[0].inputs && clips[0].inputs.text) || '';
+      if (!negative && clips.length > 1) negative = resolveText(clips[1].inputs && clips[1].inputs.text) || '';
+      // KSampler / KSamplerAdvanced
+      const sampler = nodes.find(n => n.class_type === 'KSampler' || n.class_type === 'KSamplerAdvanced');
+      if (sampler && sampler.inputs) {
+        wfMeta.sampler   = sampler.inputs.sampler_name || null;
+        wfMeta.scheduler = sampler.inputs.scheduler || null;
+        wfMeta.steps     = sampler.inputs.steps || null;
+        wfMeta.cfg       = sampler.inputs.cfg != null ? sampler.inputs.cfg : null;
+        wfMeta.denoise   = sampler.inputs.denoise != null ? sampler.inputs.denoise : null;
+      }
+      // SamplerCustomAdvanced — sampler from KSamplerSelect, steps from BasicScheduler
+      if (!wfMeta.sampler) {
+        const kss = nodes.find(n => n.class_type === 'KSamplerSelect');
+        if (kss && kss.inputs) wfMeta.sampler = kss.inputs.sampler_name || null;
+        const sched = nodes.find(n =>
+          n.class_type === 'BasicScheduler' || n.class_type === 'SDTurboScheduler' || n.class_type === 'KarrasScheduler'
+        );
+        if (sched && sched.inputs) {
+          wfMeta.scheduler = sched.inputs.scheduler || wfMeta.scheduler;
+          wfMeta.steps     = sched.inputs.steps != null ? sched.inputs.steps : wfMeta.steps;
+          wfMeta.denoise   = sched.inputs.denoise != null ? sched.inputs.denoise : wfMeta.denoise;
+        }
+      }
+      // FluxGuidance
+      const fg = nodes.find(n => n.class_type === 'FluxGuidance');
+      if (fg && fg.inputs && fg.inputs.guidance != null) wfMeta.guidance = fg.inputs.guidance;
+      // Model
+      const modelNode = nodes.find(n => n.class_type === 'UNETLoader' || n.class_type === 'CheckpointLoaderSimple');
+      if (modelNode && modelNode.inputs) {
+        wfMeta.model = (modelNode.inputs.unet_name || modelNode.inputs.ckpt_name || '').replace(/\.safetensors$/i, '') || null;
+      }
+      workflow_json = chunks.prompt; // API format — works with queue endpoint
+    } catch(e) {}
+  }
+
+  if (chunks.workflow && !workflow_json) {
+    // Fallback: graph format — extract what we can from nodes array
+    try {
+      const wf = JSON.parse(chunks.workflow);
+      if (wf.nodes && Array.isArray(wf.nodes)) {
+        const clips = wf.nodes.filter(n => n.type === 'CLIPTextEncode');
+        if (!positive && clips.length > 0) positive = (clips[0].widgets_values && clips[0].widgets_values[0]) || '';
+        if (!negative && clips.length > 1) negative = (clips[1].widgets_values && clips[1].widgets_values[0]) || '';
+        // KSampler widgets_values: [seed, control_after_generate, steps, cfg, sampler_name, scheduler, denoise]
+        const sampler = wf.nodes.find(n => n.type === 'KSampler' || n.type === 'KSamplerAdvanced');
+        if (sampler && sampler.widgets_values) {
+          wfMeta.steps     = sampler.widgets_values[2] || null;
+          wfMeta.cfg       = sampler.widgets_values[3] != null ? sampler.widgets_values[3] : null;
+          wfMeta.sampler   = sampler.widgets_values[4] || null;
+          wfMeta.scheduler = sampler.widgets_values[5] || null;
+          wfMeta.denoise   = sampler.widgets_values[6] != null ? sampler.widgets_values[6] : null;
+        }
+        // SamplerCustomAdvanced — KSamplerSelect + BasicScheduler
+        if (!wfMeta.sampler) {
+          const kss = wf.nodes.find(n => n.type === 'KSamplerSelect');
+          if (kss && kss.widgets_values) wfMeta.sampler = kss.widgets_values[0] || null;
+          const sched = wf.nodes.find(n =>
+            n.type === 'BasicScheduler' || n.type === 'SDTurboScheduler' || n.type === 'KarrasScheduler'
+          );
+          if (sched && sched.widgets_values) {
+            // BasicScheduler widgets_values: [scheduler, steps, denoise]
+            wfMeta.scheduler = sched.widgets_values[0] || wfMeta.scheduler;
+            wfMeta.steps     = sched.widgets_values[1] != null ? sched.widgets_values[1] : wfMeta.steps;
+            wfMeta.denoise   = sched.widgets_values[2] != null ? sched.widgets_values[2] : wfMeta.denoise;
+          }
+        }
+        // FluxGuidance widgets_values: [guidance]
+        const fg = wf.nodes.find(n => n.type === 'FluxGuidance');
+        if (fg && fg.widgets_values && fg.widgets_values[0] != null) wfMeta.guidance = fg.widgets_values[0];
+        // Model
+        const modelNode = wf.nodes.find(n => n.type === 'UNETLoader' || n.type === 'CheckpointLoaderSimple');
+        if (modelNode && modelNode.widgets_values) {
+          wfMeta.model = (modelNode.widgets_values[0] || '').replace(/\.safetensors$/i, '') || null;
+        }
+      }
+      workflow_json = chunks.workflow; // graph format — note: queue endpoint may not handle this
+    } catch(e) {}
+  }
+
+  // Build suggested workflow name: model name if found, else PNG filename
+  const suggestedName = wfMeta.model || fileBasename || 'Imported from image';
+
+  // Save PNG to uploads/images so the prompt gets a preview
+  let importedImagePath = null;
+  try {
+    const imgFname = Date.now() + '-imported-' + originalFilename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    require('fs').writeFileSync(path.join(__dirname, '../uploads/images', imgFname), req.file.buffer);
+    importedImagePath = 'uploads/images/' + imgFname;
+  } catch(e) { /* non-fatal */ }
+
+  const sourceFormat = workflow_json ? 'comfyui' : chunks.parameters ? 'a1111' : 'unknown';
+
+  res.json({
+    positive: (typeof positive === 'string' ? positive : '').trim(),
+    negative: (typeof negative === 'string' ? negative : '').trim(),
+    has_workflow: !!(workflow_json),
+    workflow_json: workflow_json || null,
+    has_prompt: !!(positive.trim()),
+    suggested_name: suggestedName,
+    source_filename: originalFilename,
+    wf_meta: wfMeta,
+    image_path: importedImagePath,
+    source_format: sourceFormat,
+  });
+});
+
+router.post('/api/import-png/save', (req, res) => {
+  const { positive, negative, save_workflow, workflow_json, workflow_name, source_filename, wf_meta, image_path } = req.body;
+  const importMeta = wf_meta || {};
+  let savedWfPath = null;
+
+  if (save_workflow && workflow_json) {
+    try {
+      const fs2 = require('fs');
+      JSON.parse(workflow_json); // validate
+      const fname = Date.now() + '-imported.json';
+      const fpath = path.join(__dirname, '../uploads/workflows', fname);
+      fs2.writeFileSync(fpath, workflow_json);
+      savedWfPath = 'uploads/workflows/' + fname;
+    } catch(e) {
+      return res.status(400).json({ error: 'Invalid workflow JSON: ' + e.message });
+    }
+  }
+
+  const name = (positive || '').slice(0, 80).trim() || 'Imported prompt';
+  const result = db.prepare('INSERT INTO prompts (name, positive, negative, tags, workflow_json_path, image_path, steps, cfg_scale, sampler, seed, width, height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+    name, positive || null, negative || null, 'imported', savedWfPath, image_path || null,
+    importMeta.steps || null, importMeta.cfg || null, importMeta.sampler || null,
+    importMeta.seed || null, importMeta.width || null, importMeta.height || null
+  );
+
+  res.json({ ok: true, id: result.lastInsertRowid });
 });
 
 

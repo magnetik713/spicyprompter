@@ -316,7 +316,8 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const hasWomanSubject = /\bwoman\b|\bwomen\b|\bgirl\b/i.test(skeleton.subject || '');
   const isFinishAct = actCat && (FINISH_ACTS.test(actCat.name || '') || FINISH_ACTS.test(actCat.emphasis || ''));
   const cumRule = (isFinishAct && hasWomanSubject) ? '\nCUMSHOT RULE (ABSOLUTE): The finish is always received by the woman. Never on the man.' : '';
-  const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}${cumRule}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, and theme. Expand into a rich, explicit prompt.`;
+  const soloNoCum = (!hasMaleSubject && isSoloFemale(skeleton.subject)) ? '\nSOLO FEMALE RULE (ABSOLUTE): No males, no penis, no cum, no semen, no ejaculate, no white fluid on skin. Female squirting is clear fluid only — never say ejaculation, cum, or semen. Never use the word \'orgasmic\' — instead say: ecstatic, overwhelmed by pleasure, lost in sensation. Skin moisture is sweat or water only — never describe skin as oily, oil-coated, or glazed. JOI scenes show only the woman teasing — no completion, no finish, no implied viewer orgasm. Include the phrase \'clean skin\' somewhere in the prompt to reinforce the image model.' : '';
+  const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, and theme. Expand into a rich, explicit prompt.`;
 
   const baseInstruction = '\n\nSTRICTLY FORBIDDEN: Do not include any explanation, reasoning, commentary, or meta-text. Output ONLY the image prompt text. No sentences about incompatibility, adaptations, or scene logic.';
   const systemContent = RAW_OUTPUT

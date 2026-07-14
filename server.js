@@ -6,14 +6,14 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3014;
 
-['uploads/images'].forEach(dir => {
+['uploads/images', 'uploads/workflows/generated'].forEach(dir => {
   fs.mkdirSync(path.join(__dirname, dir), { recursive: true });
 });
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(methodOverride('_method'));
 app.use('/prompts/public', express.static(path.join(__dirname, 'public')));
 app.use('/prompts/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -23,6 +23,8 @@ const promptsRouter = require('./routes/prompts');
 const settingsRouter = require('./routes/settings');
 
 app.use((req, res, next) => { res.locals.isPaid = cfg.isPaid(); next(); });
+const workflowsRouter = require('./routes/workflows');
+app.use('/prompts/workflows', workflowsRouter);
 app.use('/prompts/settings', settingsRouter);
 if (process.env.IMAGE_GEN) {
   const imagegenRouter = require('./routes/imagegen');
