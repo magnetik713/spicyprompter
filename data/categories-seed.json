@@ -1562,17 +1562,6 @@
     "emphasis": "Slim, slender woman. Lean frame, visible collarbones, long limbs, flat stomach. Not muscular \u2014 softly toned. Describe the delicate physicality explicitly. Elegant and lithe."
   },
   {
-    "name": "solo",
-    "label": "Solo / Masturbation \u2014 self-pleasure, fingers, toys",
-    "subjects": null,
-    "settings": null,
-    "clothing": null,
-    "styles": null,
-    "lighting": null,
-    "emphasis": "Solo masturbation scene. Self-pleasure with fingers, vibrator, or dildo. No partner. Describe the act graphically \u2014 position, toy detail, buildup, and climax.",
-    "type": "theme"
-  },
-  {
     "name": "spa",
     "label": "Spa \u2014 steam room, towels, wellness, relaxation",
     "subjects": null,
@@ -1769,5 +1758,17 @@
     "lighting": null,
     "emphasis": "The woman is Caucasian, classic All-American look. You MUST describe her distinctly \u2014 fair skin, natural Western European features, approachable girl-next-door or classic American beauty aesthetic. Hair and eye color vary naturally. Explicit scene.",
     "type": "race"
+  },
+  {
+    "name": "solo",
+    "label": "Solo / Masturbation \u2014 self-pleasure, fingers, toys",
+    "subjects": null,
+    "settings": null,
+    "clothing": null,
+    "styles": null,
+    "lighting": null,
+    "emphasis": "Solo masturbation scene. Self-pleasure with fingers, vibrator, or dildo. No partner. Describe the act graphically \u2014 position, toy detail, buildup, and climax.",
+    "type": "act",
+    "solo_compatible": true
   }
 ]
