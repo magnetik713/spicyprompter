@@ -163,7 +163,7 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, camera_view } = req.query;
+  const { cats, count, model, subject, race, bodytype, role, style, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view } = req.query;
 
   if (!cfg.isPaid()) {
     const promptCount = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
@@ -205,6 +205,7 @@ router.get('/generate/run', async (req, res) => {
   const safeHairColor        = (hair_color        || '').replace(/[^a-z_]/g, '');
   const safeFacialExpression = (facial_expression || '').replace(/[^a-z_]/g, '');
   const safeEyeColor         = (eye_color         || '').replace(/[^a-z_]/g, '');
+  const safeSkinTone         = (skin_tone         || '').replace(/[^a-z_]/g, '');
   const safeCameraView       = (camera_view       || '').replace(/[^a-z_]/g, '');
 
   if (cfg.isPaid()) {
@@ -232,6 +233,7 @@ router.get('/generate/run', async (req, res) => {
   if (safeHairColor)        args.push('--hair_color',        safeHairColor);
   if (safeFacialExpression) args.push('--facial_expression', safeFacialExpression);
   if (safeEyeColor)         args.push('--eye_color',         safeEyeColor);
+  if (safeSkinTone)         args.push('--skin_tone',         safeSkinTone);
   if (safeCameraView)       args.push('--camera_view',       safeCameraView);
   // only pass random flags for paid users — demo users get restricted cat pool above instead
   if (paid && act_random   === '1') args.push('--act_random');

@@ -27,6 +27,7 @@ const STYLE_RANDOM   = !STYLE_ARG;
 const HAIR_COLOR_ARG        = getArg('--hair_color', null);
 const FACIAL_EXPRESSION_ARG = getArg('--facial_expression', null);
 const EYE_COLOR_ARG         = getArg('--eye_color', null);
+const SKIN_TONE_ARG         = getArg('--skin_tone', null);
 const CAMERA_VIEW_ARG       = getArg('--camera_view', null);
 const ACT_RANDOM   = hasFlag('--act_random');
 const SCENE_RANDOM = hasFlag('--scene_random');
@@ -282,6 +283,9 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
   if (EYE_COLOR_ARG) {
     skeleton.eye_color = EYE_COLOR_ARG.replace(/_/g, ' ') + ' eyes';
   }
+  if (SKIN_TONE_ARG) {
+    skeleton.skin_tone = SKIN_TONE_ARG.replace(/_/g, ' ') + ' skin';
+  }
   if (CAMERA_VIEW_ARG) {
     skeleton.camera_angle = CAMERA_VIEW_ARG.replace(/_/g, ' ');
   }
@@ -343,7 +347,8 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const hairColorRule       = HAIR_COLOR_ARG        ? `\nHAIR COLOR (ABSOLUTE): The subject has ${HAIR_COLOR_ARG.replace(/_/g, ' ')} hair. Describe it explicitly — do not substitute or omit.` : '';
   const expressionRule      = FACIAL_EXPRESSION_ARG ? `\nFACIAL EXPRESSION (ABSOLUTE): The subject's face shows ${FACIAL_EXPRESSION_ARG.replace(/_/g, ' ')} — describe this expression explicitly in the prompt.` : '';
   const eyeColorRule        = EYE_COLOR_ARG         ? `\nEYE COLOR (ABSOLUTE): The subject has ${EYE_COLOR_ARG.replace(/_/g, ' ')} eyes. Mention eye color explicitly — do not substitute or omit.` : '';
-  const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_color, eye_color, facial_expression, and camera_angle. Expand into a rich, explicit prompt.`;
+  const skinToneRule        = SKIN_TONE_ARG         ? `\nSKIN TONE (ABSOLUTE): The subject has ${SKIN_TONE_ARG.replace(/_/g, ' ')} skin. Describe this skin tone explicitly — overrides any race-implied skin tone.` : '';
+  const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, explicit prompt.`;
 
   const baseInstruction = '\n\nSTRICTLY FORBIDDEN: Do not include any explanation, reasoning, commentary, or meta-text. Output ONLY the image prompt text. No sentences about incompatibility, adaptations, or scene logic.';
   const systemContent = RAW_OUTPUT
@@ -450,6 +455,7 @@ async function main() {
   if (HAIR_COLOR_ARG)        parts.push(`hair_color=${HAIR_COLOR_ARG}`);
   if (FACIAL_EXPRESSION_ARG) parts.push(`facial_expression=${FACIAL_EXPRESSION_ARG}`);
   if (EYE_COLOR_ARG)         parts.push(`eye_color=${EYE_COLOR_ARG}`);
+  if (SKIN_TONE_ARG)         parts.push(`skin_tone=${SKIN_TONE_ARG}`);
   if (CAMERA_VIEW_ARG)       parts.push(`camera_view=${CAMERA_VIEW_ARG}`);
   console.log(`Generating ${COUNT} prompts | ${parts.join(' | ')}`);
 
