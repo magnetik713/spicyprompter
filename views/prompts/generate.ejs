@@ -192,6 +192,17 @@
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_pleading" value="pleading"><label for="fe_pleading">Desperate / Pleading</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_blissful" value="blissful"><label for="fe_blissful">Blissful / Serene</label></div>
     </div>
+    <div style="width:100%;border-top:1px solid var(--border);margin:6px 0 2px;padding-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:0">
+      <div style="width:100%;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-family:var(--font);margin-bottom:2px">Eye Color</div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_none" value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_brown" value="brown"><label for="ec_brown">Brown</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_blue" value="blue"><label for="ec_blue">Blue</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_green" value="green"><label for="ec_green">Green</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_hazel" value="hazel"><label for="ec_hazel">Hazel</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_gray" value="gray"><label for="ec_gray">Gray</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_amber" value="amber"><label for="ec_amber">Amber</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_dark" value="dark"><label for="ec_dark">Dark / Black</label></div>
+    </div>
   </div>
 
   <!-- Role -->
@@ -339,6 +350,7 @@ function startGenerate() {
   var style       = (document.querySelector('input[name="style"]:checked') || {}).value      || '';
   var hair_color         = (document.querySelector('input[name="hair_color"]:checked') || {}).value         || '';
   var facial_expression  = (document.querySelector('input[name="facial_expression"]:checked') || {}).value  || '';
+  var eye_color          = (document.querySelector('input[name="eye_color"]:checked') || {}).value           || '';
   var camera_view        = (document.querySelector('input[name="view"]:checked') || {}).value                || '';
   var count    = document.getElementById('count').value;
   var model    = document.getElementById('model').value;
@@ -363,6 +375,7 @@ function startGenerate() {
   if (style)       params.set('style',       style);
   if (hair_color)        params.set('hair_color',        hair_color);
   if (facial_expression) params.set('facial_expression', facial_expression);
+  if (eye_color)         params.set('eye_color',         eye_color);
   if (camera_view)       params.set('camera_view',       camera_view);
 
   var es = new EventSource('/prompts/generate/run?' + params);
