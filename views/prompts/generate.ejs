@@ -178,6 +178,20 @@
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_pink" value="pink"><label for="hc_pink">Pink</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_blue" value="blue"><label for="hc_blue">Blue / Teal</label></div>
     </div>
+    <div style="width:100%;border-top:1px solid var(--border);margin:6px 0 2px;padding-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:0">
+      <div style="width:100%;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-family:var(--font);margin-bottom:2px">Facial Expression</div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none" value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_moaning" value="moaning"><label for="fe_moaning">Moaning / O-face</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_ahegao" value="ahegao"><label for="fe_ahegao">Ahegao</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eyes_closed" value="eyes_closed"><label for="fe_eyes_closed">Eyes Closed, Lips Parted</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_biting_lip" value="biting_lip"><label for="fe_biting_lip">Biting Lip</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eye_contact" value="eye_contact"><label for="fe_eye_contact">Direct Eye Contact</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_looking_up" value="looking_up"><label for="fe_looking_up">Looking Up at Camera</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_smirking" value="smirking"><label for="fe_smirking">Smirking</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_shy" value="shy"><label for="fe_shy">Shy / Flushed</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_pleading" value="pleading"><label for="fe_pleading">Desperate / Pleading</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_blissful" value="blissful"><label for="fe_blissful">Blissful / Serene</label></div>
+    </div>
   </div>
 
   <!-- Role -->
@@ -323,8 +337,9 @@ function startGenerate() {
   var bodytype = Array.from(document.querySelectorAll('.bt-check:checked')).map(function(el){return el.value;}).join(',');
   var role     = (document.querySelector('input[name="role"]:checked') || {}).value      || '';
   var style       = (document.querySelector('input[name="style"]:checked') || {}).value      || '';
-  var hair_color  = (document.querySelector('input[name="hair_color"]:checked') || {}).value || '';
-  var camera_view = (document.querySelector('input[name="view"]:checked') || {}).value        || '';
+  var hair_color         = (document.querySelector('input[name="hair_color"]:checked') || {}).value         || '';
+  var facial_expression  = (document.querySelector('input[name="facial_expression"]:checked') || {}).value  || '';
+  var camera_view        = (document.querySelector('input[name="view"]:checked') || {}).value                || '';
   var count    = document.getElementById('count').value;
   var model    = document.getElementById('model').value;
 
@@ -346,8 +361,9 @@ function startGenerate() {
   if (bodytype) params.set('bodytype', bodytype);
   if (role)        params.set('role',        role);
   if (style)       params.set('style',       style);
-  if (hair_color)  params.set('hair_color',  hair_color);
-  if (camera_view) params.set('camera_view', camera_view);
+  if (hair_color)        params.set('hair_color',        hair_color);
+  if (facial_expression) params.set('facial_expression', facial_expression);
+  if (camera_view)       params.set('camera_view',       camera_view);
 
   var es = new EventSource('/prompts/generate/run?' + params);
 

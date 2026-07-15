@@ -24,8 +24,9 @@ const ROLE_ARG     = getArg('--role', null);
 const ROLE_RANDOM  = ROLE_ARG === 'random';
 const STYLE_ARG      = getArg('--style', null);
 const STYLE_RANDOM   = !STYLE_ARG;
-const HAIR_COLOR_ARG = getArg('--hair_color', null);
-const CAMERA_VIEW_ARG = getArg('--camera_view', null);
+const HAIR_COLOR_ARG        = getArg('--hair_color', null);
+const FACIAL_EXPRESSION_ARG = getArg('--facial_expression', null);
+const CAMERA_VIEW_ARG       = getArg('--camera_view', null);
 const ACT_RANDOM   = hasFlag('--act_random');
 const SCENE_RANDOM = hasFlag('--scene_random');
 const THEME_RANDOM = hasFlag('--theme_random');
@@ -274,13 +275,16 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
   if (HAIR_COLOR_ARG) {
     skeleton.hair_color = HAIR_COLOR_ARG.replace(/_/g, ' ') + ' hair';
   }
+  if (FACIAL_EXPRESSION_ARG) {
+    skeleton.facial_expression = FACIAL_EXPRESSION_ARG.replace(/_/g, ' ');
+  }
   if (CAMERA_VIEW_ARG) {
     skeleton.camera_angle = CAMERA_VIEW_ARG.replace(/_/g, ' ');
   }
   return skeleton;
 }
 
-const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, role, camera_angle, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. Realistic photography ONLY — no anime, no illustration, no cartoon. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
+const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, facial_expression, role, camera_angle, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, facial expression, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. If facial_expression is given, the subject's face must show that exact expression throughout. Realistic photography ONLY — no anime, no illustration, no cartoon. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
 
 async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const skeletonStr = Object.entries(skeleton).map(([k,v]) => `${k}: ${v}`).join('\n');
@@ -429,8 +433,9 @@ async function main() {
   if (ROLE_ARG)          parts.push(ROLE_RANDOM ? 'role=random' : `role=${ROLE_ARG}`);
   parts.push(STYLE_ARG ? `style=${STYLE_ARG}` : 'style=random');
   if (SUBJECT_ARG)       parts.push(`subject=${SUBJECT_ARG}`);
-  if (HAIR_COLOR_ARG)    parts.push(`hair_color=${HAIR_COLOR_ARG}`);
-  if (CAMERA_VIEW_ARG)   parts.push(`camera_view=${CAMERA_VIEW_ARG}`);
+  if (HAIR_COLOR_ARG)        parts.push(`hair_color=${HAIR_COLOR_ARG}`);
+  if (FACIAL_EXPRESSION_ARG) parts.push(`facial_expression=${FACIAL_EXPRESSION_ARG}`);
+  if (CAMERA_VIEW_ARG)       parts.push(`camera_view=${CAMERA_VIEW_ARG}`);
   console.log(`Generating ${COUNT} prompts | ${parts.join(' | ')}`);
 
   const db = new Database(DB_PATH);
