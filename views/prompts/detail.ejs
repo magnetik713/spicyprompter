@@ -243,6 +243,12 @@ async function pollRegen(promptId, attempts, activeBtn) {
         btn.textContent = '✓';
         setProgress(100, 'Done! Reloading…');
         setTimeout(() => location.reload(), 1000);
+      } else {
+        const btn = activeBtn || document.getElementById('regen-btn');
+        btn.classList.remove('running'); btn.classList.add('err');
+        btn.textContent = '✗ Failed';
+        setProgress(0, fd.error || 'Failed to fetch image from ComfyUI');
+        setTimeout(() => { btn.textContent = btn === document.getElementById('regen-orig-btn') ? '↺ Original' : '↺ Regenerate'; btn.classList.remove('err'); btn.disabled = false; document.getElementById('regen-status').style.display = 'none'; }, 4000);
       }
     } else if (d.status === 'error') {
       const btn = activeBtn || document.getElementById('regen-btn');
