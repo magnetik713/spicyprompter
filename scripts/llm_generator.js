@@ -36,8 +36,8 @@ const TEMPERATURE          = parseFloat(getArg('--temperature', '1.2'));
 const TOP_P                = getArg("--top_p", null);
 const MIN_P                = getArg("--min_p", null);
 const REPETITION_PENALTY   = parseFloat(getArg('--repetition_penalty', '1.0'));
-const MAX_TOKENS           = parseInt(getArg('--max_tokens', '300'));
-const PROMPT_WORDS         = parseInt(getArg('--prompt_words', '150'), 10);
+const MAX_TOKENS           = parseInt(getArg('--max_tokens', '350'));
+const PROMPT_WORDS         = parseInt(getArg('--prompt_words', '110'), 10);
 const RAW_OUTPUT           = hasFlag('--raw_output');
 const ALLOW_TOYS           = hasFlag('--allow_toys');
 
@@ -350,7 +350,7 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const skinToneRule        = SKIN_TONE_ARG         ? `\nSKIN TONE (ABSOLUTE): The subject has ${SKIN_TONE_ARG.replace(/_/g, ' ')} skin. Describe this skin tone explicitly — overrides any race-implied skin tone.` : '';
   const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, explicit prompt.`;
 
-  const baseInstruction = '\n\nSTRICTLY FORBIDDEN: Do not include any explanation, reasoning, commentary, or meta-text. Output ONLY the image prompt text. No sentences about incompatibility, adaptations, or scene logic.';
+  const baseInstruction = '\n\nSTRICTLY FORBIDDEN: Do not include any explanation, reasoning, commentary, or meta-text. Do not pad with filler sentences like \"The X is Y.\" or \"The moment is captured.\" -- every sentence must describe a specific visual detail. Output ONLY the image prompt text. No sentences about incompatibility, adaptations, or scene logic.';
   const systemContent = RAW_OUTPUT
     ? SYSTEM + baseInstruction + ' Begin directly with the image description, no preamble.'
     : SYSTEM + baseInstruction;
@@ -386,6 +386,8 @@ function stripMetaCommentary(text) {
     .replace(/Note(?:\s+that)?:?[^.!?]*[.!?]\s*/gi, '')
     .replace(/Please note[^.!?]*[.!?]\s*/gi, '')
     .replace(/The (?:race|body type|role|theme|act|scene) is \S[^.!?]*[.!?]\s*/gi, '')
+    .replace(/The \w+ (?:is|are|was) \w+\.\s*/gi, '')
+    .replace(/\s+The \w[^.!?]*$/, '')
     .trim();
 }
 
