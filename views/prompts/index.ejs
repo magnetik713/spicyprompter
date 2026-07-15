@@ -421,6 +421,7 @@ async function queueSelected(btn) {
     });
     rows = await r.json();
   } catch(e) { btn.textContent = '✗ failed'; btn.disabled = false; return; }
+  rows.sort((a, b) => b.id - a.id);
   const locked = rows.filter(r => r.starred).length;
   rows = rows.filter(r => !r.starred);
   let ok = 0, fail = 0;
