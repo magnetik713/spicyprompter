@@ -1758,5 +1758,16 @@
     "lighting": null,
     "emphasis": "Boat, yacht, or sailboat. Ocean or lake setting. Deck, cabin below, sea breeze. Luxury or adventure feel. Describe the boat environment and explicit act on the water.",
     "type": "scene"
+  },
+  {
+    "name": "caucasian",
+    "label": "Caucasian / All-American \u2014 fair skin, natural features, classic Western look",
+    "subjects": null,
+    "settings": null,
+    "clothing": null,
+    "styles": null,
+    "lighting": null,
+    "emphasis": "The woman is Caucasian, classic All-American look. You MUST describe her distinctly \u2014 fair skin, natural Western European features, approachable girl-next-door or classic American beauty aesthetic. Hair and eye color vary naturally. Explicit scene.",
+    "type": "race"
   }
 ]
