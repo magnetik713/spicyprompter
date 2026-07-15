@@ -139,6 +139,10 @@
     <span class="cat-tab-name">Style</span>
     <span class="cat-tab-val" id="tabval-style">Default</span>
   </button>
+  <button class="cat-tab" data-cat="view" onclick="selectCat('view',this)">
+    <span class="cat-tab-name">View</span>
+    <span class="cat-tab-val" id="tabval-view">Any</span>
+  </button>
 </div>
 
 <div class="cat-panel">
@@ -161,6 +165,19 @@
       <label for="bt_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
     </div>
     <% }) %>
+    <div style="width:100%;border-top:1px solid var(--border);margin:6px 0 2px;padding-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:0">
+      <div style="width:100%;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-family:var(--font);margin-bottom:2px">Hair Color</div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_none" value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_black" value="black"><label for="hc_black">Black</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_brunette" value="brunette"><label for="hc_brunette">Brunette</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blonde" value="blonde"><label for="hc_blonde">Blonde</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_red" value="red"><label for="hc_red">Red / Ginger</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_auburn" value="auburn"><label for="hc_auburn">Auburn</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_platinum" value="platinum_blonde"><label for="hc_platinum">Platinum Blonde</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_silver" value="silver"><label for="hc_silver">Silver / White</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_pink" value="pink"><label for="hc_pink">Pink</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blue" value="blue"><label for="hc_blue">Blue / Teal</label></div>
+    </div>
   </div>
 
   <!-- Role -->
@@ -221,6 +238,19 @@
     </div>
     <% }) %>
   </div>
+
+  <!-- View / Camera Angle -->
+  <div id="cat-pane-view" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="view" id="view_none" value="" checked><label for="view_none" style="color:var(--muted);font-style:italic">Any</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_pov" value="pov"><label for="view_pov">POV</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_from_below" value="from_below"><label for="view_from_below">From Below</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_top_down" value="top_down"><label for="view_top_down">Top Down</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_from_above" value="from_above"><label for="view_from_above">From Above</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_side" value="side"><label for="view_side">Side View</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_over_shoulder" value="over_shoulder"><label for="view_over_shoulder">Over Shoulder</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_behind" value="behind"><label for="view_behind">From Behind</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_low_angle" value="low_angle"><label for="view_low_angle">Low Angle</label></div>
+  </div>
 </div>
 
 <% if (!paid) { %>
@@ -242,10 +272,10 @@ function selectCat(cat, btn) {
   document.getElementById('cat-pane-' + cat).classList.add('active');
 }
 
-var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random' };
+var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random', view:'Any' };
 
 function syncTabVals() {
-  ['race','role','act','scene','theme','style'].forEach(function(cat) {
+  ['race','role','act','scene','theme','style','view'].forEach(function(cat) {
     var checked = document.querySelector('input[name="' + cat + '"]:checked');
     var hasVal = !!(checked && checked.value !== '');
     var labelEl = checked ? checked.closest('.opt-item').querySelector('label') : null;
@@ -294,7 +324,9 @@ function startGenerate() {
   var race     = (document.querySelector('input[name="race"]:checked') || {}).value      || '';
   var bodytype = Array.from(document.querySelectorAll('.bt-check:checked')).map(function(el){return el.value;}).join(',');
   var role     = (document.querySelector('input[name="role"]:checked') || {}).value      || '';
-  var style    = (document.querySelector('input[name="style"]:checked') || {}).value     || '';
+  var style       = (document.querySelector('input[name="style"]:checked') || {}).value      || '';
+  var hair_color  = (document.querySelector('input[name="hair_color"]:checked') || {}).value || '';
+  var camera_view = (document.querySelector('input[name="view"]:checked') || {}).value        || '';
   var count    = document.getElementById('count').value;
   var model    = document.getElementById('model').value;
 
@@ -314,8 +346,10 @@ function startGenerate() {
   if (subject)  params.set('subject',  subject);
   if (race)     params.set('race',     race);
   if (bodytype) params.set('bodytype', bodytype);
-  if (role)     params.set('role',     role);
-  if (style)    params.set('style',    style);
+  if (role)        params.set('role',        role);
+  if (style)       params.set('style',       style);
+  if (hair_color)  params.set('hair_color',  hair_color);
+  if (camera_view) params.set('camera_view', camera_view);
 
   var es = new EventSource('/prompts/generate/run?' + params);
 

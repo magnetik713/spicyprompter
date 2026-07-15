@@ -163,7 +163,7 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style, act_random, scene_random, theme_random } = req.query;
+  const { cats, count, model, subject, race, bodytype, role, style, act_random, scene_random, theme_random, hair_color, camera_view } = req.query;
 
   if (!cfg.isPaid()) {
     const promptCount = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
@@ -202,6 +202,8 @@ router.get('/generate/run', async (req, res) => {
   const safeRoleGated     = demoFilter(role,     'role');
   const rawStyle = (style || '').replace(/[^a-z_]/g, '');
   const safeStyleGated = paid ? rawStyle : (rawStyle ? (DEMO_ALLOWED.style.has(rawStyle) ? rawStyle : '') : DEMO_STYLES_ARR[Math.floor(Math.random() * DEMO_STYLES_ARR.length)]);
+  const safeHairColor  = (hair_color   || '').replace(/[^a-z_]/g, '');
+  const safeCameraView = (camera_view  || '').replace(/[^a-z_]/g, '');
 
   if (cfg.isPaid()) {
     const valid = await cfg.checkLicense();
@@ -223,8 +225,10 @@ router.get('/generate/run', async (req, res) => {
   if (safeSubject)       args.push('--subject',  safeSubject);
   if (safeRaceGated)     args.push('--race',     safeRaceGated);
   if (safeBodytypeGated) args.push('--bodytype', safeBodytypeGated);
-  if (safeRoleGated)     args.push('--role',     safeRoleGated);
-  if (safeStyleGated)    args.push('--style',    safeStyleGated);
+  if (safeRoleGated)     args.push('--role',         safeRoleGated);
+  if (safeStyleGated)    args.push('--style',        safeStyleGated);
+  if (safeHairColor)     args.push('--hair_color',   safeHairColor);
+  if (safeCameraView)    args.push('--camera_view',  safeCameraView);
   // only pass random flags for paid users — demo users get restricted cat pool above instead
   if (paid && act_random   === '1') args.push('--act_random');
   if (paid && scene_random === '1') args.push('--scene_random');
