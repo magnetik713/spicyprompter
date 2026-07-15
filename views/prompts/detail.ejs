@@ -253,8 +253,9 @@ async function pollRegen(promptId, attempts, activeBtn) {
     } else if (d.status === 'error') {
       const btn = activeBtn || document.getElementById('regen-btn');
       btn.classList.remove('running'); btn.classList.add('err');
-      btn.textContent = '✗';
-      setProgress(0, 'Generation failed');
+      btn.textContent = '✗ Failed';
+      setProgress(0, d.error || 'Generation failed');
+      setTimeout(() => { btn.textContent = btn === document.getElementById('regen-orig-btn') ? '↺ Original' : '↺ Regenerate'; btn.classList.remove('err'); btn.disabled = false; document.getElementById('regen-status').style.display = 'none'; }, 4000);
     } else {
       pollRegen(promptId, attempts + 1, activeBtn);
     }
