@@ -1155,17 +1155,6 @@
     "type": "scene"
   },
   {
-    "name": "pov",
-    "label": "POV \u2014 first person perspective, immersive",
-    "subjects": "woman|woman in her 20s|woman in her 30s|two women",
-    "settings": "bedroom|hotel room|bathroom|living room sofa",
-    "clothing": "fully nude|in lingerie|partially undressed|nude mid-sex",
-    "styles": "POV photography|first-person perspective|candid photography",
-    "lighting": "natural window light|candlelight|soft overcast daylight",
-    "emphasis": "First-person POV perspective. Camera is the viewer's eyes. Subject facing or engaging directly with camera. Immersive, intimate. Shot from below or directly ahead.",
-    "type": "theme"
-  },
-  {
     "name": "pregnant",
     "label": "Pregnant \u2014 visibly pregnant woman, nude or lingerie",
     "subjects": "visibly pregnant woman|heavily pregnant woman in her 20s|pregnant woman in her 30s",
