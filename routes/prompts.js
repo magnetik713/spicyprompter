@@ -579,7 +579,8 @@ router.get('/api/comfyui/status', async (req, res) => {
       const filename = imgs[0]?.filename || '';
       const subfolder = imgs[0]?.subfolder || '';
       const imgType = imgs[0]?.type || 'output';
-      if (job.status?.completed) return res.json({ status: 'done', filename, subfolder, type: imgType });
+      if (job.status?.completed && filename) return res.json({ status: 'done', filename, subfolder, type: imgType });
+      if (job.status?.completed) return res.json({ status: 'error', error: 'ComfyUI job completed but produced no output image. Check your workflow has a SaveImage node (not PreviewImage).' });
       return res.json({ status: 'error' });
     }
     return res.json({ status: 'unknown' });
