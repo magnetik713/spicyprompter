@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 echo SpicyPrompter
 echo =============
 echo Starting server... close this window to stop.
