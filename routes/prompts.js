@@ -725,11 +725,13 @@ router.get('/:id', (req, res) => {
   `).get(req.params.id);
   if (!prompt) return res.status(404).render('404', { title: 'Not Found' });
   let wfMeta = null;
+  let hasSaveImage = false;
   if (prompt.workflow_json_path) {
     try {
       const wfRaw = require('fs').readFileSync(require('path').join(__dirname, '..', prompt.workflow_json_path), 'utf8');
       const wfJson = JSON.parse(wfRaw);
       const nodes = Array.isArray(wfJson.nodes) ? wfJson.nodes : Object.values(wfJson);
+      hasSaveImage = nodes.some(n => n.class_type === 'SaveImage');
       const sampler = nodes.find(n => n.class_type === 'KSampler' || n.class_type === 'KSamplerAdvanced' || (n.type && (n.type.includes('KSampler'))));
       const inputs = sampler ? (sampler.inputs || (sampler.widgets_values ? { steps: sampler.widgets_values[0], cfg: sampler.widgets_values[2], sampler_name: sampler.widgets_values[4], scheduler: sampler.widgets_values[5] } : {})) : {};
       wfMeta = {
@@ -746,7 +748,7 @@ router.get('/:id', (req, res) => {
   } else if (prompt.seed || prompt.steps || prompt.width) {
     wfMeta = { seed: prompt.seed, steps: prompt.steps, cfg: prompt.cfg_scale, sampler: prompt.sampler, width: prompt.width, height: prompt.height, scheduler: null, denoise: null };
   }
-  res.render('prompts/detail', { prompt, wfMeta, title: prompt.name, paid: cfg.isPaid() });
+  res.render('prompts/detail', { prompt, wfMeta, hasSaveImage, title: prompt.name, paid: cfg.isPaid() });
 });
 
 router.put('/:id', upload.single('image'), (req, res) => {

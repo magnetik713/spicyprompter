@@ -11,7 +11,7 @@
     <% } %>
     <% if (paid && prompt.positive && !prompt.starred) { %>
     <button id="regen-btn" class="btn btn-secondary" onclick="regenPrompt(false)" title="Regenerate using your currently configured workflow in Settings">&#x21BA; Regenerate</button>
-    <% if (prompt.workflow_json_path) { %><button id="regen-orig-btn" class="btn btn-secondary" onclick="regenPrompt(true)" title="Regenerate using this prompt's original embedded workflow" style="font-size:12px">&#x21BA; Original</button><% } else if (prompt.tags && prompt.tags.includes('imported')) { %><span style="font-size:11px;color:#e09a3a;align-self:center" title="Imported without a ComfyUI workflow — regenerating uses your Settings workflow">⚠ external workflow</span><% } %>
+    <% if (hasSaveImage) { %><button id="regen-orig-btn" class="btn btn-secondary" onclick="regenPrompt(true)" title="Regenerate using this prompt's original embedded workflow" style="font-size:12px">&#x21BA; Original</button><% } else if (prompt.tags && prompt.tags.includes('imported')) { %><span style="font-size:11px;color:#e09a3a;align-self:center" title="Imported without a ComfyUI workflow — regenerating uses your Settings workflow">⚠ external workflow</span><% } %>
 <% if (prompt.tags && prompt.tags.includes('imported') && !prompt.workflow_json_path) { %><button type="button" class="btn btn-secondary" onclick="adaptDetail()" id="adapt-detail-btn" style="font-size:12px">✦ Adapt</button><% } %>
 
     <% } %>
