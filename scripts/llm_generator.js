@@ -315,6 +315,12 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
       if (bodyEmphases.length) emphasisParts.push(`Body emphasis: ${bodyEmphases.join('; ')}`);
     }
   }
+  // Bust conflict: petite/slim/flat + busty — model tends to suppress large chest
+  const hasBusty     = BODYTYPE_NAMES.includes('busty');
+  const hasSmallFrame = BODYTYPE_NAMES.some(n => ['petite','petite_teen','slim','flat_chested'].includes(n));
+  if (hasBusty && hasSmallFrame) {
+    emphasisParts.push('BUST CONTRAST (ABSOLUTE): Subject has a small, slim frame with disproportionately large natural breasts — this contrast is intentional and MUST be described explicitly. Do NOT reduce breast size to match the frame. Write large breasts on a petite body.');
+  }
   const emphasisLine = emphasisParts.length ? '\n' + emphasisParts.join('\n') : '';
   const subjectLower = (skeleton.subject || '').toLowerCase();
   const hasMaleSubject = /\bman\b|\bmen\b/.test(subjectLower);
