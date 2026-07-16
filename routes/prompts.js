@@ -177,7 +177,7 @@ router.get('/generate/run', async (req, res) => {
     }
   }
 
-  const safeCount   = cfg.isPaid() ? Math.max(1, parseInt(count) || 5) : Math.min(250, Math.max(1, parseInt(count) || 5));
+  const safeCount   = cfg.isPaid() ? Math.min(999, Math.max(1, parseInt(count) || 5)) : Math.min(250, Math.max(1, parseInt(count) || 5));
   const safeModel   = (model || 'qwen3.6:35b-a3b').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
   const safeCats    = (cats || '').replace(/[^a-zA-Z0-9_,]/g, '');
   const safeSubject = (subject || '').replace(/[^a-zA-Z0-9 _,-]/g, '').trim();
