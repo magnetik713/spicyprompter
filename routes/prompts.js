@@ -580,7 +580,12 @@ router.get('/api/comfyui/status', async (req, res) => {
       const subfolder = imgs[0]?.subfolder || '';
       const imgType = imgs[0]?.type || 'output';
       if (job.status?.completed && filename) return res.json({ status: 'done', filename, subfolder, type: imgType });
-      if (job.status?.completed) return res.json({ status: 'error', error: 'ComfyUI job completed but produced no output image. Check your workflow has a SaveImage node (not PreviewImage).' });
+      if (job.status?.completed) {
+        const msgs = job.status?.messages || [];
+        const errEntry = msgs.find(m => m[0] === 'execution_error');
+        const detail = errEntry && errEntry[1] ? (errEntry[1].exception_message || errEntry[1].exception_type || '') : '';
+        return res.json({ status: 'error', error: detail ? 'ComfyUI error: ' + detail : 'ComfyUI job completed but produced no output image. Check your workflow has a SaveImage node (not PreviewImage).' });
+      }
       return res.json({ status: 'error' });
     }
     return res.json({ status: 'unknown' });
@@ -1118,7 +1123,7 @@ router.post('/api/import-png', memUpload.single('image'), (req, res) => {
     negative: (typeof negative === 'string' ? negative : '').trim(),
     has_workflow: !!(workflow_json),
     workflow_json: workflow_json || null,
-    has_prompt: !!(positive.trim()),
+    has_prompt: !!(typeof positive === 'string' && positive.trim()),
     suggested_name: suggestedName,
     source_filename: originalFilename,
     wf_meta: wfMeta,
