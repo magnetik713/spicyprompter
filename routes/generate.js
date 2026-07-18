@@ -3,7 +3,7 @@ const router = express.Router();
 const http = require('http');
 
 const cfg = require('../config');
-const COMFY_HOST = cfg.get('comfyui_host') || '192.168.1.30';
+const COMFY_HOST = cfg.get('comfyui_host') || 'localhost';
 const COMFY_PORT = parseInt(cfg.get('comfyui_port') || '8188');
 
 function comfyFetch(path, method = 'GET', body = null) {

@@ -40,6 +40,14 @@ const MAX_TOKENS           = parseInt(getArg('--max_tokens', '350'));
 const PROMPT_WORDS         = parseInt(getArg('--prompt_words', '110'), 10);
 const RAW_OUTPUT           = hasFlag('--raw_output');
 const ALLOW_TOYS           = hasFlag('--allow_toys');
+const DATASET_MODE         = hasFlag('--dataset');
+const GENDER_ARG           = getArg('--gender', 'women');
+const CLOTHING_ARG         = getArg('--clothing', null);
+const AGE_ARG              = getArg('--age', null);
+const HAIR_LENGTH_ARG      = getArg('--hair_length', null);
+const HAIR_STYLE_ARG       = getArg('--hair_style', null);
+const FACIAL_HAIR_ARG      = getArg('--facial_hair', null);
+const CLEAN_BG             = hasFlag('--clean_bg');
 
 const RACE_LABELS = {
   asian: 'Asian', ebony: 'Black', latina: 'Latina',
@@ -56,6 +64,10 @@ const BODYTYPE_LABELS = {
   milf: 'MILF', mature: 'mature', pregnant: 'pregnant', tattoos: 'tattooed',
   athletic: 'athletic', amazon: 'amazon', curvy: 'curvy', thick: 'thick',
   chubby: 'chubby', flat_chested: 'flat-chested', piercings: 'pierced',
+  // male builds
+  male_slim: 'slim, lean build', male_athletic: 'athletic, fit build',
+  male_muscular: 'muscular, well-built', male_broad: 'broad-shouldered, stocky build',
+  male_heavy: 'heavy-set build', male_tall: 'tall, slender build',
 };
 
 const DEFAULTS = {
@@ -66,6 +78,55 @@ const DEFAULTS = {
   cameras:  ['shot on DSLR, 85mm f/1.8','35mm film grain','RAW photo, Sony A7R IV','Canon 5D Mark IV, 50mm','Fujifilm X-T4, natural tones','Leica M, street documentary'],
   clothing: ['topless','fully nude','in lingerie','partially undressed','wearing only underwear','nude','in sheer fabric'],
 };
+
+const CLOTHING_LABELS = {
+  nude:            'nude',
+  casual_outfit:   'casual jeans and relaxed top, fully clothed',
+  athletic_wear:   'fitted athletic sportswear, workout clothes',
+  business_casual: 'business casual blazer and neat blouse, professional',
+  summer_dress:    'light floral summer dress, fully clothed',
+  formal_wear:     'formal evening gown, elegant dress',
+  neutral_outfit:  'plain neutral t-shirt and jeans, simple everyday clothing, no patterns',
+  male_casual:     'casual jeans and t-shirt, fully clothed',
+  male_athletic:   'athletic t-shirt and shorts, sportswear',
+  male_business:   'business casual dress shirt and slacks',
+  male_smart:      'smart casual chinos and button-up shirt',
+  male_formal:     'formal suit and tie, well-dressed',
+  male_neutral:    'plain neutral t-shirt and jeans, simple everyday clothing, no patterns',
+};
+
+if (DATASET_MODE) {
+  const AGE_SUBJECTS_F = {
+    late_teens: ['young woman, 18 years old', 'young woman, 19 years old', 'young woman in her late teens'],
+    '20s':      ['woman in her early 20s', 'woman in her mid-20s', 'woman in her late 20s'],
+    '30s':      ['woman in her early 30s', 'woman in her mid-30s', 'woman in her late 30s'],
+    '40s':      ['woman in her early 40s', 'woman in her mid-40s', 'woman in her late 40s'],
+    '50s':      ['woman in her 50s', 'mature woman in her 50s', 'mature woman in her early 60s'],
+  };
+  const AGE_SUBJECTS_M = {
+    late_teens: ['young man, 18 years old', 'young man, 19 years old', 'college-age young man'],
+    '20s':      ['man in his early 20s', 'man in his mid-20s', 'man in his late 20s'],
+    '30s':      ['man in his early 30s', 'man in his mid-30s', 'man in his late 30s'],
+    '40s':      ['man in his early 40s', 'man in his mid-40s', 'man in his late 40s'],
+    '50s':      ['man in his 50s', 'mature man in his 50s', 'distinguished man in his early 60s'],
+  };
+  const ageSubjectMap = GENDER_ARG === 'men' ? AGE_SUBJECTS_M : AGE_SUBJECTS_F;
+  const datasetSubjects = (AGE_ARG && ageSubjectMap[AGE_ARG])
+    ? ageSubjectMap[AGE_ARG]
+    : GENDER_ARG === 'men'
+      ? ['man', 'man in his 20s', 'man in his 30s', 'man in his 40s']
+      : ['woman', 'woman in her 20s', 'woman in her 30s', 'young woman'];
+  DEFAULTS.subjects = datasetSubjects;
+  DEFAULTS.settings = CLEAN_BG
+    ? ['studio with solid color backdrop', 'plain white studio background', 'seamless neutral gray backdrop', 'clean studio setup, minimal background']
+    : ['studio with neutral backdrop', 'outdoor park, natural light', 'coffee shop interior', 'urban sidewalk', 'garden patio', 'library reading area', 'bright living room'];
+  DEFAULTS.lighting = CLEAN_BG
+    ? ['studio softbox lighting', 'ring light, even illumination', 'beauty light, front-facing', 'diffused studio strobe lighting', 'soft studio fill light']
+    : ['soft natural window light', 'golden hour sunlight', 'diffused overcast daylight', 'studio softbox lighting', 'bright outdoor daylight'];
+  DEFAULTS.styles   = ['portrait photography', 'lifestyle photography', 'editorial fashion photography', 'character reference photography'];
+  DEFAULTS.cameras  = ['85mm portrait lens, f/2.0, shallow depth of field', '50mm lens, natural perspective', 'Canon 5D, portrait mode, sharp focus'];
+  DEFAULTS.clothing = ['casual jeans and relaxed t-shirt, fully clothed', 'light summer dress, fully clothed', 'business casual blazer and blouse', 'athletic sportswear, fitted', 'cozy sweater and slacks, fully clothed'];
+}
 
 function loadCategories() {
   try {
@@ -220,10 +281,10 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
   const raceCatData  = RACE_ARG     ? CATEGORIES[RACE_ARG]     : null;
   const bodyCatData  = BODYTYPE_NAMES.length ? CATEGORIES[BODYTYPE_NAMES[0]] : null;
   const S = {
-    subjects: bodyCatData?.subjects || roleCatData?.subjects || actCat?.subjects || sceneCat?.subjects || DEFAULTS.subjects,
+    subjects: DATASET_MODE ? DEFAULTS.subjects : (bodyCatData?.subjects || roleCatData?.subjects || actCat?.subjects || sceneCat?.subjects || DEFAULTS.subjects),
     settings: padPool(sceneCat?.settings || actCat?.settings || themeCat?.settings || roleCatData?.settings),
-    lighting: styleCatData?.lighting || sceneCat?.lighting || actCat?.lighting || DEFAULTS.lighting,
-    styles:   styleCatData?.styles   || sceneCat?.styles   || actCat?.styles   || DEFAULTS.styles,
+    lighting: (DATASET_MODE && CLEAN_BG) ? DEFAULTS.lighting : (styleCatData?.lighting || sceneCat?.lighting || actCat?.lighting || DEFAULTS.lighting),
+    styles:   DATASET_MODE ? DEFAULTS.styles : (styleCatData?.styles || sceneCat?.styles || actCat?.styles || DEFAULTS.styles),
     cameras:  DEFAULTS.cameras,
     clothing: roleCatData?.clothing || bodyCatData?.clothing || actCat?.clothing || sceneCat?.clothing || DEFAULTS.clothing,
   };
@@ -249,6 +310,7 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
     camera:   p.camera(),
     clothing: p.clothing(),
   };
+  if (CLOTHING_ARG) skeleton.clothing = CLOTHING_LABELS[CLOTHING_ARG] || CLOTHING_ARG.replace(/_/g, ' ');
   if (RACE_ARG) {
     const raceLabel = RACE_LABELS[RACE_ARG] || RACE_ARG;
     const subj = skeleton.subject.toLowerCase();
@@ -293,6 +355,8 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
 }
 
 const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, facial_expression, role, camera_angle, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, facial expression, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. If facial_expression is given, the subject's face must show that exact expression throughout. Realistic photography ONLY — no anime, no illustration, no cartoon. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
+
+const SYSTEM_DATASET = `You are a photorealistic portrait prompt engineer for LoRA training datasets. Write detailed, realistic character portrait prompts. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject appearance (race, body type, hair color, eye color, skin tone, facial expression), clothing/outfit description (follow the skeleton clothing field exactly — if nude, describe nude), setting/environment, lighting quality, mood, camera angle and composition. If camera_angle is given, compose the shot from that exact viewpoint. If facial_expression is given, the subject must show that expression. Realistic photography ONLY — no anime, no illustration, no cartoon. SKELETON ECHO RULE: Never output skeleton fields as standalone sentences. Weave all details into flowing prose description only.`;
 
 async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const skeletonStr = Object.entries(skeleton).map(([k,v]) => `${k}: ${v}`).join('\n');
@@ -348,12 +412,25 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const expressionRule      = FACIAL_EXPRESSION_ARG ? `\nFACIAL EXPRESSION (ABSOLUTE): The subject's face shows ${FACIAL_EXPRESSION_ARG.replace(/_/g, ' ')} — describe this expression explicitly in the prompt.` : '';
   const eyeColorRule        = EYE_COLOR_ARG         ? `\nEYE COLOR (ABSOLUTE): The subject has ${EYE_COLOR_ARG.replace(/_/g, ' ')} eyes. Mention eye color explicitly — do not substitute or omit.` : '';
   const skinToneRule        = SKIN_TONE_ARG         ? `\nSKIN TONE (ABSOLUTE): The subject has ${SKIN_TONE_ARG.replace(/_/g, ' ')} skin. Describe this skin tone explicitly — overrides any race-implied skin tone.` : '';
-  const userMsg = `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:\n${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}\n\nIMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, explicit prompt.`;
+  const ageRule             = AGE_ARG               ? `\nAGE (ABSOLUTE): Subject is in their ${AGE_ARG.replace(/_/g, ' ')} — reflect this clearly in appearance and features.` : '';
+  const hairLengthRule      = HAIR_LENGTH_ARG        ? `\nHAIR LENGTH (ABSOLUTE): Subject has ${HAIR_LENGTH_ARG.replace(/_/g, ' ')} hair — describe the length explicitly.` : '';
+  const hairStyleRule       = HAIR_STYLE_ARG         ? `\nHAIR STYLE (ABSOLUTE): Subject has ${HAIR_STYLE_ARG.replace(/_/g, ' ')} hair — describe the texture and style explicitly.` : '';
+  const facialHairRule      = FACIAL_HAIR_ARG        ? `\nFACIAL HAIR (ABSOLUTE): Subject has ${FACIAL_HAIR_ARG.replace(/_/g, ' ')} — describe it explicitly in the prompt.` : '';
+  const userMsg = DATASET_MODE
+    ? `Generate a detailed SFW photorealistic character portrait prompt for LoRA training using this skeleton:
+${skeletonStr}${emphasisLine}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}${ageRule}${hairLengthRule}${hairStyleRule}${facialHairRule}
+
+IMPORTANT: Use the EXACT subject, race, body_type, clothing, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, detailed portrait description.`
+    : `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:
+${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}${ageRule}${hairLengthRule}${hairStyleRule}${facialHairRule}
+
+IMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, explicit prompt.`;
 
   const baseInstruction = '\n\nSTRICTLY FORBIDDEN: Do not include any explanation, reasoning, commentary, or meta-text. Do not pad with filler sentences like \"The X is Y.\" or \"The moment is captured.\" -- every sentence must describe a specific visual detail. Output ONLY the image prompt text. No sentences about incompatibility, adaptations, or scene logic.';
+  const activeSystem = DATASET_MODE ? SYSTEM_DATASET : SYSTEM;
   const systemContent = RAW_OUTPUT
-    ? SYSTEM + baseInstruction + ' Begin directly with the image description, no preamble.'
-    : SYSTEM + baseInstruction;
+    ? activeSystem + baseInstruction + ' Begin directly with the image description, no preamble.'
+    : activeSystem + baseInstruction;
     const reqBody = {
     model: MODEL,
     messages: [{ role: 'system', content: systemContent }, { role: 'user', content: userMsg }],
@@ -478,7 +555,7 @@ async function main() {
     const sceneCat  = sceneName ? CATEGORIES[sceneName] : null;
     const themeCat  = themeName ? CATEGORIES[themeName] : null;
     const effectiveRole  = ROLE_RANDOM  ? ALL_ROLES[Math.floor(Math.random()  * ALL_ROLES.length)]  : ROLE_ARG;
-    const effectiveStyle = STYLE_RANDOM ? ALL_STYLES[Math.floor(Math.random() * ALL_STYLES.length)] : STYLE_ARG;
+    const effectiveStyle = (DATASET_MODE || !STYLE_RANDOM) ? STYLE_ARG : ALL_STYLES[Math.floor(Math.random() * ALL_STYLES.length)];
 
     const skeleton  = buildSkeleton(actCat, sceneCat, themeCat, effectiveRole, effectiveStyle);
     if (sceneName && SCENE_SETTING_MAP[sceneName]) skeleton.setting = SCENE_SETTING_MAP[sceneName];
@@ -554,10 +631,12 @@ async function main() {
       if (resolvedThemeName) tagParts.push(resolvedThemeName);
       if (RACE_ARG)     tagParts.push(RACE_ARG);
       if (BODYTYPE_ARG) tagParts.push(BODYTYPE_ARG);
+      if (DATASET_MODE) tagParts.push('dataset');
+      if (DATASET_MODE && CAMERA_VIEW_ARG) tagParts.push(CAMERA_VIEW_ARG);
       if (effectiveRole) tagParts.push(effectiveRole);
       if (effectiveStyle) tagParts.push(effectiveStyle);
       tagParts.push(skeleton.setting);
-      insert.run({
+      const insertInfo = insert.run({
         name,
         positive: prompt,
         tags: tagParts.join(','),
@@ -566,6 +645,7 @@ async function main() {
       });
       inserted++;
       console.log('ok');
+      if (insertInfo.changes) process.stdout.write(`PROMPT_ID:${insertInfo.lastInsertRowid}\n`);
     } catch (e) {
       console.log(`error: ${e.message}`);
       failed++;
