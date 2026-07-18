@@ -1223,9 +1223,9 @@ router.post('/api/import-png/save', (req, res) => {
       const fs2 = require('fs');
       JSON.parse(workflow_json); // validate
       const fname = Date.now() + '-imported.json';
-      const fpath = path.join(__dirname, '../uploads/workflows', fname);
+      const fpath = path.join(__dirname, '../uploads/workflows/imported', fname);
       fs2.writeFileSync(fpath, workflow_json);
-      savedWfPath = 'uploads/workflows/' + fname;
+      savedWfPath = 'uploads/workflows/imported/' + fname;
     } catch(e) {
       return res.status(400).json({ error: 'Invalid workflow JSON: ' + e.message });
     }

@@ -6,7 +6,7 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3014;
 
-['uploads/images', 'uploads/workflows/generated'].forEach(dir => {
+['uploads/images', 'uploads/workflows/generated', 'uploads/workflows/imported'].forEach(dir => {
   fs.mkdirSync(path.join(__dirname, dir), { recursive: true });
 });
 

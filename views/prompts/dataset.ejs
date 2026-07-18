@@ -51,7 +51,7 @@
 <div class="page-header">
   <h1>Dataset Builder</h1>
 </div>
-<p class="dataset-desc">Generate fully-clothed, SFW character portraits for LoRA training datasets. Check the views you want — Generate will cycle through each one automatically.</p>
+<p class="dataset-desc">Generate character portraits for LoRA training datasets. Check the views you want — Generate will cycle through each one automatically.</p>
 
 <div class="gender-toggle">
   <button class="gender-btn active" id="gender-btn-female" onclick="setGender('female')">Female</button>
@@ -133,7 +133,7 @@
 </div>
 
 <!-- Attributes -->
-<span class="section-lbl">Attributes <% if (!paid) { %><span style="color:var(--accent);font-size:9px;font-weight:400">&#128274; license required for hair/eye/skin</span><% } %></span>
+<span class="section-lbl">Attributes</span>
 <div class="attrs-grid">
   <div class="attr-panel">
     <span class="attr-label">Age</span>
@@ -254,22 +254,7 @@
   </div>
 </div>
 
-<% if (!paid) { %>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  ['hair_color','facial_expression','eye_color','skin_tone'].forEach(function(name) {
-    document.querySelectorAll('input[name="' + name + '"]').forEach(function(el) {
-      if (el.value !== '') {
-        el.disabled = true;
-        el.parentElement.style.opacity = '0.3';
-        el.parentElement.style.cursor = 'not-allowed';
-        el.parentElement.title = 'Unlock with a license';
-      }
-    });
-  });
-});
-</script>
-<% } %>
+
 
 <div id="output-box" class="output-box"></div>
 
@@ -296,6 +281,12 @@ function setGender(g) {
   var neutralId = g === 'male' ? 'mcl_neutral' : 'cl_neutral';
   var neutralEl = document.getElementById(neutralId);
   if (neutralEl) neutralEl.checked = true;
+  ALL_VIEWS.forEach(function(v) {
+    var item = document.getElementById('view-item-' + v.value);
+    var el   = document.getElementById('view_' + v.value);
+    if (item) item.classList.remove('view-done');
+    if (el)   { el.disabled = false; el.checked = true; }
+  });
   syncTabVals();
 }
 
