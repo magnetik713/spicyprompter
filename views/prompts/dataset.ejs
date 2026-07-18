@@ -1,0 +1,536 @@
+<%- include('../partials/header') %>
+<style>
+  .cat-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:0; flex-wrap:wrap; }
+  .cat-tab {
+    padding:7px 14px; font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); background:none; border:none; border-bottom:2px solid transparent;
+    cursor:pointer; font-family:var(--font); white-space:nowrap;
+  }
+  .cat-tab:hover { color:var(--text); }
+  .cat-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .cat-tab-val { font-size:9px; color:var(--dim); margin-left:5px; text-transform:none; letter-spacing:0; }
+  .cat-panes { border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); padding:14px 16px; margin-bottom:14px; min-height:80px; }
+  .cat-pane { display:none; }
+  .cat-pane.active { display:flex; flex-wrap:wrap; gap:6px 14px; }
+  .opt-item { display:flex; align-items:center; gap:5px; }
+  .opt-item label { font-size:12px; cursor:pointer; }
+  .bt-wrap { display:flex; flex-wrap:wrap; gap:6px 14px; }
+  .bt-item { display:flex; align-items:center; gap:5px; }
+  .bt-item label { font-size:12px; cursor:pointer; }
+  .attrs-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+  @media (max-width:600px) { .attrs-grid { grid-template-columns:1fr; } }
+  .attr-panel { border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+  .attr-label { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:var(--font); margin-bottom:8px; display:block; }
+  .attr-opts { display:flex; flex-wrap:wrap; gap:5px 12px; }
+
+  .output-box {
+    display:none; background:var(--bg2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:12px 14px; font-size:11px;
+    font-family:var(--font-mono,monospace); white-space:pre-wrap; line-height:1.7;
+    max-height:400px; overflow-y:auto; margin-top:14px;
+  }
+  .line-ok     { color:#6db86d; }
+  .line-err    { color:#c0392b; }
+  .line-skip   { color:#e09a3a; }
+  .line-info   { color:var(--muted); }
+  .line-header { color:var(--accent); font-weight:600; }
+
+  .gen-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .gen-bar input[type=number] { width:70px; }
+  .gen-bar input[type=text]   { flex:1; min-width:180px; }
+  .dataset-desc { font-size:12px; color:var(--muted); margin-bottom:16px; line-height:1.6; }
+  .section-lbl { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:var(--font); margin-bottom:6px; display:block; }
+  .view-done label { text-decoration:line-through; color:var(--muted) !important; }
+  .view-done input { opacity:0.4; }
+  .gender-toggle { display:flex; gap:0; margin-bottom:14px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; width:fit-content; }
+  .gender-btn { padding:6px 18px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-family:var(--font); background:none; border:none; color:var(--muted); cursor:pointer; }
+  .gender-btn.active { background:var(--accent); color:#fff; }
+  .gender-btn:hover:not(.active) { background:var(--bg2); color:var(--text); }
+</style>
+
+<div class="page-header">
+  <h1>Dataset Builder</h1>
+</div>
+<p class="dataset-desc">Generate fully-clothed, SFW character portraits for LoRA training datasets. Check the views you want — Generate will cycle through each one automatically.</p>
+
+<div class="gender-toggle">
+  <button class="gender-btn active" id="gender-btn-female" onclick="setGender('female')">Female</button>
+  <button class="gender-btn" id="gender-btn-male" onclick="setGender('male')">Male</button>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+  <input type="checkbox" id="clean-bg" checked style="cursor:pointer">
+  <label for="clean-bg" style="font-size:12px;cursor:pointer">Studio / Clean Background <span style="color:var(--muted);font-size:10px">(solid color or neutral backdrop)</span></label>
+</div>
+<div class="gen-bar">
+  <label class="section-lbl" style="margin:0">Count per view</label>
+  <input type="number" id="count-input" value="10" min="1" max="<%= paid ? 999 : 5 %>">
+  <label class="section-lbl" style="margin:0">Model</label>
+  <input type="text" id="model-input" value="<%= defaultModel %>" placeholder="e.g. qwen3.6:35b-a3b">
+  <button id="gen-btn" class="btn btn-primary" onclick="startGenerate()">&#9654; Generate</button>
+</div>
+
+<!-- Category tabs -->
+<div class="cat-tabs">
+  <button class="cat-tab active" onclick="selectCat('race',this)">Race <span class="cat-tab-val" id="tabval-race">Any</span></button>
+  <button class="cat-tab" onclick="selectCat('body',this)">Body <span class="cat-tab-val" id="tabval-body">Any</span></button>
+  <button class="cat-tab" onclick="selectCat('view',this)">Views <span class="cat-tab-val" id="tabval-view">All 7</span></button>
+</div>
+<div class="cat-panes">
+  <!-- Race -->
+  <div id="cat-pane-race" class="cat-pane active" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:5px 0;">
+    <div class="opt-item"><input type="radio" name="race" id="race_any" value="" checked><label for="race_any" style="color:var(--muted);font-style:italic">Any</label></div>
+    <% raceCategories.forEach(function(r) { %>
+    <div class="opt-item"><input type="radio" name="race" id="race_<%= r.name %>" value="<%= r.name %>"><label for="race_<%= r.name %>"><%= r.label.split(" —")[0] %></label></div>
+    <% }); %>
+  </div>
+
+  <!-- Body -->
+  <div id="cat-pane-body" class="cat-pane">
+    <div id="body-female">
+      <div class="bt-wrap" id="bt-wrap">
+        <div class="bt-item"><input type="radio" name="bodytype_f" id="bt_any" value="" checked onchange="syncTabVals()"><label for="bt_any" style="color:var(--muted);font-style:italic">Any</label></div>
+        <% bodyTypeCategories.filter(function(b){return b.name !== 'tattoos' && b.name !== 'piercings' && b.name !== 'busty';}).forEach(function(b) { %>
+        <div class="bt-item"><input type="radio" name="bodytype_f" id="bt_<%= b.name %>" value="<%= b.name %>" onchange="syncTabVals()"><label for="bt_<%= b.name %>"><%= b.label.split(' —')[0] %></label></div>
+        <% }); %>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Modifiers:</span>
+        <div class="bt-item"><input type="checkbox" class="mod-check" id="mod_busty"    value="busty"    onchange="syncTabVals()"><label for="mod_busty">Busty</label></div>
+        <div class="bt-item"><input type="checkbox" class="mod-check" id="mod_tattoos"  value="tattoos"  onchange="syncTabVals()"><label for="mod_tattoos">Tattoos</label></div>
+        <div class="bt-item"><input type="checkbox" class="mod-check" id="mod_piercings" value="piercings" onchange="syncTabVals()"><label for="mod_piercings">Piercings</label></div>
+      </div>
+    </div>
+    <div id="body-male" style="display:none">
+      <div class="bt-wrap">
+        <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_slim"      value="male_slim"     onchange="syncTabVals()"><label for="mb_slim">Slim</label></div>
+        <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_athletic"  value="male_athletic"  onchange="syncTabVals()"><label for="mb_athletic">Athletic</label></div>
+        <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_muscular"  value="male_muscular"  onchange="syncTabVals()"><label for="mb_muscular">Muscular</label></div>
+        <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_broad"     value="male_broad"     onchange="syncTabVals()"><label for="mb_broad">Broad / Stocky</label></div>
+        <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_heavy"     value="male_heavy"     onchange="syncTabVals()"><label for="mb_heavy">Heavy-set</label></div>
+        <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_tall"      value="male_tall"      onchange="syncTabVals()"><label for="mb_tall">Tall / Slender</label></div>
+      </div>
+      <div style="margin-top:8px"><button type="button" class="row-btn" onclick="clearMaleBodytype()">Clear</button></div>
+    </div>
+  </div>
+
+  <!-- Views — checkboxes, all on by default -->
+  <div id="cat-pane-view" class="cat-pane" style="flex-direction:column">
+    <div style="display:flex;flex-wrap:wrap;gap:6px 20px">
+      <div class="opt-item" id="view-item-portrait"><input type="checkbox" class="view-check" id="view_portrait" value="portrait" checked onchange="syncTabVals()"><label for="view_portrait">Portrait / Face</label></div>
+      <div class="opt-item" id="view-item-full_body"><input type="checkbox" class="view-check" id="view_full_body" value="full_body" checked onchange="syncTabVals()"><label for="view_full_body">Full Body</label></div>
+      <div class="opt-item" id="view-item-waist_up"><input type="checkbox" class="view-check" id="view_waist_up" value="waist_up" checked onchange="syncTabVals()"><label for="view_waist_up">Waist Up</label></div>
+      <div class="opt-item" id="view-item-low_angle"><input type="checkbox" class="view-check" id="view_low_angle" value="low_angle" checked onchange="syncTabVals()"><label for="view_low_angle">Low Angle</label></div>
+      <div class="opt-item" id="view-item-from_above"><input type="checkbox" class="view-check" id="view_from_above" value="from_above" checked onchange="syncTabVals()"><label for="view_from_above">From Above</label></div>
+      <div class="opt-item" id="view-item-side"><input type="checkbox" class="view-check" id="view_side" value="side" checked onchange="syncTabVals()"><label for="view_side">Side View</label></div>
+      <div class="opt-item" id="view-item-over_shoulder"><input type="checkbox" class="view-check" id="view_over_shoulder" value="over_shoulder" checked onchange="syncTabVals()"><label for="view_over_shoulder">Over Shoulder</label></div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button type="button" class="row-btn" onclick="checkAllViews(true)">All</button>
+      <button type="button" class="row-btn" onclick="checkAllViews(false)">None</button>
+    </div>
+  </div>
+</div>
+
+<!-- Attributes -->
+<span class="section-lbl">Attributes <% if (!paid) { %><span style="color:var(--accent);font-size:9px;font-weight:400">&#128274; license required for hair/eye/skin</span><% } %></span>
+<div class="attrs-grid">
+  <div class="attr-panel">
+    <span class="attr-label">Age</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="age" id="age_any" value="" checked><label for="age_any" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_teen" value="late_teens"><label for="age_teen">Teen (18+)</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_20s" value="20s"><label for="age_20s">20s</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_30s" value="30s"><label for="age_30s">30s</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_40s" value="40s"><label for="age_40s">40s</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_50s" value="50s"><label for="age_50s">50s+</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Hair Length</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_any"    value="" checked><label for="hl_any" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_short"  value="short"><label for="hl_short">Short</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_medium" value="medium_length"><label for="hl_medium">Medium</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_long"   value="long"><label for="hl_long">Long</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_vlong"  value="very_long"><label for="hl_vlong">Very Long</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Hair Style</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_any"     value="" checked><label for="hs_any" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_straight" value="straight"><label for="hs_straight">Straight</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_wavy"    value="wavy"><label for="hs_wavy">Wavy</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_curly"   value="curly"><label for="hs_curly">Curly</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_braids"  value="braids"><label for="hs_braids">Braids</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Clothing</span>
+    <div id="clothing-female" class="attr-opts">
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_any"      value=""><label for="cl_any" style="color:var(--muted);font-style:italic">Varied</label></div>
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_casual"   value="casual_outfit"><label for="cl_casual">Casual</label></div>
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_athletic" value="athletic_wear"><label for="cl_athletic">Athletic</label></div>
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_business" value="business_casual"><label for="cl_business">Business</label></div>
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_dress"    value="summer_dress"><label for="cl_dress">Summer Dress</label></div>
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_formal"   value="formal_wear"><label for="cl_formal">Formal</label></div>
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_neutral"  value="neutral_outfit" checked><label for="cl_neutral">Neutral</label></div>
+      <div class="opt-item"><input type="radio" name="clothing" id="cl_nude"     value="nude"><label for="cl_nude" style="color:var(--muted)">Nude / None</label></div>
+    </div>
+    <div id="clothing-male" class="attr-opts" style="display:none">
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_any"      value=""><label for="mcl_any" style="color:var(--muted);font-style:italic">Varied</label></div>
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_casual"   value="male_casual"><label for="mcl_casual">Casual</label></div>
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_athletic" value="male_athletic"><label for="mcl_athletic">Athletic</label></div>
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_business" value="male_business"><label for="mcl_business">Business</label></div>
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_smart"    value="male_smart"><label for="mcl_smart">Smart Casual</label></div>
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_formal"   value="male_formal"><label for="mcl_formal">Formal / Suit</label></div>
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_neutral"  value="male_neutral" checked><label for="mcl_neutral">Neutral</label></div>
+      <div class="opt-item"><input type="radio" name="clothing_male" id="mcl_nude"     value="nude"><label for="mcl_nude" style="color:var(--muted)">Nude / None</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Hair Color</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_none" value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_black"    value="black"><label for="hc_black">Black</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_brunette" value="brunette"><label for="hc_brunette">Brunette</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blonde"   value="blonde"><label for="hc_blonde">Blonde</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_red"      value="red"><label for="hc_red">Red / Ginger</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_auburn"   value="auburn"><label for="hc_auburn">Auburn</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_platinum" value="platinum_blonde"><label for="hc_platinum">Platinum Blonde</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_silver"   value="silver"><label for="hc_silver">Silver / White</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_pink"     value="pink"><label for="hc_pink">Pink</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blue"     value="blue"><label for="hc_blue">Blue / Teal</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Expression</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none"      value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_smile"     value="natural smile"><label for="fe_smile">Natural Smile</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_laughing"  value="laughing"><label for="fe_laughing">Laughing / Joyful</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_neutral"   value="neutral calm"><label for="fe_neutral">Neutral / Calm</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_pensive"   value="pensive thoughtful"><label for="fe_pensive">Pensive</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_confident" value="confident serious"><label for="fe_confident">Confident</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_shy"       value="shy bashful"><label for="fe_shy">Shy / Bashful</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_contact"   value="direct eye contact"><label for="fe_contact">Direct Eye Contact</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_away"      value="looking away"><label for="fe_away">Looking Away</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Eye Color</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_none"  value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_brown" value="brown"><label for="ec_brown">Brown</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_blue"  value="blue"><label for="ec_blue">Blue</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_green" value="green"><label for="ec_green">Green</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_hazel" value="hazel"><label for="ec_hazel">Hazel</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_gray"  value="gray"><label for="ec_gray">Gray</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_amber" value="amber"><label for="ec_amber">Amber</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_dark"  value="dark"><label for="ec_dark">Dark / Black</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Skin Tone</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_none"   value="" checked><label for="st_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_pale"   value="pale"><label for="st_pale">Pale / Fair</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_tan"    value="tan"><label for="st_tan">Tan / Sun-kissed</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_olive"  value="olive"><label for="st_olive">Olive</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_bronze" value="bronze"><label for="st_bronze">Bronze</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_dark"   value="dark"><label for="st_dark">Dark</label></div>
+    </div>
+  </div>
+  <div class="attr-panel" id="facial-hair-panel" style="display:none">
+    <span class="attr-label">Facial Hair</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="facial_hair" id="fh_none"        value="" checked><label for="fh_none" style="color:var(--muted);font-style:italic">None / Clean-shaven</label></div>
+      <div class="opt-item"><input type="radio" name="facial_hair" id="fh_stubble"     value="light stubble"><label for="fh_stubble">Stubble</label></div>
+      <div class="opt-item"><input type="radio" name="facial_hair" id="fh_short_beard" value="short neat beard"><label for="fh_short_beard">Short Beard</label></div>
+      <div class="opt-item"><input type="radio" name="facial_hair" id="fh_full_beard"  value="full beard"><label for="fh_full_beard">Full Beard</label></div>
+      <div class="opt-item"><input type="radio" name="facial_hair" id="fh_mustache"    value="mustache"><label for="fh_mustache">Mustache</label></div>
+    </div>
+  </div>
+</div>
+
+<% if (!paid) { %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  ['hair_color','facial_expression','eye_color','skin_tone'].forEach(function(name) {
+    document.querySelectorAll('input[name="' + name + '"]').forEach(function(el) {
+      if (el.value !== '') {
+        el.disabled = true;
+        el.parentElement.style.opacity = '0.3';
+        el.parentElement.style.cursor = 'not-allowed';
+        el.parentElement.title = 'Unlock with a license';
+      }
+    });
+  });
+});
+</script>
+<% } %>
+
+<div id="output-box" class="output-box"></div>
+
+<script>
+var currentGender = 'female';
+var batchIds = [];
+
+function setGender(g) {
+  currentGender = g;
+  document.getElementById('gender-btn-female').classList.toggle('active', g === 'female');
+  document.getElementById('gender-btn-male').classList.toggle('active', g === 'male');
+  document.getElementById('body-female').style.display = g === 'female' ? '' : 'none';
+  document.getElementById('body-male').style.display   = g === 'male'   ? '' : 'none';
+  // clear the other gender's checks and swap clothing panel
+  if (g === 'male') {
+    var anyEl = document.getElementById('bt_any'); if (anyEl) anyEl.checked = true;
+    document.querySelectorAll('.mod-check').forEach(function(e){e.checked=false;});
+  }
+  if (g === 'female') document.querySelectorAll('.mb-check').forEach(function(e){e.checked=false;});
+  document.getElementById('clothing-female').style.display = g === 'female' ? '' : 'none';
+  document.getElementById('clothing-male').style.display   = g === 'male'   ? '' : 'none';
+  document.getElementById('facial-hair-panel').style.display  = g === 'male'   ? '' : 'none';
+  // reset clothing to neutral when switching gender
+  var neutralId = g === 'male' ? 'mcl_neutral' : 'cl_neutral';
+  var neutralEl = document.getElementById(neutralId);
+  if (neutralEl) neutralEl.checked = true;
+  syncTabVals();
+}
+
+var ALL_VIEWS = [
+  { value: 'portrait',      label: 'Portrait / Face' },
+  { value: 'full_body',     label: 'Full Body' },
+  { value: 'waist_up',      label: 'Waist Up' },
+  { value: 'low_angle',     label: 'Low Angle' },
+  { value: 'from_above',    label: 'From Above' },
+  { value: 'side',          label: 'Side View' },
+  { value: 'over_shoulder', label: 'Over Shoulder' },
+];
+
+function selectCat(cat, btn) {
+  document.querySelectorAll('.cat-tab').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.cat-pane').forEach(function(p) {
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  var pane = document.getElementById('cat-pane-' + cat);
+  pane.style.display = cat === 'view' ? 'block' : 'flex';
+  pane.classList.add('active');
+}
+
+function checkAllViews(state) {
+  document.querySelectorAll('.view-check:not(:disabled)').forEach(function(el) { el.checked = state; });
+  syncTabVals();
+}
+
+function syncTabVals() {
+  var raceEl = document.querySelector('input[name="race"]:checked');
+  document.getElementById('tabval-race').textContent = (raceEl && raceEl.value) ? raceEl.nextElementSibling.textContent.trim() : 'Any';
+
+  var btEl = document.getElementById('tabval-body');
+  if (currentGender === 'male') {
+    var mbChecked = Array.from(document.querySelectorAll('.mb-check:checked'));
+    btEl.textContent = mbChecked.length === 0 ? 'Any' : mbChecked.length === 1 ? mbChecked[0].nextElementSibling.textContent.trim() : mbChecked.length + ' selected';
+  } else {
+    var btRadio = document.querySelector('input[name="bodytype_f"]:checked');
+    var mods = Array.from(document.querySelectorAll('.mod-check:checked'));
+    var btBase = (btRadio && btRadio.value) ? btRadio.nextElementSibling.textContent.trim() : 'Any';
+    btEl.textContent = mods.length ? btBase + ' +' + mods.length : btBase;
+  }
+
+  var checkedViews = Array.from(document.querySelectorAll('.view-check:checked:not(:disabled)'));
+  var viewEl = document.getElementById('tabval-view');
+  if (checkedViews.length === ALL_VIEWS.length) {
+    viewEl.textContent = 'All ' + ALL_VIEWS.length;
+  } else if (checkedViews.length === 0) {
+    viewEl.textContent = 'None';
+  } else {
+    viewEl.textContent = checkedViews.length + ' selected';
+  }
+}
+
+function clearBodytype() {
+  var anyEl = document.getElementById('bt_any');
+  if (anyEl) anyEl.checked = true;
+  document.querySelectorAll('.mod-check').forEach(function(el) { el.checked = false; });
+  syncTabVals();
+}
+
+function clearMaleBodytype() {
+  document.querySelectorAll('.mb-check').forEach(function(el) { el.checked = false; });
+  syncTabVals();
+}
+
+document.addEventListener('change', function(e) {
+  if (e.target.type === 'radio' || e.target.classList.contains('mb-check') || e.target.classList.contains('mod-check') || e.target.classList.contains('view-check')) syncTabVals();
+});
+
+var activeES = null;
+
+function startGenerate() {
+  if (activeES) { activeES.close(); activeES = null; }
+
+  var count     = document.getElementById('count-input').value || '10';
+  var model     = document.getElementById('model-input').value || '';
+  var race      = (document.querySelector('input[name="race"]:checked') || {}).value || '';
+  var bodytype = (function() {
+    if (currentGender === 'male') {
+      return Array.from(document.querySelectorAll('.mb-check:checked')).map(function(el){return el.value;}).join(',');
+    }
+    var base = (document.querySelector('input[name="bodytype_f"]:checked') || {}).value || '';
+    var mods = Array.from(document.querySelectorAll('.mod-check:checked')).map(function(el){return el.value;});
+    return [base].concat(mods).filter(Boolean).join(',');
+  }());
+  var clothing  = currentGender === 'male' ? (document.querySelector('input[name="clothing_male"]:checked') || {}).value || '' : (document.querySelector('input[name="clothing"]:checked') || {}).value || '';
+  var hair_color        = (document.querySelector('input[name="hair_color"]:checked') || {}).value || '';
+  var facial_expression = (document.querySelector('input[name="facial_expression"]:checked') || {}).value || '';
+  var eye_color         = (document.querySelector('input[name="eye_color"]:checked') || {}).value || '';
+  var skin_tone         = (document.querySelector('input[name="skin_tone"]:checked') || {}).value || '';
+  var age         = (document.querySelector('input[name="age"]:checked')         || {}).value || '';
+  var hair_length = (document.querySelector('input[name="hair_length"]:checked') || {}).value || '';
+  var hair_style  = (document.querySelector('input[name="hair_style"]:checked')  || {}).value || '';
+  var facial_hair = (document.querySelector('input[name="facial_hair"]:checked') || {}).value || '';
+
+  var selectedViews = ALL_VIEWS.filter(function(v) {
+    var el = document.getElementById('view_' + v.value);
+    return el && el.checked && !el.disabled;
+  });
+  if (selectedViews.length === 0) { alert('Select at least one view.'); return; }
+
+  ALL_VIEWS.forEach(function(v) {
+    var item = document.getElementById('view-item-' + v.value);
+    var el   = document.getElementById('view_' + v.value);
+    if (item) item.classList.remove('view-done');
+    if (el && !el.disabled) el.checked = !!selectedViews.find(function(sv){return sv.value === v.value;});
+  });
+  syncTabVals();
+
+  var box = document.getElementById('output-box');
+  var btn = document.getElementById('gen-btn');
+  box.innerHTML = '';
+  box.style.display = 'block';
+  btn.disabled = true;
+  batchIds = [];
+  var ep = document.getElementById('export-panel'); if (ep) ep.style.display = 'none';
+
+  var baseParams = { count: count, model: model };
+  var cleanBg = document.getElementById('clean-bg') && document.getElementById('clean-bg').checked;
+  if (cleanBg) baseParams.clean_bg = '1';
+  if (currentGender === 'male') baseParams.gender = 'men';
+  if (race)     baseParams.race     = race;
+  if (bodytype) baseParams.bodytype = bodytype;
+  if (clothing) baseParams.clothing = clothing;
+  if (hair_color)        baseParams.hair_color        = hair_color;
+  if (facial_expression) baseParams.facial_expression = facial_expression;
+  if (eye_color)         baseParams.eye_color         = eye_color;
+  if (skin_tone)         baseParams.skin_tone         = skin_tone;
+  if (age)         baseParams.age         = age;
+  if (hair_length) baseParams.hair_length = hair_length;
+  if (hair_style)  baseParams.hair_style  = hair_style;
+  if (facial_hair) baseParams.facial_hair = facial_hair;
+
+  runNextView(selectedViews, 0, baseParams, box, btn);
+}
+
+function runNextView(views, idx, params, box, btn) {
+  if (idx >= views.length) {
+    btn.disabled = false;
+    btn.textContent = '▶ Generate';
+    if (batchIds.length) { var xp = document.getElementById('export-panel'); if (xp) xp.style.display = ''; }
+    box.innerHTML += '\n<span class="line-info">✓ All ' + views.length + ' view' + (views.length !== 1 ? 's' : '') + ' complete</span>\n';
+    box.innerHTML += '<a href="/prompts?tag=dataset" class="row-btn" style="display:inline-block;margin-top:8px;font-size:11px">→ View in Library</a>\n';
+    box.scrollTop = box.scrollHeight;
+    return;
+  }
+
+  var view = views[idx];
+  btn.textContent = '⏳ ' + view.label + ' (' + (idx + 1) + '/' + views.length + ')';
+  box.innerHTML += (idx > 0 ? '\n' : '') + '<span class="line-header">▶ ' + view.label + '</span>\n';
+  box.scrollTop = box.scrollHeight;
+
+  var p = new URLSearchParams(params);
+  p.set('camera_view', view.value);
+
+  var es = new EventSource('/prompts/dataset/run?' + p);
+  activeES = es;
+
+  es.onmessage = function(e) {
+    var d = JSON.parse(e.data);
+    if (d.type === 'id') { batchIds.push(d.id); }
+    if (d.type === 'line') {
+      var t = d.text;
+      var cls = t.includes('ok') ? 'line-ok' : t.includes('error') ? 'line-err' : (t.includes('skip') || t.includes('retry')) ? 'line-skip' : '';
+      box.innerHTML += (cls ? '<span class="' + cls + '">' + t + '</span>' : t) + '\n';
+      box.scrollTop = box.scrollHeight;
+    } else if (d.type === 'err') {
+      box.innerHTML += '<span class="line-err">' + d.text + '</span>\n';
+      box.scrollTop = box.scrollHeight;
+    } else if (d.type === 'limit') {
+      box.innerHTML += '<span class="line-err">⚠ ' + d.msg + ' <a href="/prompts/settings" style="color:var(--accent)">Enter license key →</a></span>\n';
+      btn.disabled = false; btn.textContent = '▶ Generate';
+      es.close(); activeES = null;
+    } else if (d.type === 'done') {
+      var item = document.getElementById('view-item-' + view.value);
+      var chk  = document.getElementById('view_' + view.value);
+      if (item) item.classList.add('view-done');
+      if (chk)  { chk.checked = false; chk.disabled = true; }
+      syncTabVals();
+      es.close(); activeES = null;
+      runNextView(views, idx + 1, params, box, btn);
+    }
+  };
+
+  es.onerror = function() {
+    box.innerHTML += '<span class="line-err">Connection error on ' + view.label + '</span>\n';
+    btn.disabled = false; btn.textContent = '▶ Generate';
+    es.close(); activeES = null;
+  };
+}
+
+  async function exportDataset() {
+    if (!batchIds.length) return;
+    var btn = document.getElementById('export-btn');
+    btn.disabled = true; btn.textContent = 'Preparing...';
+    var referenceImage = null;
+    var fileInput = document.getElementById('ref-image');
+    if (fileInput && fileInput.files[0]) {
+      referenceImage = await new Promise(function(resolve) {
+        var reader = new FileReader();
+        reader.onload = function(e) { resolve(e.target.result); };
+        reader.readAsDataURL(fileInput.files[0]);
+      });
+    }
+    try {
+      var res = await fetch('/prompts/dataset/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: batchIds, referenceImage: referenceImage })
+      });
+      if (!res.ok) { alert('Export failed'); return; }
+      var blob = await res.blob();
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'lora-dataset.zip'; a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Download ZIP';
+    }
+  }
+</script>
+
+<div id="export-panel" style="display:none;margin-top:20px;padding:16px;background:var(--surface);border-radius:8px;border:1px solid var(--border)">
+  <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Export Dataset</div>
+  <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:12px;margin-bottom:6px;color:var(--fg)">Reference Image <span style="font-size:10px;color:var(--muted)">(optional — for face consistency in ComfyUI)</span></div>
+      <input type="file" id="ref-image" accept="image/*" style="font-size:12px;color:var(--fg)">
+    </div>
+    <button id="export-btn" onclick="exportDataset()" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap">Download ZIP</button>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:10px">ZIP includes: numbered prompt .txt files &bull; captions.csv &bull; reference image &bull; README</div>
+</div>
+
+<%- include('../partials/footer') %>

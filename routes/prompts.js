@@ -1,6 +1,8 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 const db = require('../db');
 // Add comfy_prompt_id column if not exists
 try { db.prepare('ALTER TABLE prompts ADD COLUMN comfy_prompt_id TEXT').run(); } catch(e) {}
@@ -8,6 +10,7 @@ try { db.prepare('ALTER TABLE workflows ADD COLUMN guidance REAL').run(); } catc
 try { db.prepare('ALTER TABLE prompts ADD COLUMN workflow_json_path TEXT').run(); } catch(e) {}
 
 const cfg = require('../config');
+const usage = require('../usage');
 
 const router = express.Router();
 
@@ -121,7 +124,7 @@ router.post('/', upload.single('image'), (req, res) => {
 
 
 // ── Generate ───────────────────────────────────────────────────────────────
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const GENERATOR = require('path').join(__dirname, '../scripts/llm_generator.js');
 const PROJ_DIR  = require('path').join(__dirname, '..');
 
@@ -138,7 +141,9 @@ const DEMO_ALLOWED = {
 router.get('/generate', (req, res) => { try {
   const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race'      ORDER BY label").all();
   const styleCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='style'     ORDER BY label").all();
-  const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all();
+  const DATASET_BODY_ALLOW = new Set(['athletic','chubby','curvy','mature','muscular','petite','plus_size','slim','tattoos']);
+  const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all()
+    .filter(r => DATASET_BODY_ALLOW.has(r.name));
   const roleCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='role'      ORDER BY label").all();
   const actCategories      = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='act'       ORDER BY label").all();
   const sceneCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='scene'     ORDER BY label").all();
@@ -146,16 +151,10 @@ router.get('/generate', (req, res) => { try {
   const defaultModel = cfg.get('llm_default_model') || '';
   const genPromptTotal = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
   const paid = cfg.isPaid();
-  const filterDemo = (arr, key) => paid ? arr : arr.filter(c => DEMO_ALLOWED[key].has(c.name));
   res.render('prompts/generate', {
-    raceCategories:     filterDemo(raceCategories,     'race'),
-    bodyTypeCategories: filterDemo(bodyTypeCategories, 'bodytype'),
-    roleCategories:     filterDemo(roleCategories,     'role'),
-    actCategories:      filterDemo(actCategories,      'cats'),
-    sceneCategories:    filterDemo(sceneCategories,    'cats'),
-    themeCategories:    filterDemo(themeCategories,    'cats'),
-    styleCategories:    filterDemo(styleCategories,    'style'),
-    defaultModel, paid, promptTotal: genPromptTotal, title: 'Generate Prompts'
+    raceCategories, bodyTypeCategories, roleCategories,
+    actCategories, sceneCategories, themeCategories, styleCategories,
+    defaultModel, paid, promptTotal: genPromptTotal, demoLimit: usage.DEMO_LIMIT, title: 'Generate Prompts'
   });
   } catch(e) {
     res.status(500).send('<div style="font-family:sans-serif;padding:40px"><h2>Setup incomplete</h2><p>The database is not ready. Restart the server using <code>install.bat</code> and refresh this page.</p><pre style="color:red">' + e.message + '</pre></div>');
@@ -165,43 +164,27 @@ router.get('/generate', (req, res) => { try {
 router.get('/generate/run', async (req, res) => {
   const { cats, count, model, subject, race, bodytype, role, style, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view } = req.query;
 
+
   if (!cfg.isPaid()) {
-    const promptCount = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
-    if (promptCount >= 100) {
+    if (usage.isAtLimit()) {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
-      res.write('data: ' + JSON.stringify({ type: 'limit', msg: 'Free tier limit reached (100 prompts). Purchase a license to generate unlimited prompts.' }) + '\n\n');
+      res.write('data: ' + JSON.stringify({ type: 'limit', msg: 'Free tier limit reached (' + usage.DEMO_LIMIT + ' prompts). Purchase a license to generate unlimited prompts.' }) + '\n\n');
       return res.end();
     }
   }
 
-  const safeCount   = cfg.isPaid() ? Math.min(999, Math.max(1, parseInt(count) || 5)) : Math.min(250, Math.max(1, parseInt(count) || 5));
+  const safeCount   = cfg.isPaid() ? Math.min(999, Math.max(1, parseInt(count) || 5)) : Math.min(5, Math.max(1, parseInt(count) || 5));
   const safeModel   = (model || 'qwen3.6:35b-a3b').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
-  const safeCats    = (cats || '').replace(/[^a-zA-Z0-9_,]/g, '');
   const safeSubject = (subject || '').replace(/[^a-zA-Z0-9 _,-]/g, '').trim();
   const paid = cfg.isPaid();
-  const demoFilter = (val, key) => {
-    const clean = (val || '').replace(/[^a-z_]/g, '');
-    return paid ? clean : (DEMO_ALLOWED[key].has(clean) ? clean : '');
-  };
-  const DEMO_CATS_ARR = [...DEMO_ALLOWED.cats];
-  const DEMO_STYLES_ARR = [...DEMO_ALLOWED.style];
-  const anyRandom = act_random === '1' || scene_random === '1' || theme_random === '1';
-  const safeCatsGated = paid ? safeCats : safeCats
-    ? (safeCats.split(',').filter(c => DEMO_ALLOWED.cats.has(c)).join(',') || null)
-    : DEMO_CATS_ARR[Math.floor(Math.random() * DEMO_CATS_ARR.length)];
-  // For demo with random flags: merge specific cats + full demo pool so random picks stay within demo set
-  const demoCatsWithRandom = !paid && anyRandom
-    ? [...new Set([...(safeCatsGated ? safeCatsGated.split(',') : []), ...DEMO_CATS_ARR])].join(',')
-    : safeCatsGated;
-  const safeRaceGated     = demoFilter(race,     'race');
-  const safeBodytype = (bodytype || "").replace(/[^a-z_,]/g, "");
-  const safeBodytypeGated = paid ? safeBodytype : safeBodytype.split(",").filter(c => DEMO_ALLOWED.bodytype.has(c)).join(",");
-  const safeRoleGated     = demoFilter(role,     'role');
-  const rawStyle = (style || '').replace(/[^a-z_]/g, '');
-  const safeStyleGated = paid ? rawStyle : (rawStyle ? (DEMO_ALLOWED.style.has(rawStyle) ? rawStyle : '') : DEMO_STYLES_ARR[Math.floor(Math.random() * DEMO_STYLES_ARR.length)]);
+  const safeCats     = paid ? (cats     || '').replace(/[^a-zA-Z0-9_,]/g, '') : '';
+  const safeRace     = paid ? (race     || '').replace(/[^a-z_]/g, '')        : '';
+  const safeBodytype = (bodytype || '').replace(/[^a-z_,]/g, '');
+  const safeRole     = (role || '').replace(/[^a-z_]/g, '');
+  const safeStyle    = paid ? (style    || '').replace(/[^a-z_]/g, '')        : '';
   const safeHairColor        = (hair_color        || '').replace(/[^a-z_]/g, '');
   const safeFacialExpression = (facial_expression || '').replace(/[^a-z_]/g, '');
   const safeEyeColor         = (eye_color         || '').replace(/[^a-z_]/g, '');
@@ -223,22 +206,21 @@ router.get('/generate/run', async (req, res) => {
   const llmUrl = cfg.get('llm_base_url');
   const llmKey = cfg.get('llm_api_key');
   const args = ['--count', String(safeCount), '--model', safeModel, '--url', llmUrl, '--key', llmKey];
-  const effectiveCats = paid ? safeCatsGated : demoCatsWithRandom;
-  if (effectiveCats)     args.push('--category', effectiveCats);
-  if (safeSubject)       args.push('--subject',  safeSubject);
-  if (safeRaceGated)     args.push('--race',     safeRaceGated);
-  if (safeBodytypeGated) args.push('--bodytype', safeBodytypeGated);
-  if (safeRoleGated)     args.push('--role',         safeRoleGated);
-  if (safeStyleGated)    args.push('--style',        safeStyleGated);
-  if (safeHairColor)        args.push('--hair_color',        safeHairColor);
-  if (safeFacialExpression) args.push('--facial_expression', safeFacialExpression);
-  if (safeEyeColor)         args.push('--eye_color',         safeEyeColor);
-  if (safeSkinTone)         args.push('--skin_tone',         safeSkinTone);
-  if (safeCameraView)       args.push('--camera_view',       safeCameraView);
+  if (safeCats)     args.push('--category', safeCats);
+  if (safeSubject)  args.push('--subject',  safeSubject);
+  if (safeRace)     args.push('--race',     safeRace);
+  if (safeBodytype) args.push('--bodytype', safeBodytype);
+  if (safeRole)     args.push('--role',     safeRole);
+  if (safeStyle && safeStyle !== 'random') args.push('--style', safeStyle);
+  if (paid && safeHairColor)        args.push('--hair_color',        safeHairColor);
+  if (paid && safeFacialExpression) args.push('--facial_expression', safeFacialExpression);
+  if (paid && safeEyeColor)         args.push('--eye_color',         safeEyeColor);
+  if (paid && safeSkinTone)         args.push('--skin_tone',         safeSkinTone);
+  if (paid && safeCameraView)       args.push('--camera_view',       safeCameraView);
   // only pass random flags for paid users — demo users get restricted cat pool above instead
-  if (paid && act_random   === '1') args.push('--act_random');
-  if (paid && scene_random === '1') args.push('--scene_random');
-  if (paid && theme_random === '1') args.push('--theme_random');
+  if (act_random   === '1') args.push('--act_random');
+  if (scene_random === '1') args.push('--scene_random');
+  if (theme_random === '1') args.push('--theme_random');
   const llmTemp   = cfg.get('llm_temperature');
   const llmTopP   = cfg.get('llm_top_p');
   const llmRepPen = cfg.get('llm_repetition_penalty');
@@ -260,6 +242,7 @@ router.get('/generate/run', async (req, res) => {
   const send = (data) => res.write('data: ' + JSON.stringify(data) + '\n\n');
   send({ type: 'start', args: args.join(' ') });
 
+  if (!cfg.isPaid()) usage.increment(safeCount);
   const child = spawn(process.execPath, [GENERATOR, ...args], { cwd: PROJ_DIR });
 
   child.stdout.on('data', d => {
@@ -273,6 +256,107 @@ router.get('/generate/run', async (req, res) => {
     res.end();
   });
 
+  req.on('close', () => child.kill());
+});
+
+// ── Dataset Builder ─────────────────────────────────────────────────────────
+router.get('/dataset', (req, res) => {
+  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race'      ORDER BY label").all();
+  const DATASET_BODY_ALLOW = new Set(['athletic','busty','chubby','curvy','mature','muscular','petite','piercings','plus_size','slim','tattoos']);
+  const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all()
+    .filter(r => DATASET_BODY_ALLOW.has(r.name));
+  const defaultModel = cfg.get('llm_default_model') || '';
+  const paid = cfg.isPaid();
+  res.render('prompts/dataset', { raceCategories, bodyTypeCategories, defaultModel, paid, title: 'Dataset Builder' });
+});
+
+router.get('/dataset/run', async (req, res) => {
+  const { count, model, race, bodytype, clothing, gender, age, hair_length, hair_style, facial_hair, clean_bg, hair_color, facial_expression, eye_color, skin_tone, camera_view } = req.query;
+
+  if (!cfg.isPaid()) {
+    if (usage.isAtLimit()) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
+      res.write('data: ' + JSON.stringify({ type: 'limit', msg: 'Free tier limit reached (' + usage.DEMO_LIMIT + ' prompts). Purchase a license to generate unlimited prompts.' }) + '\n\n');
+      return res.end();
+    }
+  }
+
+  const safeCount   = cfg.isPaid() ? Math.min(999, Math.max(1, parseInt(count) || 5)) : Math.min(5, Math.max(1, parseInt(count) || 5));
+  const safeModel   = (model || 'qwen3.6:35b-a3b').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
+  const safeRace    = (race     || '').replace(/[^a-z_]/g, '');
+  const safeBodytype = (bodytype || '').replace(/[^a-z_,]/g, '');
+  const safeClothing  = (clothing || '').replace(/[^a-z_]/g, '');
+  const safeGender    = gender === 'men' ? 'men' : 'women';
+  const safeAge        = (age         || '').replace(/[^a-z0-9_]/g, '');
+  const safeHairLength = (hair_length || '').replace(/[^a-z_]/g, '');
+  const safeHairStyle  = (hair_style  || '').replace(/[^a-z_]/g, '');
+  const safeFacialHair = (facial_hair || '').replace(/[^a-z_ ]/g, '');
+  const safeCameraView = (camera_view || '').replace(/[^a-z_]/g, '');
+  const paid = cfg.isPaid();
+  const safeHairColor        = paid ? (hair_color        || '').replace(/[^a-z_]/g, '') : '';
+  const safeFacialExpression = paid ? (facial_expression || '').replace(/[^a-z_]/g, '') : '';
+  const safeEyeColor         = paid ? (eye_color         || '').replace(/[^a-z_]/g, '') : '';
+  const safeSkinTone         = paid ? (skin_tone         || '').replace(/[^a-z_]/g, '') : '';
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const llmUrl = cfg.get('llm_base_url');
+  const llmKey = cfg.get('llm_api_key');
+  const args = ['--dataset', '--count', String(safeCount), '--model', safeModel, '--url', llmUrl, '--key', llmKey];
+  if (safeRace)       args.push('--race',     safeRace);
+  if (safeBodytype)   args.push('--bodytype', safeBodytype);
+  if (safeClothing)   args.push('--clothing',  safeClothing);
+  if (safeGender === 'men') args.push('--gender', 'men');
+  if (safeAge)        args.push('--age',        safeAge);
+  if (safeHairLength) args.push('--hair_length', safeHairLength);
+  if (safeHairStyle)  args.push('--hair_style',  safeHairStyle);
+  if (safeFacialHair) args.push('--facial_hair', safeFacialHair);
+  if (clean_bg === '1') args.push('--clean_bg');
+  if (safeCameraView && safeCameraView !== 'random') args.push('--camera_view', safeCameraView);
+  if (safeHairColor)        args.push('--hair_color',        safeHairColor);
+  if (safeFacialExpression) args.push('--facial_expression', safeFacialExpression);
+  if (safeEyeColor)         args.push('--eye_color',         safeEyeColor);
+  if (safeSkinTone)         args.push('--skin_tone',         safeSkinTone);
+
+  const llmTemp   = cfg.get('llm_temperature');
+  const llmTopP   = cfg.get('llm_top_p');
+  const llmRepPen = cfg.get('llm_repetition_penalty');
+  const llmMaxTok = cfg.get('llm_max_tokens');
+  const llmRaw    = cfg.get('llm_raw_output');
+  if (llmTemp)                                 args.push('--temperature',  llmTemp);
+  if (llmTopP && parseFloat(llmTopP) > 0)      args.push('--top_p',        llmTopP);
+  const llmMinP   = cfg.get('llm_min_p');
+  if (llmMinP && parseFloat(llmMinP) > 0)      args.push('--min_p',        llmMinP);
+  const llmOllamaParams = cfg.get('llm_ollama_params');
+  if (llmOllamaParams && llmOllamaParams !== 'false' && llmRepPen && parseFloat(llmRepPen) > 1) args.push('--repetition_penalty', llmRepPen);
+  if (llmMaxTok)                               args.push('--max_tokens',   llmMaxTok);
+  const llmPromptWords = cfg.get('llm_prompt_words');
+  if (llmPromptWords)                          args.push('--prompt_words', llmPromptWords);
+  if (llmRaw === 'true')                       args.push('--raw_output');
+
+  const send = (data) => res.write('data: ' + JSON.stringify(data) + '\n\n');
+  send({ type: 'start', args: args.join(' ') });
+
+  if (!cfg.isPaid()) usage.increment(safeCount);
+  const child = spawn(process.execPath, [GENERATOR, ...args], { cwd: PROJ_DIR });
+  child.stdout.on('data', d => {
+    d.toString().split('\n').filter(Boolean).forEach(line => {
+      if (line.startsWith('PROMPT_ID:')) {
+        const id = parseInt(line.slice('PROMPT_ID:'.length));
+        if (!isNaN(id)) send({ type: 'id', id });
+      } else {
+        send({ type: 'line', text: line });
+      }
+    });
+  });
+  child.stderr.on('data', d => { d.toString().split('\n').filter(Boolean).forEach(line => send({ type: 'err',  text: line })); });
+  child.on('close', code => { send({ type: 'done', code }); res.end(); });
   req.on('close', () => child.kill());
 });
 
@@ -669,12 +753,9 @@ router.get('/categories', (req, res) => {
   const TYPE_LABELS = { act:'Acts', scene:'Scenes', theme:'Themes', role:'Roles', body_type:'Body Types', race:'Race / Ethnicity', style:'Styles' };
   const rows = db.prepare('SELECT * FROM llm_categories ORDER BY label').all();
   const paid = cfg.isPaid();
-  const DEMO_TYPE_MAP = { race: 'race', body_type: 'bodytype', role: 'role', act: 'cats', scene: 'cats', theme: 'cats', style: 'style' };
   const grouped = TYPE_ORDER.map(t => {
     const all = rows.filter(r => r.type === t);
-    const demoKey = DEMO_TYPE_MAP[t];
-    const visible = paid ? all : all.filter(r => demoKey && DEMO_ALLOWED[demoKey] ? DEMO_ALLOWED[demoKey].has(r.name) : true);
-    return { type: t, label: TYPE_LABELS[t] || t, items: visible, hidden: all.length - visible.length };
+    return { type: t, label: TYPE_LABELS[t] || t, items: all, hidden: 0 };
   }).filter(g => g.items.length);
   const others = rows.filter(r => !TYPE_ORDER.includes(r.type));
   if (others.length) grouped.push({ type: 'other', label: 'Other', items: others, hidden: 0 });
@@ -1160,5 +1241,73 @@ router.post('/api/import-png/save', (req, res) => {
   res.json({ ok: true, id: result.lastInsertRowid });
 });
 
+
+
+// ── Dataset export ──────────────────────────────────────────────────────────
+router.post('/dataset/export', express.json({ limit: '20mb' }), (req, res) => {
+  const { ids, referenceImage } = req.body || {};
+  if (!ids || !ids.length) return res.status(400).json({ error: 'no ids' });
+  const safIds = ids.map(Number).filter(n => Number.isFinite(n) && n > 0);
+  if (!safIds.length) return res.status(400).json({ error: 'invalid ids' });
+  const placeholders = safIds.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT id, positive, tags FROM prompts WHERE id IN (${placeholders})`).all(...safIds);
+  if (!rows.length) return res.status(404).json({ error: 'no prompts found' });
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', 'attachment; filename="lora-dataset.zip"');
+  const VIEWS = ['portrait','full_body','waist_up','low_angle','from_above','side','over_shoulder'];
+  const viewRe = new RegExp('\\b(' + VIEWS.join('|') + ')\\b');
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lora-export-'));
+  try {
+    rows.forEach((p, i) => {
+      const num = String(i + 1).padStart(3, '0');
+      const m = (p.tags || '').match(viewRe);
+      const view = m ? m[1] : 'prompt';
+      fs.writeFileSync(path.join(tmpDir, `${num}_${view}.txt`), p.positive);
+    });
+
+    const csvRows = ['filename,caption'];
+    rows.forEach((p, i) => {
+      const num = String(i + 1).padStart(3, '0');
+      const m = (p.tags || '').match(viewRe);
+      const view = m ? m[1] : 'prompt';
+      csvRows.push(`${num}_${view}.txt,"${p.positive.replace(/"/g, '""')}"`);
+    });
+    fs.writeFileSync(path.join(tmpDir, 'captions.csv'), csvRows.join('\n'));
+
+    if (referenceImage && typeof referenceImage === 'string') {
+      try {
+        const b64 = referenceImage.replace(/^data:image\/\w+;base64,/, '');
+        const ext = (referenceImage.match(/^data:image\/(\w+)/) || [])[1] || 'jpg';
+        fs.writeFileSync(path.join(tmpDir, `reference.${ext}`), Buffer.from(b64, 'base64'));
+      } catch (_) {}
+    }
+
+    const readme = [
+      'LoRA Dataset Export — SpicyPrompter',
+      '',
+      'Files:',
+      '  NNN_view.txt   prompt text file — pair with your generated image (same filename)',
+      '  captions.csv   all captions in CSV format for batch training tools',
+      '  reference.*    reference face image for use with IP-Adapter / PuLID / InstantID',
+      '',
+      'Training tools: Kohya-ss, SimpleTuner, OneTrainer',
+      'Face consistency: IP-Adapter FaceID (SDXL), PuLID (Flux), InstantID (SDXL)',
+      '',
+      `Total prompts: ${rows.length}`,
+    ].join('\n');
+    fs.writeFileSync(path.join(tmpDir, 'README.txt'), readme);
+
+    const zipPath = path.join(os.tmpdir(), `lora-dataset-${Date.now()}.zip`);
+    execSync(`zip -j "${zipPath}" "${tmpDir}"/*`);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="lora-dataset.zip"');
+    const stream = fs.createReadStream(zipPath);
+    stream.pipe(res);
+    stream.on('end', () => { try { fs.unlinkSync(zipPath); } catch(_){} });
+  } finally {
+    try { execSync(`rm -rf "${tmpDir}"`); } catch(_) {}
+  }
+});
 
 module.exports = router;

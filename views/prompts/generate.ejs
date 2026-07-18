@@ -103,7 +103,7 @@
   <button id="gen-btn" class="btn btn-primary gen-btn" onclick="startGenerate()">&#9654; Generate</button>
 </div>
 <% if (!paid) { %>
-<p style="font-size:10px;color:var(--muted);margin:6px 0 0;font-family:var(--font-mono)"><%= promptTotal %> / 100 free prompts used &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></p>
+<p style="font-size:10px;color:var(--muted);margin:6px 0 0;font-family:var(--font-mono)"><%= promptTotal %> / <%= demoLimit %> free prompts used &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></p>
 <% } %>
 
 <div id="act-warning"></div>
@@ -137,11 +137,11 @@
   </button>
   <button class="cat-tab" data-cat="style" onclick="selectCat('style',this)">
     <span class="cat-tab-name">Style</span>
-    <span class="cat-tab-val" id="tabval-style">Default</span>
+    <span class="cat-tab-val" id="tabval-style">Random</span>
   </button>
   <button class="cat-tab" data-cat="view" onclick="selectCat('view',this)">
     <span class="cat-tab-name">View</span>
-    <span class="cat-tab-val" id="tabval-view">Any</span>
+    <span class="cat-tab-val" id="tabval-view">Random</span>
   </button>
 </div>
 
@@ -264,7 +264,8 @@
 
   <!-- Style -->
   <div id="cat-pane-style" class="cat-pane">
-    <div class="opt-item"><input type="radio" name="style" id="style_none" value="" checked><label for="style_none" style="color:var(--muted);font-style:italic">None / default</label></div>
+    <div class="opt-item"><input type="radio" name="style" id="style_none" value=""><label for="style_none" style="color:var(--muted);font-style:italic">None</label></div>
+    <div class="opt-item"><input type="radio" name="style" id="style_random" value="random" checked><label for="style_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% styleCategories.forEach(c => { %>
     <div class="opt-item">
       <input type="radio" name="style" id="style_<%= c.id %>" value="<%= c.name %>">
@@ -275,7 +276,8 @@
 
   <!-- View / Camera Angle -->
   <div id="cat-pane-view" class="cat-pane">
-    <div class="opt-item"><input type="radio" name="view" id="view_none" value="" checked><label for="view_none" style="color:var(--muted);font-style:italic">Any</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_none" value=""><label for="view_none" style="color:var(--muted);font-style:italic">None</label></div>
+    <div class="opt-item"><input type="radio" name="view" id="view_random" value="random" checked><label for="view_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <div class="opt-item"><input type="radio" name="view" id="view_pov" value="pov"><label for="view_pov">POV</label></div>
     <div class="opt-item"><input type="radio" name="view" id="view_low_angle" value="low_angle"><label for="view_low_angle">Low Angle / From Below</label></div>
     <div class="opt-item"><input type="radio" name="view" id="view_from_above" value="from_above"><label for="view_from_above">From Above / Top Down</label></div>
@@ -304,7 +306,7 @@ function selectCat(cat, btn) {
   document.getElementById('cat-pane-' + cat).classList.add('active');
 }
 
-var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random', view:'Any' };
+var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random', view:'Random' };
 
 function syncTabVals() {
   ['race','role','act','scene','theme','style','view'].forEach(function(cat) {
@@ -382,12 +384,12 @@ function startGenerate() {
   if (race)     params.set('race',     race);
   if (bodytype) params.set('bodytype', bodytype);
   if (role)        params.set('role',        role);
-  if (style)       params.set('style',       style);
+  if (style && style !== 'random') params.set('style', style);
   if (hair_color)        params.set('hair_color',        hair_color);
   if (facial_expression) params.set('facial_expression', facial_expression);
   if (eye_color)         params.set('eye_color',         eye_color);
   if (skin_tone)         params.set('skin_tone',         skin_tone);
-  if (camera_view)       params.set('camera_view',       camera_view);
+  if (camera_view && camera_view !== 'random') params.set('camera_view', camera_view);
 
   var es = new EventSource('/prompts/generate/run?' + params);
 
@@ -585,4 +587,19 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('cat-pane-bodytype').addEventListener('change', checkBodyTypeWarning);
 });
 </script>
+
+<% if (!paid) { %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('input[type="radio"], input[type="checkbox"]:not(.bt-check)').forEach(function(el) {
+    if (el.value !== '' && el.value !== 'random') {
+      el.disabled = true;
+      el.parentElement.style.opacity = '0.3';
+      el.parentElement.style.cursor = 'not-allowed';
+      el.parentElement.title = 'Unlock with a license';
+    }
+  });
+});
+</script>
+<% } %>
 <%- include('../partials/footer') %>
