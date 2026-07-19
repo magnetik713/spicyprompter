@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3014;
   fs.mkdirSync(path.join(__dirname, dir), { recursive: true });
 });
 
+app.locals.version = require('./package.json').version;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));

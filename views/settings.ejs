@@ -495,5 +495,25 @@ async function uploadWorkflow(input) {
 
 </script>
 
-<p style="font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:32px">SpicyPrompter v<%= version %></p>
+<p style="font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:32px">SpicyPrompter v<%= version %> &nbsp;<span id="update-status" style="font-size:10px;color:var(--dim,#555)">checking...</span></p>
+<script>
+(function() {
+  var cur = '<%= version %>';
+  var repo = 'magnetik713/spicyprompter';
+  fetch('https://api.github.com/repos/' + repo + '/releases/latest')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var latest = (d.tag_name || '').replace(/^v/, '');
+      var box = document.getElementById('update-status');
+      if (!box) return;
+      if (latest && latest !== cur) {
+        box.innerHTML = '&#8593; <a href="' + d.html_url + '" target="_blank" style="color:var(--accent)">v' + latest + ' available &rarr;</a>';
+        box.style.color = 'var(--accent)';
+      } else if (latest) {
+        box.textContent = 'Up to date';
+      }
+    })
+    .catch(function() {});
+})();
+</script>
 <%- include("./partials/footer") %>
