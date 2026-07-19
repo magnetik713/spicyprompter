@@ -76,7 +76,7 @@ router.get('/', async (req, res) => {
     prompts, categories,
     selectedTags, selectedCategory, selectedSort, showStarred, q: q || '',
     page: safePage, totalPages, total,
-    promptTotal, paid: cfg.isPaid(),
+    promptTotal, paid: cfg.isPaid(), demoLimit: usage.DEMO_LIMIT,
     title: 'Prompt Library'
   });
 });
@@ -139,11 +139,9 @@ const DEMO_ALLOWED = {
 };
 
 router.get('/generate', (req, res) => { try {
-  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race'      ORDER BY label").all();
+  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' AND name NOT IN ('asian','ebony','latina') ORDER BY label").all();
   const styleCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='style'     ORDER BY label").all();
-  const DATASET_BODY_ALLOW = new Set(['athletic','chubby','curvy','mature','muscular','petite','plus_size','slim','tattoos']);
-  const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all()
-    .filter(r => DATASET_BODY_ALLOW.has(r.name));
+  const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all();
   const roleCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='role'      ORDER BY label").all();
   const actCategories      = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='act'       ORDER BY label").all();
   const sceneCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='scene'     ORDER BY label").all();
@@ -162,7 +160,7 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view } = req.query;
+  const { cats, count, model, subject, race, bodytype, role, style, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style } = req.query;
 
 
   if (!cfg.isPaid()) {
@@ -181,8 +179,12 @@ router.get('/generate/run', async (req, res) => {
   const safeSubject = (subject || '').replace(/[^a-zA-Z0-9 _,-]/g, '').trim();
   const paid = cfg.isPaid();
   const safeCats     = paid ? (cats     || '').replace(/[^a-zA-Z0-9_,]/g, '') : '';
-  const safeRace     = paid ? (race     || '').replace(/[^a-z_]/g, '')        : '';
+  const safeRace     = (race     || '').replace(/[^a-z_]/g, '');
+  const safeAct      = (act      || '').replace(/[^a-z_]/g, '');
   const safeBodytype = (bodytype || '').replace(/[^a-z_,]/g, '');
+  const safeAge        = (age        || '').replace(/[^a-z0-9_]/g, '');
+  const safeHairLength = (hair_length || '').replace(/[^a-z_]/g, '');
+  const safeHairStyle  = (hair_style  || '').replace(/[^a-z_]/g, '');
   const safeRole     = (role || '').replace(/[^a-z_]/g, '');
   const safeStyle    = paid ? (style    || '').replace(/[^a-z_]/g, '')        : '';
   const safeHairColor        = (hair_color        || '').replace(/[^a-z_]/g, '');
@@ -206,7 +208,8 @@ router.get('/generate/run', async (req, res) => {
   const llmUrl = cfg.get('llm_base_url');
   const llmKey = cfg.get('llm_api_key');
   const args = ['--count', String(safeCount), '--model', safeModel, '--url', llmUrl, '--key', llmKey];
-  if (safeCats)     args.push('--category', safeCats);
+  const combinedCats = [safeCats, safeAct].filter(Boolean).join(',');
+  if (combinedCats)  args.push('--category', combinedCats);
   if (safeSubject)  args.push('--subject',  safeSubject);
   if (safeRace)     args.push('--race',     safeRace);
   if (safeBodytype) args.push('--bodytype', safeBodytype);
@@ -216,6 +219,9 @@ router.get('/generate/run', async (req, res) => {
   if (paid && safeFacialExpression) args.push('--facial_expression', safeFacialExpression);
   if (paid && safeEyeColor)         args.push('--eye_color',         safeEyeColor);
   if (paid && safeSkinTone)         args.push('--skin_tone',         safeSkinTone);
+  if (safeAge)                      args.push('--age',               safeAge);
+  if (paid && safeHairLength)       args.push('--hair_length',       safeHairLength);
+  if (paid && safeHairStyle)        args.push('--hair_style',        safeHairStyle);
   if (paid && safeCameraView)       args.push('--camera_view',       safeCameraView);
   // only pass random flags for paid users — demo users get restricted cat pool above instead
   if (act_random   === '1') args.push('--act_random');
@@ -261,7 +267,7 @@ router.get('/generate/run', async (req, res) => {
 
 // ── Dataset Builder ─────────────────────────────────────────────────────────
 router.get('/dataset', (req, res) => {
-  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race'      ORDER BY label").all();
+  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' AND name NOT IN ('asian','ebony','latina') ORDER BY label").all();
   const DATASET_BODY_ALLOW = new Set(['athletic','busty','chubby','curvy','mature','muscular','petite','piercings','plus_size','slim','tattoos']);
   const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all()
     .filter(r => DATASET_BODY_ALLOW.has(r.name));
@@ -273,18 +279,7 @@ router.get('/dataset', (req, res) => {
 router.get('/dataset/run', async (req, res) => {
   const { count, model, race, bodytype, clothing, gender, age, hair_length, hair_style, facial_hair, clean_bg, hair_color, facial_expression, eye_color, skin_tone, camera_view } = req.query;
 
-  if (!cfg.isPaid()) {
-    if (usage.isAtLimit()) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.flushHeaders();
-      res.write('data: ' + JSON.stringify({ type: 'limit', msg: 'Free tier limit reached (' + usage.DEMO_LIMIT + ' prompts). Purchase a license to generate unlimited prompts.' }) + '\n\n');
-      return res.end();
-    }
-  }
-
-  const safeCount   = cfg.isPaid() ? Math.min(999, Math.max(1, parseInt(count) || 5)) : Math.min(5, Math.max(1, parseInt(count) || 5));
+  const safeCount   = Math.min(999, Math.max(1, parseInt(count) || 10));
   const safeModel   = (model || 'qwen3.6:35b-a3b').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
   const safeRace    = (race     || '').replace(/[^a-z_]/g, '');
   const safeBodytype = (bodytype || '').replace(/[^a-z_,]/g, '');

@@ -75,9 +75,13 @@
     color:#f5c842; margin-bottom:8px; }
   #act-warning.blocked { background:rgba(192,57,43,.12); border-color:rgba(192,57,43,.4); color:#e74c3c; }
   #act-warning.warn    { background:rgba(250,180,50,.08); border-color:rgba(250,180,50,.3); color:#f5c842; }
-  #bt-warning { display:none; margin-top:6px; padding:6px 12px; border-radius:var(--radius); font-size:12px;
-    background:rgba(250,180,50,.08); border:1px solid rgba(250,180,50,.3); color:#f5c842; }
-  #bt-warning.info { background:rgba(96,165,250,.08); border-color:rgba(96,165,250,.3); color:#60a5fa; }
+  .attrs-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  @media (max-width:600px) { .attrs-grid { grid-template-columns:1fr; } }
+  .attr-panel { border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; }
+  .attr-label { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:var(--font); margin-bottom:6px; display:block; }
+  .attr-opts  { display:flex; flex-wrap:wrap; gap:4px 12px; }
+  .section-lbl { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:var(--font); margin-bottom:6px; display:block; }
+
 </style>
 
 <div class="page-header">
@@ -107,8 +111,6 @@
 <% } %>
 
 <div id="act-warning"></div>
-<div id="bt-warning"></div>
-
 
 <div class="cat-tab-row">
   <button class="cat-tab active" data-cat="race" onclick="selectCat('race',this)">
@@ -159,58 +161,22 @@
 
   <!-- Body Type -->
   <div id="cat-pane-bodytype" class="cat-pane">
-    <% bodyTypeCategories.forEach(c => { %>
+    <% var MODIFIER_NAMES = new Set(['busty','flat_chested','piercings','pregnant','tattoos']); %>
+    <div class="opt-item"><input type="radio" name="bodytype" id="bt_none" value="" checked><label for="bt_none" style="color:var(--muted);font-style:italic">Any</label></div>
+    <% bodyTypeCategories.filter(c => !MODIFIER_NAMES.has(c.name) && c.name !== 'petite_teen').forEach(c => { %>
     <div class="opt-item">
-      <input type="checkbox" class="bt-check" id="bt_<%= c.name %>" value="<%= c.name %>">
+      <input type="radio" name="bodytype" id="bt_<%= c.name %>" value="<%= c.name %>">
       <label for="bt_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
     </div>
     <% }) %>
-    <div style="width:100%;border-top:1px solid var(--border);margin:6px 0 2px;padding-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:0">
-      <div style="width:100%;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-family:var(--font);margin-bottom:2px">Hair Color</div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_none" value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">Any</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_black" value="black"><label for="hc_black">Black</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_brunette" value="brunette"><label for="hc_brunette">Brunette</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blonde" value="blonde"><label for="hc_blonde">Blonde</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_red" value="red"><label for="hc_red">Red / Ginger</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_auburn" value="auburn"><label for="hc_auburn">Auburn</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_platinum" value="platinum_blonde"><label for="hc_platinum">Platinum Blonde</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_silver" value="silver"><label for="hc_silver">Silver / White</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_pink" value="pink"><label for="hc_pink">Pink</label></div>
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blue" value="blue"><label for="hc_blue">Blue / Teal</label></div>
-    </div>
-    <div style="width:100%;border-top:1px solid var(--border);margin:6px 0 2px;padding-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:0">
-      <div style="width:100%;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-family:var(--font);margin-bottom:2px">Facial Expression</div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none" value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">Any</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_moaning" value="moaning"><label for="fe_moaning">Moaning / O-face</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_ahegao" value="ahegao"><label for="fe_ahegao">Ahegao</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eyes_closed" value="eyes_closed"><label for="fe_eyes_closed">Eyes Closed, Lips Parted</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_biting_lip" value="biting_lip"><label for="fe_biting_lip">Biting Lip</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eye_contact" value="eye_contact"><label for="fe_eye_contact">Direct Eye Contact</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_looking_up" value="looking_up"><label for="fe_looking_up">Looking Up at Camera</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_smirking" value="smirking"><label for="fe_smirking">Smirking</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_shy" value="shy"><label for="fe_shy">Shy / Flushed</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_pleading" value="pleading"><label for="fe_pleading">Desperate / Pleading</label></div>
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_blissful" value="blissful"><label for="fe_blissful">Blissful / Serene</label></div>
-    </div>
-    <div style="width:100%;border-top:1px solid var(--border);margin:6px 0 2px;padding-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:0">
-      <div style="width:100%;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-family:var(--font);margin-bottom:2px">Eye Color</div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_none" value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">Any</label></div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_brown" value="brown"><label for="ec_brown">Brown</label></div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_blue" value="blue"><label for="ec_blue">Blue</label></div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_green" value="green"><label for="ec_green">Green</label></div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_hazel" value="hazel"><label for="ec_hazel">Hazel</label></div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_gray" value="gray"><label for="ec_gray">Gray</label></div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_amber" value="amber"><label for="ec_amber">Amber</label></div>
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_dark" value="dark"><label for="ec_dark">Dark / Black</label></div>
-    </div>
-    <div style="width:100%;border-top:1px solid var(--border);margin:6px 0 2px;padding-top:6px;display:flex;flex-wrap:wrap;align-items:center;gap:0">
-      <div style="width:100%;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-family:var(--font);margin-bottom:2px">Skin Tone</div>
-      <div class="opt-item"><input type="radio" name="skin_tone" id="st_none" value="" checked><label for="st_none" style="color:var(--muted);font-style:italic">Any</label></div>
-      <div class="opt-item"><input type="radio" name="skin_tone" id="st_pale" value="pale"><label for="st_pale">Pale / Fair</label></div>
-      <div class="opt-item"><input type="radio" name="skin_tone" id="st_tan" value="tan"><label for="st_tan">Tan / Sun-kissed</label></div>
-      <div class="opt-item"><input type="radio" name="skin_tone" id="st_olive" value="olive"><label for="st_olive">Olive</label></div>
-      <div class="opt-item"><input type="radio" name="skin_tone" id="st_bronze" value="bronze"><label for="st_bronze">Bronze</label></div>
-      <div class="opt-item"><input type="radio" name="skin_tone" id="st_dark" value="dark"><label for="st_dark">Dark</label></div>
+    <div style="margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Modifiers:</span>
+      <% bodyTypeCategories.filter(c => MODIFIER_NAMES.has(c.name)).forEach(c => { %>
+      <div class="opt-item" style="width:auto">
+        <input type="checkbox" class="mod-check" id="mod_<%= c.name %>" value="<%= c.name %>">
+        <label for="mod_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
+      </div>
+      <% }) %>
     </div>
   </div>
 
@@ -287,6 +253,96 @@
   </div>
 </div>
 
+<span class="section-lbl" style="margin-top:4px">Attributes</span>
+<div class="attrs-grid">
+  <div class="attr-panel">
+    <span class="attr-label">Age</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="age" id="age_none" value="" checked><label for="age_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_teen" value="late_teens"><label for="age_teen">Teen (18+)</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_20s" value="20s"><label for="age_20s">20s</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_30s" value="30s"><label for="age_30s">30s</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_40s" value="40s"><label for="age_40s">40s</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_50s" value="50s"><label for="age_50s">50s+</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Hair Length</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_any"    value="" checked><label for="hl_any" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_short"  value="short"><label for="hl_short">Short</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_medium" value="medium_length"><label for="hl_medium">Medium</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_long"   value="long"><label for="hl_long">Long</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_vlong"  value="very_long"><label for="hl_vlong">Very Long</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Hair Style</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_any"      value="" checked><label for="hs_any" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_straight" value="straight"><label for="hs_straight">Straight</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_wavy"     value="wavy"><label for="hs_wavy">Wavy</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_curly"    value="curly"><label for="hs_curly">Curly</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_braids"   value="braids"><label for="hs_braids">Braids</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Hair Color</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_none"     value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_black"    value="black"><label for="hc_black">Black</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_brunette" value="brunette"><label for="hc_brunette">Brunette</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blonde"   value="blonde"><label for="hc_blonde">Blonde</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_red"      value="red"><label for="hc_red">Red / Ginger</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_auburn"   value="auburn"><label for="hc_auburn">Auburn</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_platinum" value="platinum_blonde"><label for="hc_platinum">Platinum Blonde</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_silver"   value="silver"><label for="hc_silver">Silver / White</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_pink"     value="pink"><label for="hc_pink">Pink</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_blue"     value="blue"><label for="hc_blue">Blue / Teal</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Expression</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none"        value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_moaning"     value="moaning"><label for="fe_moaning">Moaning / O-face</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_ahegao"      value="ahegao"><label for="fe_ahegao">Ahegao</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eyes_closed" value="eyes_closed"><label for="fe_eyes_closed">Eyes Closed, Lips Parted</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_biting_lip"  value="biting_lip"><label for="fe_biting_lip">Biting Lip</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eye_contact" value="eye_contact"><label for="fe_eye_contact">Direct Eye Contact</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_looking_up"  value="looking_up"><label for="fe_looking_up">Looking Up at Camera</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_smirking"    value="smirking"><label for="fe_smirking">Smirking</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_shy"         value="shy"><label for="fe_shy">Shy / Flushed</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_pleading"    value="pleading"><label for="fe_pleading">Desperate / Pleading</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_blissful"    value="blissful"><label for="fe_blissful">Blissful / Serene</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Eye Color</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_none"  value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_brown" value="brown"><label for="ec_brown">Brown</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_blue"  value="blue"><label for="ec_blue">Blue</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_green" value="green"><label for="ec_green">Green</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_hazel" value="hazel"><label for="ec_hazel">Hazel</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_gray"  value="gray"><label for="ec_gray">Gray</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_amber" value="amber"><label for="ec_amber">Amber</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_dark"  value="dark"><label for="ec_dark">Dark / Black</label></div>
+    </div>
+  </div>
+  <div class="attr-panel">
+    <span class="attr-label">Skin Tone</span>
+    <div class="attr-opts">
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_none"   value="" checked><label for="st_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_pale"   value="pale"><label for="st_pale">Pale / Fair</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_tan"    value="tan"><label for="st_tan">Tan / Sun-kissed</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_olive"  value="olive"><label for="st_olive">Olive</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_bronze" value="bronze"><label for="st_bronze">Bronze</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_dark"   value="dark"><label for="st_dark">Dark</label></div>
+    </div>
+  </div>
+</div>
+
 <% if (!paid) { %>
 <p style="font-size:11px;color:var(--muted);margin:8px 0 0;font-family:var(--font-mono)">&#128274; Demo: limited selections shown &mdash; <a href="/prompts/settings" style="color:var(--accent)">unlock all with a license</a></p>
 <% } %>
@@ -319,19 +375,20 @@ function syncTabVals() {
     var tab = document.querySelector('[data-cat="' + cat + '"]');
     if (tab) tab.classList.toggle('has-val', hasVal);
   });
-  var btChecked = Array.from(document.querySelectorAll('.bt-check:checked'));
+  var btRadio = document.querySelector('input[name="bodytype"]:checked');
+  var btVal = btRadio && btRadio.value ? btRadio : null;
+  var mods = Array.from(document.querySelectorAll('.mod-check:checked'));
   var btEl = document.getElementById('tabval-bodytype');
   var btTab = document.querySelector('[data-cat="bodytype"]');
-  if (btChecked.length === 0) {
+  if (!btVal && !mods.length) {
     if (btEl) btEl.textContent = 'Any';
     if (btTab) btTab.classList.remove('has-val');
-  } else if (btChecked.length === 1) {
-    var lbl = btChecked[0].closest('.opt-item').querySelector('label');
-    if (btEl) btEl.textContent = (lbl.firstChild.nodeValue || lbl.textContent).trim();
-    if (btTab) btTab.classList.add('has-val');
   } else {
-    if (btEl) btEl.textContent = btChecked.length + ' selected';
-    if (btTab) btTab.classList.add('has-val');
+    var btParts = [];
+    if (btVal) { var btLbl = btVal.closest('.opt-item').querySelector('label'); btParts.push((btLbl.firstChild.nodeValue || btLbl.textContent).trim()); }
+    if (mods.length) btParts.push('+' + mods.length + (mods.length > 1 ? ' mods' : ' mod'));
+    if (btEl) btEl.textContent = btParts.join(' ') || 'Any';
+    if (btTab) btTab.classList.toggle('has-val', !!(btVal || mods.length));
   }
 }
 
@@ -341,7 +398,7 @@ function clearBodytype() {
 }
 
 document.addEventListener('change', function(e) {
-  if (e.target.type === 'radio' || e.target.classList.contains('bt-check')) {
+  if (e.target.type === 'radio' || e.target.classList.contains('mod-check')) {
     syncTabVals();
     if (e.target.name === 'act') checkActWarning();
   }
@@ -353,16 +410,19 @@ function startGenerate() {
   var scene = (document.querySelector('input[name="scene"]:checked') || {}).value || '';
   var theme = (document.querySelector('input[name="theme"]:checked') || {}).value || '';
 
-
   var subject  = buildSubject();
   var race     = (document.querySelector('input[name="race"]:checked') || {}).value      || '';
-  var bodytype = Array.from(document.querySelectorAll('.bt-check:checked')).map(function(el){return el.value;}).join(',');
+  var btBase   = (document.querySelector('input[name="bodytype"]:checked') || {}).value || '';
+  var bodytype = [btBase].concat(Array.from(document.querySelectorAll('.mod-check:checked')).map(function(el){return el.value;})).filter(Boolean).join(',');
+  var age      = (document.querySelector('input[name="age"]:checked') || {}).value || '';
   var role     = (document.querySelector('input[name="role"]:checked') || {}).value      || '';
   var style       = (document.querySelector('input[name="style"]:checked') || {}).value      || '';
   var hair_color         = (document.querySelector('input[name="hair_color"]:checked') || {}).value         || '';
   var facial_expression  = (document.querySelector('input[name="facial_expression"]:checked') || {}).value  || '';
   var eye_color          = (document.querySelector('input[name="eye_color"]:checked') || {}).value           || '';
   var skin_tone          = (document.querySelector('input[name="skin_tone"]:checked') || {}).value           || '';
+  var hair_length        = (document.querySelector('input[name="hair_length"]:checked') || {}).value         || '';
+  var hair_style         = (document.querySelector('input[name="hair_style"]:checked') || {}).value          || '';
   var camera_view        = (document.querySelector('input[name="view"]:checked') || {}).value                || '';
   var count    = document.getElementById('count').value;
   var model    = document.getElementById('model').value;
@@ -375,13 +435,15 @@ function startGenerate() {
   btn.textContent = 'Generating…';
 
   var params = new URLSearchParams({ count: count, model: model });
-  var cleanCat = [act, scene, theme].filter(function(v) { return v && v !== 'random'; }).join(',');
+  var cleanCat = [scene, theme].filter(function(v) { return v && v !== 'random'; }).join(',');
   if (cleanCat) params.set('cats', cleanCat);
+  if (act && act !== 'random') params.set('act', act);
   if (act   === 'random') params.set('act_random',   '1');
   if (scene === 'random') params.set('scene_random', '1');
   if (theme === 'random') params.set('theme_random', '1');
   if (subject)  params.set('subject',  subject);
   if (race)     params.set('race',     race);
+  if (age)      params.set('age',      age);
   if (bodytype) params.set('bodytype', bodytype);
   if (role)        params.set('role',        role);
   if (style && style !== 'random') params.set('style', style);
@@ -390,6 +452,8 @@ function startGenerate() {
   if (eye_color)         params.set('eye_color',         eye_color);
   if (skin_tone)         params.set('skin_tone',         skin_tone);
   if (camera_view && camera_view !== 'random') params.set('camera_view', camera_view);
+  if (hair_length)       params.set('hair_length',       hair_length);
+  if (hair_style)        params.set('hair_style',        hair_style);
 
   var es = new EventSource('/prompts/generate/run?' + params);
 
@@ -521,7 +585,6 @@ function previewSubj() {
   var el = document.getElementById('subj-preview');
   if (el) { var s = buildSubject(); el.textContent = s ? '"' + s + '"' : ''; }
   checkActWarning();
-  checkBodyTypeWarning();
 }
 
 var SOLO_ACTS  = { joi:1, squirting:1, fingering:1, masturbation:1, solo:1, posing:1, spread:1, stripping:1, edging:1, shower:1 };
@@ -553,46 +616,17 @@ function checkActWarning() {
   return clear();
 }
 
-var BT_CONFLICT_GROUPS = [
-  ['busty','flat_chested'],
-  ['slim','bbw','chubby','plus_size','thick'],
-  ['amazon','petite','short_stack'],
-  ['petite_teen','mature','milf'],
-];
-
-function checkBodyTypeWarning() {
-  var selected = Array.from(document.querySelectorAll('.bt-check:checked')).map(function(el){return el.value;});
-  var box = document.getElementById('bt-warning');
-  var w = Math.max(0, parseInt((document.getElementById('subj-w')||{}).value)||0);
-  if (!box || selected.length < 2) { if (box) box.style.display='none'; return; }
-  for (var g = 0; g < BT_CONFLICT_GROUPS.length; g++) {
-    var hits = selected.filter(function(s){ return BT_CONFLICT_GROUPS[g].indexOf(s) !== -1; });
-    if (hits.length > 1) {
-      if (w >= hits.length) {
-        box.textContent = '\u2139 ' + hits.join(' + ') + ' will be distributed across the ' + w + ' women.';
-        box.className = 'info'; box.style.display = 'block';
-      } else {
-        box.textContent = '\u26a0 Conflicting body types: ' + hits.join(' + ') + ' — add more women or remove one.';
-        box.className = ''; box.style.display = 'block';
-      }
-      return;
-    }
-  }
-  box.style.display = 'none';
-}
-
 document.addEventListener('DOMContentLoaded', function() {
   previewSubj();
   syncTabVals();
-  document.getElementById('cat-pane-bodytype').addEventListener('change', checkBodyTypeWarning);
 });
 </script>
 
 <% if (!paid) { %>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('input[type="radio"], input[type="checkbox"]:not(.bt-check)').forEach(function(el) {
-    if (el.value !== '' && el.value !== 'random') {
+  document.querySelectorAll('input[type="radio"], input[type="checkbox"]:not(.bt-check):not(.mod-check)').forEach(function(el) {
+    if (el.value !== '' && el.value !== 'random' && el.name !== 'bodytype' && el.name !== 'age' && el.name !== 'race' && el.name !== 'act') {
       el.disabled = true;
       el.parentElement.style.opacity = '0.3';
       el.parentElement.style.cursor = 'not-allowed';

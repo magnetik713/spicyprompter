@@ -93,7 +93,7 @@
 <div class="page-header">
   <h1>Prompt Library</h1>
   <% if (!paid) { %>
-  <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)"><%= promptTotal %> / 100 prompts &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></span>
+  <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)"><%= promptTotal %> / <%= demoLimit %> prompts &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></span>
   <% } %>
   <div style="display:flex;gap:8px">
     <button id="select-toggle" class="btn btn-secondary" onclick="toggleSelect()">Select</button>

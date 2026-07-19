@@ -13,6 +13,8 @@
   .cat-pane { display:none; }
   .cat-pane.active { display:flex; flex-wrap:wrap; gap:6px 14px; }
   .opt-item { display:flex; align-items:center; gap:5px; }
+  #cat-pane-race { gap:0; }
+  #cat-pane-race .opt-item { width:25%; min-width:130px; padding:5px 10px; }
   .opt-item label { font-size:12px; cursor:pointer; }
   .bt-wrap { display:flex; flex-wrap:wrap; gap:6px 14px; }
   .bt-item { display:flex; align-items:center; gap:5px; }
@@ -78,7 +80,7 @@
 </div>
 <div class="cat-panes">
   <!-- Race -->
-  <div id="cat-pane-race" class="cat-pane active" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:5px 0;">
+  <div id="cat-pane-race" class="cat-pane active">
     <div class="opt-item"><input type="radio" name="race" id="race_any" value="" checked><label for="race_any" style="color:var(--muted);font-style:italic">Any</label></div>
     <% raceCategories.forEach(function(r) { %>
     <div class="opt-item"><input type="radio" name="race" id="race_<%= r.name %>" value="<%= r.name %>"><label for="race_<%= r.name %>"><%= r.label.split(" —")[0] %></label></div>
@@ -109,6 +111,11 @@
         <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_broad"     value="male_broad"     onchange="syncTabVals()"><label for="mb_broad">Broad / Stocky</label></div>
         <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_heavy"     value="male_heavy"     onchange="syncTabVals()"><label for="mb_heavy">Heavy-set</label></div>
         <div class="bt-item"><input type="checkbox" class="mb-check" id="mb_tall"      value="male_tall"      onchange="syncTabVals()"><label for="mb_tall">Tall / Slender</label></div>
+      </div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Modifiers:</span>
+        <div class="bt-item"><input type="checkbox" class="mm-check" id="mm_tattoos"   value="tattoos"   onchange="syncTabVals()"><label for="mm_tattoos">Tattoos</label></div>
+        <div class="bt-item"><input type="checkbox" class="mm-check" id="mm_piercings" value="piercings" onchange="syncTabVals()"><label for="mm_piercings">Piercings</label></div>
       </div>
       <div style="margin-top:8px"><button type="button" class="row-btn" onclick="clearMaleBodytype()">Clear</button></div>
     </div>
@@ -273,7 +280,7 @@ function setGender(g) {
     var anyEl = document.getElementById('bt_any'); if (anyEl) anyEl.checked = true;
     document.querySelectorAll('.mod-check').forEach(function(e){e.checked=false;});
   }
-  if (g === 'female') document.querySelectorAll('.mb-check').forEach(function(e){e.checked=false;});
+  if (g === 'female') { document.querySelectorAll('.mb-check,.mm-check').forEach(function(e){e.checked=false;}); }
   document.getElementById('clothing-female').style.display = g === 'female' ? '' : 'none';
   document.getElementById('clothing-male').style.display   = g === 'male'   ? '' : 'none';
   document.getElementById('facial-hair-panel').style.display  = g === 'male'   ? '' : 'none';
@@ -323,7 +330,7 @@ function syncTabVals() {
 
   var btEl = document.getElementById('tabval-body');
   if (currentGender === 'male') {
-    var mbChecked = Array.from(document.querySelectorAll('.mb-check:checked'));
+    var mbChecked = Array.from(document.querySelectorAll('.mb-check:checked,.mm-check:checked'));
     btEl.textContent = mbChecked.length === 0 ? 'Any' : mbChecked.length === 1 ? mbChecked[0].nextElementSibling.textContent.trim() : mbChecked.length + ' selected';
   } else {
     var btRadio = document.querySelector('input[name="bodytype_f"]:checked');
@@ -351,7 +358,7 @@ function clearBodytype() {
 }
 
 function clearMaleBodytype() {
-  document.querySelectorAll('.mb-check').forEach(function(el) { el.checked = false; });
+  document.querySelectorAll('.mb-check,.mm-check').forEach(function(el) { el.checked = false; });
   syncTabVals();
 }
 
@@ -369,7 +376,7 @@ function startGenerate() {
   var race      = (document.querySelector('input[name="race"]:checked') || {}).value || '';
   var bodytype = (function() {
     if (currentGender === 'male') {
-      return Array.from(document.querySelectorAll('.mb-check:checked')).map(function(el){return el.value;}).join(',');
+      return Array.from(document.querySelectorAll('.mb-check:checked,.mm-check:checked')).map(function(el){return el.value;}).join(',');
     }
     var base = (document.querySelector('input[name="bodytype_f"]:checked') || {}).value || '';
     var mods = Array.from(document.querySelectorAll('.mod-check:checked')).map(function(el){return el.value;});

@@ -57,6 +57,17 @@ const RACE_LABELS = {
   brazilian: 'Brazilian', scandinavian: 'Scandinavian', persian: 'Persian',
   russian: 'Russian', biracial: 'Mixed/Biracial', french: 'French',
   armenian: 'Armenian',
+  turkish: 'Turkish',
+  native_american: 'Native American',
+  pacific_islander: 'Pacific Islander',
+  celtic: 'Celtic / Irish',
+  moroccan: 'Moroccan',
+  ethiopian: 'Ethiopian',
+  caribbean: 'Caribbean',
+  mexican: 'Mexican',
+  colombian: 'Colombian',
+  argentinian: 'Argentinian',
+  puerto_rican: 'Puerto Rican',
 };
 
 const BODYTYPE_LABELS = {
