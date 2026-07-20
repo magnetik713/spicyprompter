@@ -20,6 +20,14 @@ Bulk AI prompt generator for local and cloud image models. Connects to any OpenA
 3. Run `install.bat` — installs dependencies and creates a desktop shortcut
 4. Run `start.bat` (or use the shortcut) — opens the app in your browser
 
+## Updating
+
+1. Download the latest zip from [Releases](https://github.com/magnetik713/spicyprompter/releases/latest)
+2. Extract to any folder (fresh folder or over the existing one — both work)
+3. Run `install.bat` to reinstall dependencies
+
+Your prompts are stored in `%APPDATA%\SpicyPrompter\prompts.db`, separate from the app folder. Updates and reinstalls never touch your data.
+
 ## Setup
 
 On first launch, go to **Settings** and configure:
@@ -57,4 +65,4 @@ Also available as a standalone free tool: [LoRA Dataset Builder](https://github.
 
 ## Data & Privacy
 
-Everything lives in a local SQLite database on your machine. No accounts, no sync, no cloud storage.
+Prompts are stored in `%APPDATA%\SpicyPrompter\prompts.db` — separate from the app folder so updates, reinstalls, and folder changes never affect your data. No accounts, no sync, no cloud storage.
