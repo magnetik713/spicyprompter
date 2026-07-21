@@ -147,7 +147,7 @@ router.get('/generate', (req, res) => { try {
   const sceneCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='scene'     ORDER BY label").all();
   const themeCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='theme'     ORDER BY label").all();
   const defaultModel = cfg.get('llm_default_model') || '';
-  const genPromptTotal = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
+  const genPromptTotal = usage.getCount();
   const paid = cfg.isPaid();
   res.render('prompts/generate', {
     raceCategories, bodyTypeCategories, roleCategories,

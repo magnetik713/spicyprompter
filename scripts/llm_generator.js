@@ -4,7 +4,13 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', 'prompts.db');
+const os = require('os');
+const fs = require('fs');
+const DATA_DIR = process.platform === 'win32' && process.env.APPDATA
+  ? require('path').join(process.env.APPDATA, 'SpicyPrompter')
+  : require('path').join(os.homedir(), '.spicyprompter');
+fs.mkdirSync(DATA_DIR, { recursive: true });
+const DB_PATH = require('path').join(DATA_DIR, 'prompts.db');
 
 const args = process.argv.slice(2);
 const getArg = (flag, def) => { const i = args.indexOf(flag); return i >= 0 ? args[i+1] : def; };
