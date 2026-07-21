@@ -94,6 +94,10 @@
   <input type="number" id="subj-w" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
   <span class="gen-label">Men</span>
   <input type="number" id="subj-m" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
+  <span id="interracial-wrap" style="display:none;align-items:center;gap:5px">
+    <input type="checkbox" id="interracial">
+    <label for="interracial" class="gen-label" style="cursor:pointer;text-transform:uppercase;letter-spacing:.06em">Interracial</label>
+  </span>
   <span class="gen-label">Count</span>
   
   <% if (paid) { %>
@@ -424,6 +428,7 @@ function startGenerate() {
   var hair_length        = (document.querySelector('input[name="hair_length"]:checked') || {}).value         || '';
   var hair_style         = (document.querySelector('input[name="hair_style"]:checked') || {}).value          || '';
   var camera_view        = (document.querySelector('input[name="view"]:checked') || {}).value                || '';
+  var interracial = (document.getElementById('interracial') && document.getElementById('interracial').checked) ? '1' : '';
   var count    = document.getElementById('count').value;
   var model    = document.getElementById('model').value;
 
@@ -454,6 +459,7 @@ function startGenerate() {
   if (camera_view && camera_view !== 'random') params.set('camera_view', camera_view);
   if (hair_length)       params.set('hair_length',       hair_length);
   if (hair_style)        params.set('hair_style',        hair_style);
+  if (interracial)       params.set('interracial',       interracial);
 
   var es = new EventSource('/prompts/generate/run?' + params);
 
@@ -584,6 +590,14 @@ function buildSubject() {
 function previewSubj() {
   var el = document.getElementById('subj-preview');
   if (el) { var s = buildSubject(); el.textContent = s ? '"' + s + '"' : ''; }
+  var w = Math.max(0, parseInt(document.getElementById('subj-w').value) || 0);
+  var m = Math.max(0, parseInt(document.getElementById('subj-m').value) || 0);
+  var wrap = document.getElementById('interracial-wrap');
+  if (wrap) {
+    var multi = (w + m) > 1;
+    wrap.style.display = multi ? 'flex' : 'none';
+    if (!multi) document.getElementById('interracial').checked = false;
+  }
   checkActWarning();
 }
 

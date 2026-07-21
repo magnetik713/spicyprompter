@@ -46,6 +46,7 @@ const MAX_TOKENS           = parseInt(getArg('--max_tokens', '350'));
 const PROMPT_WORDS         = parseInt(getArg('--prompt_words', '110'), 10);
 const RAW_OUTPUT           = hasFlag('--raw_output');
 const ALLOW_TOYS           = hasFlag('--allow_toys');
+const INTERRACIAL          = hasFlag('--interracial');
 const DATASET_MODE         = hasFlag('--dataset');
 const GENDER_ARG           = getArg('--gender', 'women');
 const CLOTHING_ARG         = getArg('--clothing', null);
@@ -75,6 +76,10 @@ const RACE_LABELS = {
   argentinian: 'Argentinian',
   puerto_rican: 'Puerto Rican',
 };
+
+const INTERRACIAL_DARK  = ['ebony','ethiopian','caribbean','moroccan'];
+const INTERRACIAL_LIGHT = ['scandinavian','eastern_european','french','celtic','russian'];
+const INTERRACIAL_MID   = ['latina','east_asian','indian','arabic','brazilian','persian'];
 
 const BODYTYPE_LABELS = {
   bbw: 'BBW', busty: 'busty', petite: 'petite', petite_teen: 'petite teen',
@@ -371,7 +376,7 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
   return skeleton;
 }
 
-const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, facial_expression, role, camera_angle, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, facial expression, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. If facial_expression is given, the subject's face must show that exact expression throughout. Realistic photography ONLY — no anime, no illustration, no cartoon. ONE subject only — never include observers, bystanders, unseen people, or any secondary figures. Over-shoulder shots must show only the primary subject from behind with no other person implied or present. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. (5) ORAL SEX DIRECTION (ABSOLUTE): Oral sex directed AT a man = fellatio — always. Oral sex directed AT a woman = cunnilingus — always, regardless of who performs it. Never write a man receiving cunnilingus or a woman receiving fellatio. The woman NEVER has a penis, shaft, member, or cock under any framing. If act is generic "oral", determine direction from who receives it. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
+const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, facial_expression, role, camera_angle, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, facial expression, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. If facial_expression is given, the subject's face must show that exact expression throughout. Realistic photography ONLY — no anime, no illustration, no cartoon. ONE subject only — never include observers, bystanders, unseen people, or any secondary figures. Over-shoulder shots must show only the primary subject from behind with no other person implied or present. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. CAST PRESENCE (ABSOLUTE): Every person listed in the subject MUST appear physically in the scene — described by position, body, and role. If subject is "a woman and a man", BOTH must be explicitly present and active. The man cannot be implied, off-screen, or absent. A partnered act requires both partners visibly described. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. (5) TITFUCK / PAIZURI (ABSOLUTE): The man's PENIS goes between the woman's breasts — she presses them together around his shaft. FORBIDDEN: man's head between breasts, man's face in cleavage, man buried in cleavage, any body part other than his penis between her breasts. His penis is sandwiched between her breasts from below — she looks down at him, he looks up at her. The woman is the performer; the man is the receiver of the act. (6) ORAL SEX DIRECTION (ABSOLUTE): Oral sex directed AT a man = fellatio — always. Oral sex directed AT a woman = cunnilingus — always, regardless of who performs it. Never write a man receiving cunnilingus or a woman receiving fellatio. The woman NEVER has a penis, shaft, member, or cock under any framing. If act is generic "oral", determine direction from who receives it. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
 
 const SYSTEM_DATASET = `You are a photorealistic portrait prompt engineer for LoRA training datasets. Write detailed, realistic character portrait prompts. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject appearance (race, body type, hair color, eye color, skin tone, facial expression), clothing/outfit description (follow the skeleton clothing field exactly — if nude, describe nude), setting/environment, lighting quality, mood, camera angle and composition. If camera_angle is given, compose the shot from that exact viewpoint. If facial_expression is given, the subject must show that expression. Realistic photography ONLY — no anime, no illustration, no cartoon. ONE subject only — never include observers, bystanders, unseen people, or any secondary figures. Over-shoulder shots must show only the primary subject from behind with no other person implied or present. SKELETON ECHO RULE: Never output skeleton fields as standalone sentences. Weave all details into flowing prose description only.`;
 
@@ -409,9 +414,13 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const emphasisLine = emphasisParts.length ? '\n' + emphasisParts.join('\n') : '';
   const subjectLower = (skeleton.subject || '').toLowerCase();
   const hasMaleSubject = /\bman\b|\bmen\b/.test(subjectLower);
+  const hasFemaleSubject = /woman|women|girl/i.test(subjectLower);
+  const isMaleOnly = hasMaleSubject && !hasFemaleSubject;
   const hasMultipleFemales = /two women|three women|\bwomen\b/.test(subjectLower);
   let castOverride = '';
-  if (!hasMaleSubject && emphasisParts.length) {
+  if (isMaleOnly) {
+    castOverride = '\nCAST OVERRIDE (ABSOLUTE): Scene is all-male — no female characters exist. All acts are performed between the men only. Fingering, rimming, handjob, oral, and all other acts are male-on-male.';
+  } else   if (!hasMaleSubject && emphasisParts.length) {
     if (hasMultipleFemales) {
       castOverride = '\nCAST OVERRIDE (ABSOLUTE): Scene is all-female — no male characters exist. Adapt all acts to be performed between the women only.';
     } else {
@@ -424,6 +433,16 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const isFinishAct = actCat && (FINISH_ACTS.test(actCat.name || '') || FINISH_ACTS.test(actCat.emphasis || ''));
   const cumRule = (isFinishAct && hasWomanSubject) ? '\nCUMSHOT RULE (ABSOLUTE): The finish is always received by the woman. Never on the man.' : '';
   const soloNoCum = (!hasMaleSubject && isSoloFemale(skeleton.subject)) ? '\nSOLO FEMALE RULE (ABSOLUTE): No males, no penis, no cum, no semen, no ejaculate, no white fluid on skin. Female squirting is clear fluid only — never say ejaculation, cum, or semen. Never use the word \'orgasmic\' — instead say: ecstatic, overwhelmed by pleasure, lost in sensation. Skin moisture is sweat or water only — never describe skin as oily, oil-coated, or glazed. JOI scenes show only the woman teasing — no completion, no finish, no implied viewer orgasm. Include the phrase \'clean skin\' somewhere in the prompt to reinforce the image model.' : '';
+  let interracialRule = '';
+  if (INTERRACIAL) {
+    const isAfricanRace = RACE_ARG && INTERRACIAL_DARK.includes(RACE_ARG);
+    const contrastPool = isAfricanRace ? INTERRACIAL_LIGHT : INTERRACIAL_DARK;
+    const race2 = contrastPool[Math.floor(Math.random() * contrastPool.length)];
+    const label1 = RACE_ARG ? (RACE_LABELS[RACE_ARG] || RACE_ARG) : 'Caucasian';
+    const label2 = RACE_LABELS[race2] || race2;
+    interracialRule = `
+INTERRACIAL CAST (ABSOLUTE): The subjects have contrasting racial backgrounds — ${label1} and ${label2}. Describe each person's race, skin tone, and physical features explicitly. The racial contrast is visually prominent.`;
+  }
   const cameraAngleRule     = CAMERA_VIEW_ARG       ? `\nCAMERA ANGLE (ABSOLUTE): Shoot this scene from ${CAMERA_VIEW_ARG.replace(/_/g, ' ')} — this is the primary viewpoint. Describe the composition from this exact angle.` : '';
   const hairColorRule       = HAIR_COLOR_ARG        ? `\nHAIR COLOR (ABSOLUTE): The subject has ${HAIR_COLOR_ARG.replace(/_/g, ' ')} hair. Describe it explicitly — do not substitute or omit.` : '';
   const expressionRule      = FACIAL_EXPRESSION_ARG ? `\nFACIAL EXPRESSION (ABSOLUTE): The subject's face shows ${FACIAL_EXPRESSION_ARG.replace(/_/g, ' ')} — describe this expression explicitly in the prompt.` : '';
@@ -439,7 +458,7 @@ ${skeletonStr}${emphasisLine}${cameraAngleRule}${hairColorRule}${expressionRule}
 
 IMPORTANT: Use the EXACT subject, race, body_type, clothing, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, detailed portrait description.`
     : `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:
-${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}${ageRule}${hairLengthRule}${hairStyleRule}${facialHairRule}
+${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${interracialRule}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}${ageRule}${hairLengthRule}${hairStyleRule}${facialHairRule}
 
 IMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, explicit prompt.`;
 

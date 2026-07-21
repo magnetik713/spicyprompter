@@ -160,7 +160,7 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style } = req.query;
+  const { cats, count, model, subject, race, bodytype, role, style, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial } = req.query;
 
 
   if (!cfg.isPaid()) {
@@ -212,6 +212,7 @@ router.get('/generate/run', async (req, res) => {
   if (combinedCats)  args.push('--category', combinedCats);
   if (safeSubject)  args.push('--subject',  safeSubject);
   if (safeRace)     args.push('--race',     safeRace);
+  if (interracial === '1') args.push('--interracial');
   if (safeBodytype) args.push('--bodytype', safeBodytype);
   if (safeRole)     args.push('--role',     safeRole);
   if (safeStyle && safeStyle !== 'random') args.push('--style', safeStyle);
