@@ -130,7 +130,7 @@
       <div class="opt-item" id="view-item-low_angle"><input type="checkbox" class="view-check" id="view_low_angle" value="low_angle" checked onchange="syncTabVals()"><label for="view_low_angle">Low Angle</label></div>
       <div class="opt-item" id="view-item-from_above"><input type="checkbox" class="view-check" id="view_from_above" value="from_above" checked onchange="syncTabVals()"><label for="view_from_above">From Above</label></div>
       <div class="opt-item" id="view-item-side"><input type="checkbox" class="view-check" id="view_side" value="side" checked onchange="syncTabVals()"><label for="view_side">Side View</label></div>
-      <div class="opt-item" id="view-item-over_shoulder"><input type="checkbox" class="view-check" id="view_over_shoulder" value="over_shoulder" checked onchange="syncTabVals()"><label for="view_over_shoulder">Over Shoulder</label></div>
+      <div class="opt-item" id="view-item-back_angle"><input type="checkbox" class="view-check" id="view_back_angle" value="back_angle" checked onchange="syncTabVals()"><label for="view_back_angle">Back Angle</label></div>
     </div>
     <div style="margin-top:8px;display:flex;gap:8px">
       <button type="button" class="row-btn" onclick="checkAllViews(true)">All</button>
@@ -304,7 +304,7 @@ var ALL_VIEWS = [
   { value: 'low_angle',     label: 'Low Angle' },
   { value: 'from_above',    label: 'From Above' },
   { value: 'side',          label: 'Side View' },
-  { value: 'over_shoulder', label: 'Over Shoulder' },
+  { value: 'back_angle', label: 'Back Angle' },
 ];
 
 function selectCat(cat, btn) {

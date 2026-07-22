@@ -1251,7 +1251,7 @@ router.post('/dataset/export', express.json({ limit: '20mb' }), (req, res) => {
 
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', 'attachment; filename="lora-dataset.zip"');
-  const VIEWS = ['portrait','full_body','waist_up','low_angle','from_above','side','over_shoulder'];
+  const VIEWS = ['portrait','full_body','waist_up','low_angle','from_above','side','back_angle'];
   const viewRe = new RegExp('\\b(' + VIEWS.join('|') + ')\\b');
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lora-export-'));
   try {
