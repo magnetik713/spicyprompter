@@ -82,6 +82,13 @@
   .attr-opts  { display:flex; flex-wrap:wrap; gap:4px 12px; }
   .section-lbl { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:var(--font); margin-bottom:6px; display:block; }
 
+  .preset-bar { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .preset-bar select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:var(--radius); font-family:var(--font); font-size:12px; min-width:140px; }
+  .preset-bar select:focus { outline:none; border-color:var(--accent); }
+  .preset-bar input[type=text] { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:var(--radius); font-family:var(--font); font-size:12px; width:150px; }
+  .preset-bar input[type=text]:focus { outline:none; border-color:var(--accent); }
+  .opt-item.ha-partner.disabled input { pointer-events:none; }
+  .opt-item.ha-partner.disabled label { opacity:.35; cursor:not-allowed; }
 </style>
 
 <div class="page-header">
@@ -89,6 +96,13 @@
   <a href="/prompts" class="btn btn-secondary">&#8592; Library</a>
 </div>
 
+<div class="preset-bar">
+  <span class="gen-label" style="white-space:nowrap">Presets</span>
+  <select id="preset-select" onchange="loadPreset(this.value)"><option value="">— load —</option></select>
+  <input type="text" id="preset-name" placeholder="name…" maxlength="100">
+  <button class="btn btn-secondary" style="padding:5px 12px;font-size:11px" onclick="savePreset()">Save</button>
+  <button class="btn btn-danger" id="preset-del-btn" style="display:none;padding:5px 12px;font-size:11px" onclick="deletePreset()">Delete</button>
+</div>
 <div class="gen-topbar">
   <span class="gen-label">Women</span>
   <input type="number" id="subj-w" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
@@ -110,6 +124,7 @@
   <span id="subj-preview" class="gen-preview"></span>
   <button id="gen-btn" class="btn btn-primary gen-btn" onclick="startGenerate()">&#9654; Generate</button>
 </div>
+
 <% if (!paid) { %>
 <p style="font-size:10px;color:var(--muted);margin:6px 0 0;font-family:var(--font-mono)"><%= promptTotal %> / <%= demoLimit %> free prompts used &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></p>
 <% } %>
@@ -345,6 +360,24 @@
       <div class="opt-item"><input type="radio" name="skin_tone" id="st_dark"   value="dark"><label for="st_dark">Dark</label></div>
     </div>
   </div>
+  <div class="attr-panel">
+    <span class="attr-label">Hand Action</span>
+    <div class="attr-opts" id="hand-action-opts">
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_none"      value=""           checked><label for="ha_none"      style="color:var(--muted);font-style:italic">None</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_random"    value="random"            ><label for="ha_random"   >Random</label></div>
+      <div class="opt-item ha-solo"><input type="radio" name="hand_action" id="ha_sheet"     value="sheet_grip"        ><label for="ha_sheet"    >Sheet Grip</label></div>
+      <div class="opt-item ha-solo"><input type="radio" name="hand_action" id="ha_wall"      value="wall_brace"        ><label for="ha_wall"     >Wall Brace</label></div>
+      <div class="opt-item ha-solo"><input type="radio" name="hand_action" id="ha_self"      value="self_touch"        ><label for="ha_self"     >Self-Touch</label></div>
+      <div class="opt-item ha-solo"><input type="radio" name="hand_action" id="ha_headboard" value="headboard"         ><label for="ha_headboard">Headboard</label></div>
+      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_hair"   value="hair_grab"         ><label for="ha_hair"     >Hair Grab</label></div>
+      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_hip"    value="hip_grip"          ><label for="ha_hip"      >Hip Grip</label></div>
+      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_wrist"  value="wrist_grip"        ><label for="ha_wrist"    >Wrist Grip</label></div>
+      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_face"   value="face_cup"          ><label for="ha_face"     >Face Cup</label></div>
+      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_thigh"  value="thigh_grip"        ><label for="ha_thigh"    >Thigh Grip</label></div>
+      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_breast" value="breast_grip"       ><label for="ha_breast"   >Breast Grip</label></div>
+      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_butt"   value="butt_grab"         ><label for="ha_butt"     >Butt Grab</label></div>
+    </div>
+  </div>
 </div>
 
 <% if (!paid) { %>
@@ -425,6 +458,7 @@ function startGenerate() {
   var facial_expression  = (document.querySelector('input[name="facial_expression"]:checked') || {}).value  || '';
   var eye_color          = (document.querySelector('input[name="eye_color"]:checked') || {}).value           || '';
   var skin_tone          = (document.querySelector('input[name="skin_tone"]:checked') || {}).value           || '';
+  var hand_action        = (document.querySelector('input[name=hand_action]:checked') || {}).value          || '';
   var hair_length        = (document.querySelector('input[name="hair_length"]:checked') || {}).value         || '';
   var hair_style         = (document.querySelector('input[name="hair_style"]:checked') || {}).value          || '';
   var camera_view        = (document.querySelector('input[name="view"]:checked') || {}).value                || '';
@@ -460,6 +494,7 @@ function startGenerate() {
   if (hair_length)       params.set('hair_length',       hair_length);
   if (hair_style)        params.set('hair_style',        hair_style);
   if (interracial)       params.set('interracial',       interracial);
+  if (hand_action)       params.set('hand_action',     hand_action);
 
   var es = new EventSource('/prompts/generate/run?' + params);
 
@@ -588,6 +623,7 @@ function buildSubject() {
 }
 
 function previewSubj() {
+  updateHandAction();
   var el = document.getElementById('subj-preview');
   if (el) { var s = buildSubject(); el.textContent = s ? '"' + s + '"' : ''; }
   var w = Math.max(0, parseInt(document.getElementById('subj-w').value) || 0);
@@ -634,6 +670,92 @@ document.addEventListener('DOMContentLoaded', function() {
   previewSubj();
   syncTabVals();
 });
+
+// Presets
+var _presets = [];
+function getFormState() {
+  var state = {
+    subj_w: (document.getElementById('subj-w')||{}).value||'1',
+    subj_m: (document.getElementById('subj-m')||{}).value||'1',
+    interracial: !!(document.getElementById('interracial') && document.getElementById('interracial').checked),
+    count: (document.getElementById('count')||{}).value||'5',
+    model: (document.getElementById('model')||{}).value||'',
+    race: (document.querySelector('input[name="race"]:checked')||{}).value||'',
+    bodytype: (document.querySelector('input[name="bodytype"]:checked')||{}).value||'',
+    modifiers: Array.from(document.querySelectorAll('.mod-check:checked')).map(function(e){return e.value;}),
+    role: (document.querySelector('input[name="role"]:checked')||{}).value||'random',
+    act: (document.querySelector('input[name="act"]:checked')||{}).value||'random',
+    scene: (document.querySelector('input[name="scene"]:checked')||{}).value||'random',
+    theme: (document.querySelector('input[name="theme"]:checked')||{}).value||'random',
+    style: (document.querySelector('input[name="style"]:checked')||{}).value||'random',
+    view: (document.querySelector('input[name="view"]:checked')||{}).value||'random',
+    age: (document.querySelector('input[name="age"]:checked')||{}).value||'',
+    hair_color: (document.querySelector('input[name="hair_color"]:checked')||{}).value||'',
+    facial_expression: (document.querySelector('input[name="facial_expression"]:checked')||{}).value||'',
+    eye_color: (document.querySelector('input[name="eye_color"]:checked')||{}).value||'',
+    skin_tone: (document.querySelector('input[name="skin_tone"]:checked')||{}).value||''
+  };
+  return state;
+}
+function applyFormState(s) {
+  function setNum(id,val){var el=document.getElementById(id);if(el)el.value=val;}
+  function setChk(id,val){var el=document.getElementById(id);if(el)el.checked=!!val;}
+  function chkRadio(name,val){var el=document.querySelector('input[name="'+name+'"][value="'+val+'"]');if(el){el.checked=true;el.dispatchEvent(new Event('change'));}}
+  setNum('subj-w',s.subj_w||'1');
+  setNum('subj-m',s.subj_m||'1');
+  setChk('interracial',s.interracial);
+  setNum('count',s.count||'5');
+  var modelEl=document.getElementById('model');if(modelEl)modelEl.value=s.model||'';
+  chkRadio('race',s.race||'');
+  chkRadio('bodytype',s.bodytype||'');
+  document.querySelectorAll('.mod-check').forEach(function(e){e.checked=(s.modifiers||[]).indexOf(e.value)>=0;});
+  ['role','act','scene','theme','style','view'].forEach(function(a){chkRadio(a,s[a]||'random');});
+  ['age','hair_color','facial_expression','eye_color','skin_tone'].forEach(function(a){chkRadio(a,s[a]||'');});
+  if(typeof previewSubj==='function')previewSubj();
+  if(typeof syncTabVals==='function')syncTabVals();
+}
+function refreshPresets() {
+  fetch('/prompts/presets?type=generate').then(function(r){return r.json();}).then(function(list){
+    _presets=list;
+    var sel=document.getElementById('preset-select'),cur=sel.value;
+    sel.innerHTML='<option value="">— load —</option>';
+    list.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
+    if(cur)sel.value=cur;
+  });
+}
+function loadPreset(id) {
+  var del=document.getElementById('preset-del-btn');
+  if(!id){del.style.display='none';return;}
+  del.style.display='';
+  var p=_presets.find(function(x){return x.id==id;});
+  if(!p)return;
+  applyFormState(typeof p.config==='string'?JSON.parse(p.config):p.config);
+  document.getElementById('preset-name').value=p.name;
+}
+function savePreset() {
+  var name=document.getElementById('preset-name').value.trim();
+  if(!name){alert('Enter a preset name.');return;}
+  fetch('/prompts/presets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,type:'generate',config:getFormState()})})
+    .then(function(r){return r.json();}).then(function(res){
+      if(res.ok){refreshPresets();setTimeout(function(){
+        var sel=document.getElementById('preset-select');
+        for(var i=0;i<sel.options.length;i++){if(sel.options[i].textContent===name){sel.value=sel.options[i].value;break;}}
+        document.getElementById('preset-del-btn').style.display='';
+      },150);}
+    });
+}
+function deletePreset() {
+  var id=document.getElementById('preset-select').value;
+  if(!id||!confirm('Delete preset?'))return;
+  fetch('/prompts/presets/'+id,{method:'DELETE'}).then(function(){
+    document.getElementById('preset-select').value='';
+    document.getElementById('preset-del-btn').style.display='none';
+    document.getElementById('preset-name').value='';
+    refreshPresets();
+  });
+}
+document.addEventListener('DOMContentLoaded',function(){refreshPresets();updateHandAction();});
+
 </script>
 
 <% if (!paid) { %>
@@ -648,6 +770,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+function updateHandAction() {
+  var w = parseInt(document.getElementById('subj-w').value) || 0;
+  var m = parseInt(document.getElementById('subj-m').value) || 0;
+  var solo = (w + m) <= 1;
+  document.querySelectorAll('.ha-partner').forEach(function(el) {
+    el.classList.toggle('disabled', solo);
+    var inp = el.querySelector('input');
+    if (solo && inp.checked) { document.getElementById('ha_none').checked = true; }
+  });
+}
+
 </script>
 <% } %>
 <%- include('../partials/footer') %>

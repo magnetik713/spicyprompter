@@ -90,6 +90,14 @@ const MIGRATIONS = [
     try { db.exec('ALTER TABLE prompts ADD COLUMN sampler TEXT DEFAULT NULL'); } catch (e) {}
     try { db.exec('ALTER TABLE prompts ADD COLUMN size_preset TEXT DEFAULT NULL'); } catch (e) {}
   },
+  // 2 --- presets table
+  () => {
+    db.exec("CREATE TABLE IF NOT EXISTS presets (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'dataset', config TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+  },
+  // 3 --- unique index on presets(name, type)
+  () => {
+    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS presets_name_type ON presets (name, type)');
+  },
 ];
 
 function runMigrations() {

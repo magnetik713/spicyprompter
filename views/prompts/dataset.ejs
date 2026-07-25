@@ -38,6 +38,18 @@
   .line-header { color:var(--accent); font-weight:600; }
 
   .gen-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .gen-bar input[type=number],
+  .gen-bar input[type=text] {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 5px 8px;
+    font-family: var(--font);
+    font-size: 12px;
+  }
+  .gen-bar input[type=number]:focus,
+  .gen-bar input[type=text]:focus { outline: none; border-color: var(--accent); }
   .gen-bar input[type=number] { width:70px; }
   .gen-bar input[type=text]   { flex:1; min-width:180px; }
   .dataset-desc { font-size:12px; color:var(--muted); margin-bottom:16px; line-height:1.6; }
@@ -48,6 +60,11 @@
   .gender-btn { padding:6px 18px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-family:var(--font); background:none; border:none; color:var(--muted); cursor:pointer; }
   .gender-btn.active { background:var(--accent); color:#fff; }
   .gender-btn:hover:not(.active) { background:var(--bg2); color:var(--text); }
+  .preset-bar { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .preset-bar select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:var(--radius); font-family:var(--font); font-size:12px; min-width:140px; }
+  .preset-bar select:focus { outline:none; border-color:var(--accent); }
+  .preset-bar input[type=text] { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:var(--radius); font-family:var(--font); font-size:12px; width:150px; }
+  .preset-bar input[type=text]:focus { outline:none; border-color:var(--accent); }
 </style>
 
 <div class="page-header">
@@ -63,6 +80,13 @@
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
   <input type="checkbox" id="clean-bg" checked style="cursor:pointer">
   <label for="clean-bg" style="font-size:12px;cursor:pointer">Studio / Clean Background <span style="color:var(--muted);font-size:10px">(solid color or neutral backdrop)</span></label>
+</div>
+<div class="preset-bar">
+  <span class="section-lbl" style="margin:0;white-space:nowrap">Presets</span>
+  <select id="preset-select" onchange="loadPreset(this.value)"><option value="">— load —</option></select>
+  <input type="text" id="preset-name" placeholder="name…" maxlength="100">
+  <button class="btn btn-secondary" style="padding:5px 12px;font-size:11px" onclick="savePreset()">Save</button>
+  <button class="btn btn-danger" id="preset-del-btn" style="display:none;padding:5px 12px;font-size:11px" onclick="deletePreset()">Delete</button>
 </div>
 <div class="gen-bar">
   <label class="section-lbl" style="margin:0">Count per view</label>
@@ -517,6 +541,93 @@ function runNextView(views, idx, params, box, btn) {
       btn.disabled = false; btn.textContent = 'Download ZIP';
     }
   }
+
+// Presets
+var _presets = [];
+function getFormState() {
+  return {
+    gender: currentGender,
+    race: (document.querySelector('input[name="race"]:checked')||{}).value||'',
+    bodytype_f: (document.querySelector('input[name="bodytype_f"]:checked')||{}).value||'',
+    modifiers: Array.from(document.querySelectorAll('.mod-check:checked')).map(function(e){return e.value;}),
+    male_body: Array.from(document.querySelectorAll('.mb-check:checked')).map(function(e){return e.value;}),
+    male_mods: Array.from(document.querySelectorAll('.mm-check:checked')).map(function(e){return e.value;}),
+    views: Array.from(document.querySelectorAll('.view-check:checked')).map(function(e){return e.value;}),
+    age: (document.querySelector('input[name="age"]:checked')||{}).value||'',
+    hair_length: (document.querySelector('input[name="hair_length"]:checked')||{}).value||'',
+    hair_style: (document.querySelector('input[name="hair_style"]:checked')||{}).value||'',
+    hair_color: (document.querySelector('input[name="hair_color"]:checked')||{}).value||'',
+    facial_expression: (document.querySelector('input[name="facial_expression"]:checked')||{}).value||'',
+    eye_color: (document.querySelector('input[name="eye_color"]:checked')||{}).value||'',
+    skin_tone: (document.querySelector('input[name="skin_tone"]:checked')||{}).value||'',
+    clothing: (document.querySelector('input[name="clothing"]:checked')||{}).value||'',
+    clothing_male: (document.querySelector('input[name="clothing_male"]:checked')||{}).value||'',
+    facial_hair: (document.querySelector('input[name="facial_hair"]:checked')||{}).value||'',
+    count: document.getElementById('count-input').value,
+    clean_bg: document.getElementById('clean-bg').checked,
+    model: document.getElementById('model-input').value
+  };
+}
+function applyFormState(s) {
+  setGender(s.gender||'female');
+  function chk(name,val,fb){var el=document.querySelector('input[name="'+name+'"][value="'+val+'"]')||document.querySelector('input[name="'+name+'"][value="'+(fb||'')+'"]');if(el)el.checked=true;}
+  chk('race',s.race||'');
+  chk('bodytype_f',s.bodytype_f||'');
+  document.querySelectorAll('.mod-check').forEach(function(e){e.checked=(s.modifiers||[]).indexOf(e.value)>=0;});
+  document.querySelectorAll('.mb-check').forEach(function(e){e.checked=(s.male_body||[]).indexOf(e.value)>=0;});
+  document.querySelectorAll('.mm-check').forEach(function(e){e.checked=(s.male_mods||[]).indexOf(e.value)>=0;});
+  document.querySelectorAll('.view-check').forEach(function(e){e.checked=(s.views||[]).indexOf(e.value)>=0;});
+  ['age','hair_length','hair_style','hair_color','facial_expression','eye_color','skin_tone'].forEach(function(a){chk(a,s[a]||'');});
+  chk('clothing',s.clothing||'','neutral_outfit');
+  chk('clothing_male',s.clothing_male||'','male_neutral');
+  chk('facial_hair',s.facial_hair||'');
+  document.getElementById('count-input').value=s.count||10;
+  document.getElementById('clean-bg').checked=s.clean_bg!==false;
+  document.getElementById('model-input').value=s.model||'';
+  syncTabVals();
+}
+function refreshPresets() {
+  fetch('/prompts/presets?type=sp_dataset').then(function(r){return r.json();}).then(function(list){
+    _presets=list;
+    var sel=document.getElementById('preset-select'),cur=sel.value;
+    sel.innerHTML='<option value="">— load —</option>';
+    list.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
+    if(cur)sel.value=cur;
+  });
+}
+function loadPreset(id) {
+  var del=document.getElementById('preset-del-btn');
+  if(!id){del.style.display='none';return;}
+  del.style.display='';
+  var p=_presets.find(function(x){return x.id==id;});
+  if(!p)return;
+  applyFormState(typeof p.config==='string'?JSON.parse(p.config):p.config);
+  document.getElementById('preset-name').value=p.name;
+}
+function savePreset() {
+  var name=document.getElementById('preset-name').value.trim();
+  if(!name){alert('Enter a preset name.');return;}
+  fetch('/prompts/presets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,type:'sp_dataset',config:getFormState()})})
+    .then(function(r){return r.json();}).then(function(res){
+      if(res.ok){refreshPresets();setTimeout(function(){
+        var sel=document.getElementById('preset-select');
+        for(var i=0;i<sel.options.length;i++){if(sel.options[i].textContent===name){sel.value=sel.options[i].value;break;}}
+        document.getElementById('preset-del-btn').style.display='';
+      },150);}
+    });
+}
+function deletePreset() {
+  var id=document.getElementById('preset-select').value;
+  if(!id||!confirm('Delete preset?'))return;
+  fetch('/prompts/presets/'+id,{method:'DELETE'}).then(function(){
+    document.getElementById('preset-select').value='';
+    document.getElementById('preset-del-btn').style.display='none';
+    document.getElementById('preset-name').value='';
+    refreshPresets();
+  });
+}
+document.addEventListener('DOMContentLoaded',refreshPresets);
+
 </script>
 
 <div id="export-panel" style="display:none;margin-top:20px;padding:16px;background:var(--surface);border-radius:8px;border:1px solid var(--border)">

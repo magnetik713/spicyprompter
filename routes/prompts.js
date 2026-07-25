@@ -160,7 +160,7 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial } = req.query;
+  const { cats, count, model, subject, race, bodytype, role, style, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial, hand_action } = req.query;
 
 
   if (!cfg.isPaid()) {
@@ -192,6 +192,7 @@ router.get('/generate/run', async (req, res) => {
   const safeEyeColor         = (eye_color         || '').replace(/[^a-z_]/g, '');
   const safeSkinTone         = (skin_tone         || '').replace(/[^a-z_]/g, '');
   const safeCameraView       = (camera_view       || '').replace(/[^a-z_]/g, '');
+  const safeHandAction       = (hand_action       || '').replace(/[^a-z_]/g, '');
 
   if (cfg.isPaid()) {
     const valid = await cfg.checkLicense();
@@ -224,6 +225,7 @@ router.get('/generate/run', async (req, res) => {
   if (paid && safeHairLength)       args.push('--hair_length',       safeHairLength);
   if (paid && safeHairStyle)        args.push('--hair_style',        safeHairStyle);
   if (paid && safeCameraView)       args.push('--camera_view',       safeCameraView);
+  if (safeHandAction && safeHandAction !== 'none') args.push('--hand_action', safeHandAction);
   // only pass random flags for paid users — demo users get restricted cat pool above instead
   if (act_random   === '1') args.push('--act_random');
   if (scene_random === '1') args.push('--scene_random');
@@ -792,6 +794,30 @@ router.post('/categories/:id', (req, res) => {
   res.redirect('/prompts/categories');
 });
 
+
+
+// Presets
+router.get('/presets', (req, res) => {
+  const type = req.query.type || 'dataset';
+  const rows = db.prepare('SELECT id, name, config FROM presets WHERE type = ? ORDER BY name COLLATE NOCASE').all(type);
+  res.json(rows);
+});
+
+router.post('/presets', (req, res) => {
+  const { name, type, config } = req.body;
+  if (!name || !config) return res.status(400).json({ ok: false, error: 'name and config required' });
+  const result = db.prepare('INSERT OR REPLACE INTO presets (name, type, config) VALUES (?, ?, ?)').run(
+    name.trim().slice(0, 100),
+    (type || 'dataset').replace(/[^a-z_]/g, ''),
+    JSON.stringify(config)
+  );
+  res.json({ ok: true, id: result.lastInsertRowid });
+});
+
+router.delete('/presets/:id', (req, res) => {
+  db.prepare('DELETE FROM presets WHERE id = ?').run(parseInt(req.params.id));
+  res.json({ ok: true });
+});
 
 router.get('/:id/edit', (req, res) => {
   const prompt = db.prepare('SELECT * FROM prompts WHERE id = ?').get(req.params.id);

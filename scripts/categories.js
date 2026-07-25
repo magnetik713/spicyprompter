@@ -252,12 +252,12 @@ module.exports = {
 
   oral: {
     label: 'Oral — explicit oral sex scenes',
-    subjects:  ['man and woman','two women','woman'],
+    subjects:  ['man and woman','man and woman','man and woman','two women'],
     settings:  ['bedroom','hotel room','living room sofa','studio'],
     clothing:  ['fully nude','partially undressed','nude mid-act'],
     styles:    ['intimate photography','candid photography'],
     lighting:  ['natural window light','candlelight','studio softbox lighting'],
-    emphasis:  'Explicit oral sex scene. Graphic description of the act — fellatio or cunnilingus. Describe position, eye contact, and explicit anatomical detail.',
+    emphasis:  'Explicit oral sex scene — fellatio preferred. When subject includes a man and woman, the woman performs fellatio on the man. Graphic description of position, eye contact, and explicit anatomical detail. Only write cunnilingus when subject is two women.',
   },
 
   anal: {
