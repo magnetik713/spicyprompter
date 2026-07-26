@@ -165,15 +165,6 @@
         </div>
       </div>
 
-      <div class=field style=margin-top:16px>
-        <label for=image-model-compat>Anime Model Compatibility</label>
-        <select name=image_model_compat id=image-model-compat>
-          <option value=illustrious <%= (config.image_model_compat || 'illustrious') === 'illustrious' ? 'selected' : '' %>>Illustrious / SDXL / NAI (default)</option>
-          <option value=pony        <%= config.image_model_compat === 'pony'   ? 'selected' : '' %>>Pony Diffusion</option>
-          <option value=noobai      <%= config.image_model_compat === 'noobai' ? 'selected' : '' %>>NoobAI</option>
-        </select>
-        <div class=hint>Sets quality tags for anime prompts. Illustrious: masterpiece/best quality. Pony: score_9/score_8_up. NoobAI: masterpiece/newest.</div>
-      </div>
     </div>
 
 
@@ -256,6 +247,16 @@
           <button type="button" class="btn btn-secondary" style="font-size:12px" onclick="saveTriggerWords()">Save</button>
           <span id="trigger-words-status" style="font-size:11px;color:var(--muted)"></span>
         </div>
+      </div>
+
+      <div class=field style=margin-top:16px>
+        <label for=image-model-compat>Anime Model Compatibility</label>
+        <select name=image_model_compat id=image-model-compat>
+          <option value=illustrious <%= (config.image_model_compat || 'illustrious') === 'illustrious' ? 'selected' : '' %>>Illustrious / SDXL / NAI (default)</option>
+          <option value=pony        <%= config.image_model_compat === 'pony'   ? 'selected' : '' %>>Pony Diffusion</option>
+          <option value=noobai      <%= config.image_model_compat === 'noobai' ? 'selected' : '' %>>NoobAI</option>
+        </select>
+        <div class=hint>Sets quality tags for anime prompts. Illustrious: masterpiece/best quality. Pony: score_9/score_8_up. NoobAI: masterpiece/newest.</div>
       </div>
 
       <div class="field">
