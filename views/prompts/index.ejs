@@ -227,10 +227,12 @@
   <a href="<%= starredUrl(!showStarred) %>" class="sort-btn <%= showStarred ? 'active' : '' %>">★ Starred</a>
   <% if (categories.length > 0) { %>
   <span style="margin-left:4px;width:1px;height:20px;background:var(--border);display:inline-block"></span>
-  <a href="<%= catUrl('') %>" class="sort-btn <%= !selectedCategory ? 'active' : '' %>">All</a>
-  <% categories.forEach(c => { %>
-    <a href="<%= catUrl(c) %>" class="sort-btn <%= selectedCategory===c ? 'active' : '' %>"><%= c %></a>
-  <% }) %>
+  <select onchange="location.href=this.value" style="font-size:12px;padding:2px 6px;border-radius:4px;border:1px solid var(--border,rgba(255,255,255,0.15));background:var(--bg2,rgba(0,0,0,0.3));color:var(--text)<%= selectedCategory ? ';outline:2px solid var(--accent)' : '' %>">
+    <option value="<%= catUrl('') %>" <%= !selectedCategory ? 'selected' : '' %>>All categories</option>
+    <% categories.forEach(c => { %>
+      <option value="<%= catUrl(c) %>" <%= selectedCategory===c ? 'selected' : '' %>><%= c %></option>
+    <% }) %>
+  </select>
   <% } %>
 </div>
 
