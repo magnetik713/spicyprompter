@@ -164,10 +164,20 @@
           <div class="hint" style="margin-top:3px">When enabled, solo acts may include tasteful prop use. Disable to restrict solo scenes to self-pleasure only.</div>
         </div>
       </div>
+
+      <div class=field style=margin-top:16px>
+        <label for=image-model-compat>Anime Model Compatibility</label>
+        <select name=image_model_compat id=image-model-compat>
+          <option value=illustrious <%= (config.image_model_compat || 'illustrious') === 'illustrious' ? 'selected' : '' %>>Illustrious / SDXL / NAI (default)</option>
+          <option value=pony        <%= config.image_model_compat === 'pony'   ? 'selected' : '' %>>Pony Diffusion</option>
+          <option value=noobai      <%= config.image_model_compat === 'noobai' ? 'selected' : '' %>>NoobAI</option>
+        </select>
+        <div class=hint>Sets quality tags for anime prompts. Illustrious: masterpiece/best quality. Pony: score_9/score_8_up. NoobAI: masterpiece/newest.</div>
+      </div>
     </div>
 
 
-    <div class="settings-section">
+    <div class=settings-section>
       <h2>Prompt Adaptation</h2>
       <p style="font-size:13px;color:var(--muted);margin:0 0 16px">Used when adapting imported prompts to your workflow style. Leave blank to fall back to the LLM Inference settings above — but if your main LLM is local, a separate cloud API key here avoids GPU memory conflicts.</p>
 

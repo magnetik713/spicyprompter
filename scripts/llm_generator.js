@@ -30,11 +30,20 @@ const ROLE_ARG     = getArg('--role', null);
 const ROLE_RANDOM  = ROLE_ARG === 'random';
 const STYLE_ARG      = getArg('--style', null);
 const STYLE_RANDOM   = !STYLE_ARG;
+const LIGHTING_ARG   = getArg('--lighting', null);
+const LIGHTING_RANDOM = !LIGHTING_ARG;
+const COMPAT_ARG     = getArg('--compat', 'illustrious');
+const QUALITY_TAGS   = COMPAT_ARG === 'pony'
+  ? 'score_9, score_8_up, score_7_up, score_6_up, source_anime, rating:explicit'
+  : COMPAT_ARG === 'noobai'
+  ? 'masterpiece, best quality, newest, rating:explicit'
+  : 'masterpiece, best quality, newest, absurdres, rating:explicit';
 const HAIR_COLOR_ARG        = getArg('--hair_color', null);
 const FACIAL_EXPRESSION_ARG = getArg('--facial_expression', null);
 const EYE_COLOR_ARG         = getArg('--eye_color', null);
 const SKIN_TONE_ARG         = getArg('--skin_tone', null);
 const CAMERA_VIEW_ARG       = getArg('--camera_view', null);
+const MODE_ARG               = getArg('--mode', 'realistic');
 const HAND_ACTION_ARG       = getArg('--hand_action', null);
 const ACT_RANDOM   = hasFlag('--act_random');
 const SCENE_RANDOM = hasFlag('--scene_random');
@@ -321,6 +330,15 @@ function personCount(subject) {
   return 1;
 }
 
+function maleCount(subject) {
+  const s = (subject || '').toLowerCase();
+  if (/\bthree men\b/.test(s)) return 3;
+  if (/\btwo men\b/.test(s)) return 2;
+  if (/\bmen\b/.test(s)) return 2;
+  if (/\bman\b/.test(s)) return 1;
+  return 0;
+}
+
 function getPersonLabels(subject) {
   const s = (subject || '').toLowerCase();
   if (s.includes('three women') || s.includes('three girls')) return ['the first woman', 'the second woman', 'the third woman'];
@@ -367,7 +385,7 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
   };
   if (CLOTHING_ARG) skeleton.clothing = CLOTHING_LABELS[CLOTHING_ARG] || CLOTHING_ARG.replace(/_/g, ' ');
   if (RACE_ARG) {
-    const raceLabel = RACE_LABELS[RACE_ARG] || RACE_ARG;
+    const raceLabel = (RACE_ARG && RACE_ARG.startsWith('ct_') && raceCatData) ? raceCatData.label : (RACE_LABELS[RACE_ARG] || RACE_ARG);
     const subj = skeleton.subject.toLowerCase();
     const hasWoman = subj.includes('woman') || subj.includes('women');
     if (hasWoman) {
@@ -417,9 +435,11 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
 
 const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, facial_expression, role, camera_angle, hand_action, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, facial expression, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. If hand_action is given, one or more subjects must have their hands doing exactly that — weave it naturally into the scene. If facial_expression is given, the subject's face must show that exact expression throughout. Realistic photography ONLY — no anime, no illustration, no cartoon. ONE subject only — never include observers, bystanders, unseen people, or any secondary figures. camera_angle=back_angle means: camera positioned behind the subject at upper-back/shoulder height — show their back, shoulder blades, and hair, with their face turned slightly toward camera or in profile. Write as rear three-quarter view or back angle — NEVER write over-the-shoulder, never imply a second person. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. CAST PRESENCE (ABSOLUTE): Every person listed in the subject MUST appear physically in the scene — described by position, body, and role. If subject is "a woman and a man", BOTH must be explicitly present and active. The man cannot be implied, off-screen, or absent. A partnered act requires both partners visibly described. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. (5) TITFUCK / PAIZURI (ABSOLUTE): The man's PENIS goes between the woman's breasts — she presses them together around his shaft. FORBIDDEN: man's head between breasts, man's face in cleavage, man buried in cleavage, any body part other than his penis between her breasts. His penis is sandwiched between her breasts from below — she looks down at him, he looks up at her. The woman is the performer; the man is the receiver of the act. (6) ORAL SEX DIRECTION (ABSOLUTE): Oral sex directed AT a man = fellatio — always. Oral sex directed AT a woman = cunnilingus — always, regardless of who performs it. Never write a man receiving cunnilingus or a woman receiving fellatio. The woman NEVER has a penis, shaft, member, or cock under any framing. If act is generic "oral" with a man and woman present, DEFAULT to fellatio (woman performing on man) — do NOT default to cunnilingus. Only write cunnilingus when the subject is two women or no man is present. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
 
+const SYSTEM_ANIME = `You are a booru-tag prompt engineer for anime image generation models (Pony Diffusion, NoobAI, Illustrious). You write ONLY comma-separated booru-style tags — never prose, never sentences. Output ONLY the raw tag list. No intro, no quotes, no explanation. Tags must be explicit and graphic for the requested act. Start every output with: ${QUALITY_TAGS}. Then character count (1girl, 2girls, 1boy 1girl, etc). Then character features, then act/scene tags, then style tags. Every tag is lowercase. Use underscores for multi-word tags (e.g. long_hair, spread_legs, cum_on_face). Be direct and explicit about anatomy and acts — this is for adult content generation. Never write a sentence. Never write a description. Tags only. FORBIDDEN tags — never include any of these: camera brands (canon, nikon, sony, leica, fuji, hasselblad), lens specs (50mm, 85mm, 35mm, 24mm), photography terms (depth_of_field, bokeh, f/1.8, f/2.8, dslr, mirrorless, shot_on, raw_photo, candid_photography, candid, documentary, lifestyle_photography, street_photography, intimate_photography, shallow_depth_of_field, editorial, editorial_photography, softbox, softbox_lighting, studio_lighting, studio_softbox, studio_flash, ring_light, lifestyle, realistic_anatomy, detailed_skin_texture, realistic_proportions, detailed_anatomy, photo_realistic, hyperrealistic). These are PHOTOGRAPHY terms and have no place in anime tags. For lighting and atmosphere use ONLY anime-appropriate terms like: warm_lighting, moonlight, candlelight, neon_lights, dramatic_shadows, soft_light, golden_light, dappled_sunlight, firelight, dim_lighting, backlight, rim_light, natural_light. TAG FORMAT: use_underscores_for_multi_word_tags (e.g. long_hair, spread_legs, large_breasts). Single-word tags have no underscore. Spaces between tags use commas only. GENDER RULE (ABSOLUTE): When subject contains both female AND male characters, ALL sexual acts must be heterosexual male-female. A woman and a man = 1boy 1girl — write only heterosexual pairings. Two women and a man = 1boy 2girls — man interacts with women heterosexually. A woman and two men = 2boys 1girl — men interact with woman heterosexually. NEVER write male-on-male acts when a female is present in the subject.`;
+
 const SYSTEM_DATASET = `You are a photorealistic portrait prompt engineer for LoRA training datasets. Write detailed, realistic character portrait prompts. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject appearance (race, body type, hair color, eye color, skin tone, facial expression), clothing/outfit description (follow the skeleton clothing field exactly — if nude, describe nude), setting/environment, lighting quality, mood, camera angle and composition. If camera_angle is given, compose the shot from that exact viewpoint. If facial_expression is given, the subject must show that expression. Realistic photography ONLY — no anime, no illustration, no cartoon. ONE subject only — never include observers, bystanders, unseen people, or any secondary figures. camera_angle=back_angle means: camera positioned behind the subject at upper-back/shoulder height — show their back, shoulder blades, and hair, with their face turned slightly toward camera or in profile. Write as rear three-quarter view or back angle — NEVER write over-the-shoulder, never imply a second person. SKELETON ECHO RULE: Never output skeleton fields as standalone sentences. Weave all details into flowing prose description only.`;
 
-async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
+async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat, lightingCat = null) {
   const skeletonStr = Object.entries(skeleton).map(([k,v]) => `${k}: ${v}`).join('\n');
   const emphasisParts = [];
   if (actCat?.emphasis)   emphasisParts.push(`Act emphasis: ${actCat.emphasis}`);
@@ -430,6 +450,7 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const raceCat2  = RACE_ARG     ? CATEGORIES[RACE_ARG]     : null;
   const bodyCat2  = BODYTYPE_NAMES.length ? CATEGORIES[BODYTYPE_NAMES[0]] : null;
   if (styleCat2?.emphasis) emphasisParts.push(`Style emphasis: ${styleCat2.emphasis}`);
+  if (lightingCat?.emphasis) emphasisParts.push(`Lighting emphasis: ${lightingCat.emphasis}`);
   if (raceCat2?.emphasis)  emphasisParts.push(`Race emphasis: ${raceCat2.emphasis}`);
   if (BODYTYPE_NAMES.length) {
     const personLabels = getPersonLabels(skeleton.subject);
@@ -453,7 +474,7 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
   const emphasisLine = emphasisParts.length ? '\n' + emphasisParts.join('\n') : '';
   const subjectLower = (skeleton.subject || '').toLowerCase();
   const hasMaleSubject = /\bman\b|\bmen\b/.test(subjectLower);
-  const hasFemaleSubject = /woman|women|girl/i.test(subjectLower);
+  const hasFemaleSubject = /\bwoman\b|\bwomen\b|\bgirl\b/i.test(subjectLower);
   const isMaleOnly = hasMaleSubject && !hasFemaleSubject;
   const hasMultipleFemales = /two women|three women|\bwomen\b/.test(subjectLower);
   let castOverride = '';
@@ -503,13 +524,30 @@ INTERRACIAL CAST (ABSOLUTE): The subjects have contrasting racial backgrounds �
 ${skeletonStr}${emphasisLine}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}${ageRule}${hairLengthRule}${hairStyleRule}${facialHairRule}
 
 IMPORTANT: Use the EXACT subject, race, body_type, clothing, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, detailed portrait description.`
+    : MODE_ARG === 'anime'
+    ? `Generate an anime-style NSFW image generation prompt as a TAG LIST using this scene skeleton:
+${skeletonStr}${emphasisLine}${castOverride}${soloNoCum}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}${ageRule}${hairLengthRule}${hairStyleRule}
+
+CRITICAL OUTPUT FORMAT: Write ONLY comma-separated booru-style tags. No sentences. No prose. No punctuation other than commas.
+CHARACTER COUNT RULE (ABSOLUTE): Translate the subject field into count tags using ONLY these exact mappings — "woman"/"girl" = 1girl | "man"/"boy" = 1boy | "two women"/"two girls" = 2girls | "two men"/"two boys" = 2boys | "man and woman" or "woman and man" = 1boy 1girl | "two women and a man" or "two girls and a boy" = 1boy 2girls | "a woman and two men" or "two men and a woman" = 2boys 1girl | "three women" = 3girls | "three men" = 3boys. FORBIDDEN: never write 1boy 1boy (→ 2boys), never write 1girl 1girl (→ 2girls), never invent characters not in subject. Place count tag ONCE at the very start, never repeated anywhere.
+Start with quality tags: ${QUALITY_TAGS}
+Then: character count tag (1girl / 2girls / 1boy 1girl / etc)
+Then: character type, features, hair, eyes, expression, body
+Then: clothing or lack thereof (be explicit)
+Then: act/scene/setting tags
+Then: anime art style tags (e.g. cel_shading, flat_color, anime_style, dark_fantasy_anime) and mood/atmosphere using ONLY anime-appropriate lighting terms (moonlight, candlelight, neon_lights, dramatic_shadows — NEVER softbox, studio_lighting, bokeh, or any photography terms)
+End with: explicit content tags describing the act graphically
+
+Example format: ${QUALITY_TAGS}, 1girl, elf, long silver hair, green eyes, ahegao, large breasts, naked, spread legs, missionary, creampie, bedroom, moonlight, cel shading, anime style
+
+Use the EXACT subject, character_type, role, act, scene, style from the skeleton. Be explicit and graphic with the act tags.`
     : `Generate a detailed photorealistic NSFW image generation prompt using this scene skeleton:
 ${skeletonStr}${emphasisLine}${castOverride}${cumRule}${soloNoCum}${interracialRule}${cameraAngleRule}${hairColorRule}${expressionRule}${eyeColorRule}${skinToneRule}${ageRule}${hairLengthRule}${hairStyleRule}${facialHairRule}
 
 IMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_color, eye_color, skin_tone, facial_expression, and camera_angle. Expand into a rich, explicit prompt.`;
 
   const baseInstruction = '\n\nSTRICTLY FORBIDDEN: Do not include any explanation, reasoning, commentary, or meta-text. Do not pad with filler sentences like \"The X is Y.\" or \"The moment is captured.\" -- every sentence must describe a specific visual detail. Output ONLY the image prompt text. No sentences about incompatibility, adaptations, or scene logic.';
-  const activeSystem = DATASET_MODE ? SYSTEM_DATASET : SYSTEM;
+  const activeSystem = DATASET_MODE ? SYSTEM_DATASET : (MODE_ARG === 'anime' ? SYSTEM_ANIME : SYSTEM);
   const systemContent = RAW_OUTPUT
     ? activeSystem + baseInstruction + ' Begin directly with the image description, no preamble.'
     : activeSystem + baseInstruction;
@@ -544,8 +582,8 @@ function stripMetaCommentary(text) {
     .replace(/However,?\s+[^.!?]*incompatib[^.!?]*[.!?]\s*/gi, '')
     .replace(/Note(?:\s+that)?:?[^.!?]*[.!?]\s*/gi, '')
     .replace(/Please note[^.!?]*[.!?]\s*/gi, '')
-    .replace(/The (?:race|body type|role|theme|act|scene) is \S[^.!?]*[.!?]\s*/gi, '')
-    .replace(/The \w+ (?:is|are|was) \w+\.\s*/gi, '')
+    .replace(/\bThe (?:race|body type|role|theme|act|scene) is \S[^.!?]*[.!?]\s*/gi, '')
+    .replace(/\bThe \w+ (?:is|are|was) \w+\.\s*/gi, '')
     .replace(/\s+The \w[^.!?]*$/, '')
     .trim();
 }
@@ -555,6 +593,94 @@ function settingKeywords(setting) {
 }
 function promptMatchesSetting(prompt, setting) {
   return settingKeywords(setting).some(w => prompt.toLowerCase().includes(w));
+}
+
+
+function filterAnimeTags(text, subject) {
+  if (!text || typeof text !== 'string') return text;
+  const BAD_ALWAYS = [/\bshota\b/i, /\bshouta\b/i, /\bshotacon\b/i, /\bloli\b/i, /\blolicon\b/i, /\blolikon\b/i, /\bunderage\b/i, /\bminor\b/i, /\bchild\b/i, /\bjailbait\b/i, /\bkiddie\b/i, /\bshota_con\b/i, /\bloli_con\b/i];
+  const BAD_EXACT = new Set([
+    'dslr','mirrorless','bokeh','softbox','editorial','lifestyle','candid','documentary',
+    'shot on','raw photo','candid photography','editorial photography',
+    'street photography','intimate photography','lifestyle photography',
+    'softbox lighting','studio lighting','studio flash','studio softbox',
+    'depth of field','shallow depth of field','hidden camera angle','hidden camera',
+    'photo realistic','hyperrealistic','realistic anatomy','detailed skin texture',
+    'detailed anatomy','realistic proportions','candid pose','candid shot','unposed',
+    'film grain','vintage tone','warm skin tone',
+    'warm lighting','warm_lighting','natural light','natural tones','natural_tones',
+    'soft overcast lighting','natural light through slats','natural_window_light',
+    'window light','window_light','morning light','morning_light',
+    'cinematic composition','cinematic lighting','cinematic_lighting',
+    'moody atmosphere','moody_atmosphere','rim light','rim_light','backlight',
+    'phone camera','amateur','cool lighting','cool_lighting',
+    'retro pinup','close up','close_up','wide shot','wide_shot','raw','soft focus','soft_focus',
+  ]);
+  const BAD_PARTIAL = [/\b(1[0-7]|[2-9])[-_ ]*years?[-_ ]*(old)?\b/i, /\bhigh[-_ ]?school[-_ ]?student/i, /\b(leica|canon|nikon|sony|fuji|hasselblad)\b/i, /\b\d{2,3}mm\b/i, /shallow.depth/i, /depth.of.field/i, /studio.light/i, /studio.flash/i, /softbox/i, /shot.on\b/i, /raw.photo/i, /\bcandid\b/i, /editorial.photo/i, /lifestyle.photo/i, /street.photo/i, /intimate.photo/i, /photography\b/i, /photoshoot/i, /shaky.cam/i, /realistic.prop/i, /detailed.anat/i, /\bgrainy\b/i, /film.grain/i, /hidden.camera/i, /\bunposed\b/i, /\bglistening\b/i, /\bhandheld\b/i, /cinematic/i, /warm.{1,15}light/i, /natural.light/i, /window.light/i, /morning.light/i, /retro.pinup/i, /\bclose.up\b/i, /wide.shot\b/i, /\d{4}s.style/i, /\bovercast\b/i, /soft.light/i, /golden.hour/i, /\bdappled\b/i, /vintage.filter/i, /vintage.tone/i, /motion.blur/i, /golden.light/i, /\bgleaming\b/i, /moody.light/i, /documentary/i, /boudoir/i, /voyeuristic.angle/i, /lens.flare/i, /lens.effect/i, /blue.hour/i, /unaware.subject/i, /distorted.lens/i, /\bamateur\b/i, /high.key\b/i, /artistic.nude/i, /high.production/i, /\bside.light/i, /\bunstaged\b/i, /posing.for.camera/i, /shallow.focus/i, /high.angle/i, /angle.from.above/i, /\bpinup\b/i, /\bvintage\b/i, /morning.sunlight/i, /bright.lighting/i, /sunlight.through/i];
+  // Strip quality header tags — test against original tag (underscores intact), not norm
+  const QUALITY_STRIP = /^(score_\d\w*|source_anime|source_\w+|rating:\w+|masterpiece|best_quality|best quality|ultra.detailed|newest)$/i;
+  // Fix invalid duplicate count tags before splitting
+  // Fix invalid/duplicate count tags
+  text = text.replace(/\b1boy[\s,]+1boy\b/gi, '2boys').replace(/\b1girl[\s,]+1girl\b/gi, '2girls');
+  // Fix 3-person count sequences (any order) → canonical booru form
+  text = text.replace(/\b1boy[\s,]+1girl[\s,]+1girl\b/gi, '1boy 2girls');
+  text = text.replace(/\b1girl[\s,]+1boy[\s,]+1girl\b/gi, '1boy 2girls');
+  text = text.replace(/\b1girl[\s,]+1girl[\s,]+1boy\b/gi, '1boy 2girls');
+  text = text.replace(/\b1boy[\s,]+1boy[\s,]+1girl\b/gi, '2boys 1girl');
+  text = text.replace(/\b1girl[\s,]+1boy[\s,]+1boy\b/gi, '2boys 1girl');
+  text = text.replace(/\b1boy[\s,]+1girl[\s,]+1boy\b/gi, '2boys 1girl');
+  text = text.replace(/\b(1girl|1boy|2girls|2boys|3girls|3boys|1boy 1girl|1girl 1boy|1boy 2girls|2girls 1boy|2boys 1girl|1girl 2boys|2boys 2girls|2girls 2boys)(\s+)(?!,)([a-z])/gi, '$1, $3');
+  const COUNT_TAG_EXACT = new Set([
+    '1girl','1boy','2girls','2boys','3girls','3boys',
+    '1boy 1girl','1girl 1boy','1boy 2girls','2girls 1boy',
+    '2boys 1girl','1girl 2boys','2boys 2girls','2girls 2boys',
+    '2men','2women','3men','3women',
+    'solo female','solo male','male only','female only',
+    'males only','females only','male_only','female_only'
+  ]);
+  const tags = text.split(',').map(t => t.trim()).filter(Boolean);
+  const seen = new Set();
+  const isMixedGender = subject ? (maleCount(subject) > 0 && (personCount(subject) - maleCount(subject)) > 0) : false;
+  const isFemaleOnly = subject ? (maleCount(subject) === 0 && personCount(subject) > 0) : false;
+  const GAY_MIXED = new Set(['male on male','homosexual','gay','yaoi','gay sex','male male','male on male sex','man penetrating man','man on man','male anal','prostate stimulation','prostate massage','homo eroticism','homoeroticism','male sex','three males','homoerotic','man giving head to man','man receiving head from man','man fucking man','man sucking man','man rimming man','man licking man']);
+  const COUNT_IN_TAG = /\b(1\s*girl|1\s*boy|1\s*man|1\s*woman|2\s*girls|2\s*boys|2\s*men|2\s*women|3\s*girls|3\s*boys|3\s*men|3\s*women|two\s+(?:men|women|boys?|girls?)|three\s+(?:men|women|boys?|girls?)|\d+\s*guys?)\b/i;
+  const kept = tags.filter(tag => {
+    const tagLower = tag.toLowerCase();
+    const norm = tagLower.replace(/_/g, ' ');
+    if (seen.has(norm)) return false;
+    seen.add(norm);
+    if (QUALITY_STRIP.test(tagLower)) return false;
+    if (COUNT_TAG_EXACT.has(norm)) return false;
+    if (COUNT_IN_TAG.test(norm)) return false;
+    if (isMixedGender && GAY_MIXED.has(norm)) return false;
+    if (isMixedGender && /\bprostate\b/i.test(norm)) return false;
+      if (isMixedGender && /\bman\b.{0,25}\bman\b/i.test(norm)) return false;
+      if (isFemaleOnly && /\bman\b/i.test(norm)) return false;
+      if (isFemaleOnly && /\b(cock|penis|deepthroat|blowjob|fellatio)\b/i.test(norm)) return false;
+      if (isFemaleOnly && new Set(['creampie','facial','titfuck','paizuri','handjob','dp','bukakke','cum in pussy','impregnation','internal cumshot']).has(norm)) return false;
+    if (BAD_ALWAYS.some(re => re.test(norm))) return false;
+    if (BAD_EXACT.has(norm)) return false;
+    if (BAD_PARTIAL.some(re => re.test(norm))) return false;
+    return true;
+  });
+  const qualityList = QUALITY_TAGS.split(',').map(t => t.trim());
+  let countTag = '';
+  if (subject) {
+    const males = maleCount(subject);
+    const total = personCount(subject);
+    const females = total - males;
+    if (females >= 1 && males >= 1) {
+      if      (females === 1 && males === 1) countTag = '1boy 1girl';
+      else if (females === 2 && males === 1) countTag = '1boy 2girls';
+      else if (females === 1 && males === 2) countTag = '2boys 1girl';
+    } else if (females > 0) {
+      countTag = females === 1 ? '1girl' : females === 2 ? '2girls' : '3girls';
+    } else if (males > 0) {
+      countTag = males === 1 ? '1boy' : males === 2 ? '2boys' : '3boys';
+    }
+  }
+  const countPart = countTag ? [countTag] : [];
+  return qualityList.concat(countPart).concat(kept).join(', ');
 }
 
 async function main() {
@@ -578,6 +704,9 @@ async function main() {
   const themeNames = catNames ? catNames.filter(n => CATEGORIES[n]?.type === 'theme') : [];
 
   const ALL_ROLES  = ROLE_RANDOM  ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'role')  : null;
+  const MALE_REQUIRED_ACTS  = new Set(['titfuck','handjob','facial','creampie','dp','bukakke']);
+  const SOLO_ONLY_ACTS       = new Set(['joi','solo']);
+  const MALE_REQUIRED_THEMES = new Set(['pegging','femdom','daddy_bg','breeding','cuckold']);
   const ALL_ACTS_FULL = ACT_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'act') : null;
   const ALL_ACTS = (() => {
     if (!ALL_ACTS_FULL || !SUBJECT_ARG) return ALL_ACTS_FULL;
@@ -585,7 +714,10 @@ async function main() {
       const cat = CATEGORIES[k];
       if (isSoloFemale(SUBJECT_ARG) && !cat.solo_compatible) return false;
       if (cat.ff_only && hasMalePresent(SUBJECT_ARG)) return false;
-      if (cat.multi_required && personCount(SUBJECT_ARG) < 3) return false;
+      if (cat.multi_required && personCount(SUBJECT_ARG) < (k === 'bukakke' ? 4 : 3)) return false;
+      if (MALE_REQUIRED_ACTS.has(k) && !hasMalePresent(SUBJECT_ARG)) return false;
+      if (SOLO_ONLY_ACTS.has(k) && personCount(SUBJECT_ARG) > 1) return false;
+      if (k === 'dp' && maleCount(SUBJECT_ARG) < 2) return false;
       return true;
     });
   })();
@@ -597,10 +729,20 @@ async function main() {
       const cat = CATEGORIES[k];
       if (isSoloFemale(SUBJECT_ARG) && !cat.solo_compatible) return false;
       if (cat.multi_required && personCount(SUBJECT_ARG) < 3) return false;
+      if (MALE_REQUIRED_THEMES.has(k) && !hasMalePresent(SUBJECT_ARG)) return false;
+      if (k === 'swingers' && personCount(SUBJECT_ARG) < 4) return false;
+      if (k === 'cuckold' && maleCount(SUBJECT_ARG) < 2) return false;
       return true;
     });
   })();
-  const ALL_STYLES = STYLE_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'style') : null;
+  const ALL_STYLES = STYLE_RANDOM ? Object.keys(CATEGORIES).filter(k => {
+    const cat = CATEGORIES[k];
+    return cat.type === 'style' && (cat.mode === 'all' || cat.mode === MODE_ARG || (!cat.mode && MODE_ARG === 'realistic'));
+  }) : null;
+  const ALL_LIGHTINGS = LIGHTING_RANDOM ? Object.keys(CATEGORIES).filter(k => {
+    const cat = CATEGORIES[k];
+    return cat.type === 'lighting' && (cat.mode === 'all' || cat.mode === MODE_ARG || (!cat.mode && MODE_ARG === 'realistic'));
+  }) : null;
   const roleCat = (ROLE_ARG && !ROLE_RANDOM) ? CATEGORIES[ROLE_ARG] : null;
   if (ROLE_ARG && !ROLE_RANDOM && !roleCat) { console.error(`Unknown role: "${ROLE_ARG}"`); process.exit(1); }
 
@@ -643,7 +785,8 @@ async function main() {
     const sceneCat  = sceneName ? CATEGORIES[sceneName] : null;
     const themeCat  = themeName ? CATEGORIES[themeName] : null;
     const effectiveRole  = ROLE_RANDOM  ? ALL_ROLES[Math.floor(Math.random()  * ALL_ROLES.length)]  : ROLE_ARG;
-    const effectiveStyle = (DATASET_MODE || !STYLE_RANDOM) ? STYLE_ARG : ALL_STYLES[Math.floor(Math.random() * ALL_STYLES.length)];
+    const effectiveStyle = (DATASET_MODE || !STYLE_RANDOM) ? STYLE_ARG : (ALL_STYLES?.length ? ALL_STYLES[Math.floor(Math.random() * ALL_STYLES.length)] : null);
+    const effectiveLighting = (DATASET_MODE || !LIGHTING_RANDOM) ? LIGHTING_ARG : (ALL_LIGHTINGS?.length ? ALL_LIGHTINGS[Math.floor(Math.random() * ALL_LIGHTINGS.length)] : null);
 
     const skeleton  = buildSkeleton(actCat, sceneCat, themeCat, effectiveRole, effectiveStyle);
     if (sceneName && SCENE_SETTING_MAP[sceneName]) skeleton.setting = SCENE_SETTING_MAP[sceneName];
@@ -661,13 +804,19 @@ async function main() {
       const actIncompat =
         (isSoloFemale(subj) && !resolvedActCat?.solo_compatible) ||
         (resolvedActCat?.ff_only && hasMalePresent(subj)) ||
-        (resolvedActCat?.multi_required && personCount(subj) < 3);
+        (resolvedActCat?.multi_required && personCount(subj) < (resolvedActName === 'bukakke' ? 4 : 3)) ||
+        (MALE_REQUIRED_ACTS.has(resolvedActName) && !hasMalePresent(subj)) ||
+        (SOLO_ONLY_ACTS.has(resolvedActName) && personCount(subj) > 1) ||
+        (resolvedActName === 'dp' && maleCount(subj) < 2);
       if (actIncompat) {
         const compatible = ALL_ACTS_FULL.filter(k => {
           const cat = CATEGORIES[k];
           if (isSoloFemale(subj) && !cat.solo_compatible) return false;
           if (cat.ff_only && hasMalePresent(subj)) return false;
-          if (cat.multi_required && personCount(subj) < 3) return false;
+          if (cat.multi_required && personCount(subj) < (k === 'bukakke' ? 4 : 3)) return false;
+          if (MALE_REQUIRED_ACTS.has(k) && !hasMalePresent(subj)) return false;
+          if (SOLO_ONLY_ACTS.has(k) && personCount(subj) > 1) return false;
+          if (k === 'dp' && maleCount(subj) < 2) return false;
           return true;
         });
         if (compatible.length) {
@@ -682,12 +831,18 @@ async function main() {
       const subj = skeleton.subject;
       const themeIncompat =
         (isSoloFemale(subj) && !CATEGORIES[resolvedThemeName]?.solo_compatible) ||
-        (CATEGORIES[resolvedThemeName]?.multi_required && personCount(subj) < 3);
+        (CATEGORIES[resolvedThemeName]?.multi_required && personCount(subj) < 3) ||
+        (MALE_REQUIRED_THEMES.has(resolvedThemeName) && !hasMalePresent(subj)) ||
+        (resolvedThemeName === 'swingers' && personCount(subj) < 4) ||
+        (resolvedThemeName === 'cuckold' && maleCount(subj) < 2);
       if (themeIncompat) {
         const compatThemes = ALL_THEMES_FULL.filter(k => {
           const cat = CATEGORIES[k];
           if (isSoloFemale(subj) && !cat.solo_compatible) return false;
           if (cat.multi_required && personCount(subj) < 3) return false;
+          if (MALE_REQUIRED_THEMES.has(k) && !hasMalePresent(subj)) return false;
+          if (k === 'swingers' && personCount(subj) < 4) return false;
+          if (k === 'cuckold' && maleCount(subj) < 2) return false;
           return true;
         });
         if (compatThemes.length) resolvedThemeName = compatThemes[Math.floor(Math.random() * compatThemes.length)];
@@ -698,16 +853,18 @@ async function main() {
 
     const loopRoleCat  = effectiveRole  ? CATEGORIES[effectiveRole]  : null;
     const loopStyleCat = effectiveStyle ? CATEGORIES[effectiveStyle] : null;
+    const loopLightingCat = effectiveLighting ? CATEGORIES[effectiveLighting] : null;
     const catTag = [resolvedActName, sceneName, resolvedThemeName].filter(Boolean).map(n => `[${n}]`).join('');
-    const tags = [catTag, RACE_ARG ? `[${RACE_ARG}]` : '', BODYTYPE_ARG ? `[${BODYTYPE_ARG}]` : '', effectiveRole ? `[${effectiveRole}]` : '', effectiveStyle ? `[${effectiveStyle}]` : '', HAND_ACTION_ARG ? `[${HAND_ACTION_ARG}]` : ''].filter(Boolean).join('');
+    const tags = [catTag, RACE_ARG ? `[${RACE_ARG}]` : '', BODYTYPE_ARG ? `[${BODYTYPE_ARG}]` : '', effectiveRole ? `[${effectiveRole}]` : '', effectiveStyle ? `[${effectiveStyle}]` : '', effectiveLighting ? `[${effectiveLighting}]` : '', HAND_ACTION_ARG ? `[${HAND_ACTION_ARG}]` : ''].filter(Boolean).join('');
     process.stdout.write(`  [${i+1}/${COUNT}]${tags ? ' ' + tags : ''} ${skeleton.subject} / ${skeleton.setting}... `);
 
     try {
       let prompt = null;
       for (let attempt = 0; attempt < 3; attempt++) {
-        const candidate = await generatePrompt(skeleton, resolvedActCat, sceneCat, resolvedThemeCat, loopRoleCat);
+        const candidate = await generatePrompt(skeleton, resolvedActCat, sceneCat, resolvedThemeCat, loopRoleCat, loopLightingCat);
         if (!candidate || candidate.length < 40) continue;
         prompt = candidate;
+        if (MODE_ARG === 'anime') prompt = filterAnimeTags(prompt, skeleton.subject || SUBJECT_ARG);
         break;
       }
       if (!prompt) { console.log('skip'); failed++; continue; }

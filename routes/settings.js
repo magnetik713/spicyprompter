@@ -37,6 +37,9 @@ router.post('/', (req, res) => {
   if (req.body.llm_prompt_words)               cfg.set('llm_prompt_words',         req.body.llm_prompt_words.trim());
   cfg.set('llm_raw_output', req.body.llm_raw_output === 'on' ? 'true' : 'false');
   cfg.set('llm_allow_toys', req.body.llm_allow_toys === 'on' ? 'true' : 'false');
+  const validCompat = ['illustrious', 'pony', 'noobai'];
+  const rawCompat = (req.body.image_model_compat || 'illustrious').trim();
+  cfg.set('image_model_compat', validCompat.includes(rawCompat) ? rawCompat : 'illustrious');
   cfg.set('llm_ollama_params', req.body.llm_ollama_params === 'on' ? 'true' : 'false');
   res.redirect('/prompts/settings?saved=1');
 });

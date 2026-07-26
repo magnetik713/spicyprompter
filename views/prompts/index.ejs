@@ -154,7 +154,8 @@
     <div id="import-wf-saved-note" style="display:none;font-size:12px;color:#6db86d;margin-bottom:8px"></div>
     <div class="actions" style="flex-wrap:wrap;gap:8px">
       <button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
-      <button id="import-adapt-btn" class="btn btn-secondary" style="display:none" onclick="adaptPrompt()">Adapt for my workflow</button>
+      <select id="import-adapt-target" style="display:none;font-size:12px;padding:4px 6px;border-radius:4px;border:1px solid var(--border,rgba(255,255,255,0.15));background:var(--bg2,rgba(0,0,0,0.3));color:var(--text)"><option value="flux">Adapt for Flux</option><option value="booru">Adapt for Booru (Pony / Illustrious / NoobAI)</option></select>
+      <button id="import-adapt-btn" class="btn btn-secondary" style="display:none" onclick="adaptPrompt()">Adapt</button>
       <button id="import-save-btn" class="btn btn-primary" onclick="saveImport()">Import prompt</button>
     </div>
   </div>
@@ -658,10 +659,14 @@ async function handlePngImport(file) {
         fetch('/prompts/api/adapt-status').then(r=>r.json()).then(s=>{
           _adaptStatus = s;
           const btn = document.getElementById('import-adapt-btn');
-          if (btn) {
-            btn.style.display = '';
-            const wt = s.workflow_type !== 'unknown' ? s.workflow_type.toUpperCase() : 'my workflow';
-            btn.textContent = 'Adapt for ' + wt;
+          if (btn) btn.style.display = '';
+          const tgtSel2 = document.getElementById('import-adapt-target');
+          if (tgtSel2) {
+            tgtSel2.style.display = '';
+            if (s.workflow_type && s.workflow_type !== 'unknown') {
+              const mapped = s.workflow_type === 'flux' ? 'flux' : 'booru';
+              tgtSel2.value = mapped;
+            }
           }
         }).catch(()=>{});
       } else {
@@ -721,7 +726,8 @@ async function adaptPrompt() {
     const r = await fetch('/prompts/api/adapt-prompt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ positive, negative, use_llm: useLlm })
+      body: JSON.stringify({ positive, negative, use_llm: useLlm,
+        target_model: (document.getElementById('import-adapt-target') || {}).value || 'flux' })
     });
     const d = await r.json();
     if (!d.ok) throw new Error('Adapt failed');
@@ -729,7 +735,9 @@ async function adaptPrompt() {
     document.getElementById('import-negative').value = d.negative || negative;
     const fmtNote = document.getElementById('import-format-note');
     if (d.method === 'llm') {
-      if (fmtNote) { fmtNote.textContent = '✓ AI-adapted for ' + (d.workflow_type || 'your workflow'); fmtNote.style.background = 'rgba(109,184,109,0.12)'; fmtNote.style.color = '#6db86d'; fmtNote.style.borderColor = 'rgba(109,184,109,0.25)'; fmtNote.style.display = 'block'; }
+      if (fmtNote) { const tgtSel = document.getElementById('import-adapt-target');
+      const tgtLabel = tgtSel ? tgtSel.options[tgtSel.selectedIndex].text : (d.workflow_type || 'your workflow');
+      fmtNote.textContent = '✓ AI-adapted for ' + tgtLabel; fmtNote.style.background = 'rgba(109,184,109,0.12)'; fmtNote.style.color = '#6db86d'; fmtNote.style.borderColor = 'rgba(109,184,109,0.25)'; fmtNote.style.display = 'block'; }
     } else {
       if (fmtNote) { fmtNote.textContent = '⚠ LLM unavailable — rule-based cleanup only. Set up Prompt Adaptation in Settings for full rewrite.'; fmtNote.style.background = 'rgba(224,154,58,0.12)'; fmtNote.style.color = '#e09a3a'; fmtNote.style.borderColor = 'rgba(224,154,58,0.25)'; fmtNote.style.display = 'block'; }
     }
@@ -749,7 +757,8 @@ function closeImportModal() {
   _importImagePath = null;
   _importSourceFormat = 'unknown';
   const fn = document.getElementById('import-format-note'); if (fn) fn.style.display = 'none';
-  const ab = document.getElementById('import-adapt-btn'); if (ab) { ab.style.display = 'none'; ab.disabled = false; ab.textContent = 'Adapt for my workflow'; }
+  const ab = document.getElementById('import-adapt-btn'); if (ab) { ab.style.display = 'none'; ab.disabled = false; ab.textContent = 'Adapt'; }
+  const at = document.getElementById('import-adapt-target'); if (at) { at.style.display = 'none'; at.value = 'flux'; }
   _adaptStatus = null;
 }
 

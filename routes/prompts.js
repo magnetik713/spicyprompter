@@ -140,9 +140,11 @@ const DEMO_ALLOWED = {
 
 router.get('/generate', (req, res) => { try {
   const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' AND name NOT IN ('asian','ebony','latina') ORDER BY label").all();
-  const styleCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='style'     ORDER BY label").all();
+  const charTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='character_type' ORDER BY label").all();
+  const styleCategories    = db.prepare("SELECT id,name,label,COALESCE(mode,'all') as mode FROM llm_categories WHERE type='style'     ORDER BY label").all();
+  const lightingCategories = db.prepare("SELECT id,name,label,COALESCE(mode,'all') as mode FROM llm_categories WHERE type='lighting'   ORDER BY label").all();
   const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all();
-  const roleCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='role'      ORDER BY label").all();
+  const roleCategories     = db.prepare("SELECT id,name,label,COALESCE(mode,'all') as mode FROM llm_categories WHERE type='role'      ORDER BY label").all();
   const actCategories      = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='act'       ORDER BY label").all();
   const sceneCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='scene'     ORDER BY label").all();
   const themeCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='theme'     ORDER BY label").all();
@@ -150,8 +152,8 @@ router.get('/generate', (req, res) => { try {
   const genPromptTotal = usage.getCount();
   const paid = cfg.isPaid();
   res.render('prompts/generate', {
-    raceCategories, bodyTypeCategories, roleCategories,
-    actCategories, sceneCategories, themeCategories, styleCategories,
+    raceCategories, charTypeCategories, bodyTypeCategories, roleCategories,
+    actCategories, sceneCategories, themeCategories, styleCategories, lightingCategories,
     defaultModel, paid, promptTotal: genPromptTotal, demoLimit: usage.DEMO_LIMIT, title: 'Generate Prompts'
   });
   } catch(e) {
@@ -160,7 +162,7 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial, hand_action } = req.query;
+  const { cats, count, model, subject, race, bodytype, role, style, lighting, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial, hand_action, mode } = req.query;
 
 
   if (!cfg.isPaid()) {
@@ -186,7 +188,8 @@ router.get('/generate/run', async (req, res) => {
   const safeHairLength = (hair_length || '').replace(/[^a-z_]/g, '');
   const safeHairStyle  = (hair_style  || '').replace(/[^a-z_]/g, '');
   const safeRole     = (role || '').replace(/[^a-z_]/g, '');
-  const safeStyle    = paid ? (style    || '').replace(/[^a-z_]/g, '')        : '';
+  const safeStyle    = (style    || '').replace(/[^a-z_]/g, '');
+  const safeLighting = (lighting || '').replace(/[^a-z_]/g, '');
   const safeHairColor        = (hair_color        || '').replace(/[^a-z_]/g, '');
   const safeFacialExpression = (facial_expression || '').replace(/[^a-z_]/g, '');
   const safeEyeColor         = (eye_color         || '').replace(/[^a-z_]/g, '');
@@ -217,6 +220,7 @@ router.get('/generate/run', async (req, res) => {
   if (safeBodytype) args.push('--bodytype', safeBodytype);
   if (safeRole)     args.push('--role',     safeRole);
   if (safeStyle && safeStyle !== 'random') args.push('--style', safeStyle);
+  if (safeLighting && safeLighting !== 'random') args.push('--lighting', safeLighting);
   if (paid && safeHairColor)        args.push('--hair_color',        safeHairColor);
   if (paid && safeFacialExpression) args.push('--facial_expression', safeFacialExpression);
   if (paid && safeEyeColor)         args.push('--eye_color',         safeEyeColor);
@@ -226,6 +230,10 @@ router.get('/generate/run', async (req, res) => {
   if (paid && safeHairStyle)        args.push('--hair_style',        safeHairStyle);
   if (paid && safeCameraView)       args.push('--camera_view',       safeCameraView);
   if (safeHandAction && safeHandAction !== 'none') args.push('--hand_action', safeHandAction);
+  const safeMode = (mode === 'anime') ? 'anime' : 'realistic';
+  if (safeMode === 'anime') args.push('--mode', 'anime');
+  const compatVal = cfg.get('image_model_compat') || 'illustrious';
+  if (safeMode === 'anime' && compatVal !== 'illustrious') args.push('--compat', compatVal);
   // only pass random flags for paid users — demo users get restricted cat pool above instead
   if (act_random   === '1') args.push('--act_random');
   if (scene_random === '1') args.push('--scene_random');
@@ -747,8 +755,8 @@ router.get('/api/recent', (req, res) => {
 
 // ── Category Admin ─────────────────────────────────────────────────────────
 router.get('/categories', (req, res) => {
-  const TYPE_ORDER = ['act','scene','theme','role','body_type','race','style'];
-  const TYPE_LABELS = { act:'Acts', scene:'Scenes', theme:'Themes', role:'Roles', body_type:'Body Types', race:'Race / Ethnicity', style:'Styles' };
+  const TYPE_ORDER = ['act','scene','theme','role','style','lighting','body_type','race','character_type'];
+  const TYPE_LABELS = { act:'Acts', scene:'Scenes', theme:'Themes', role:'Roles', style:'Styles', lighting:'Lighting', body_type:'Body Types', race:'Race / Ethnicity', character_type:'Character Types (Anime)' };
   const rows = db.prepare('SELECT * FROM llm_categories ORDER BY label').all();
   const paid = cfg.isPaid();
   const grouped = TYPE_ORDER.map(t => {
@@ -942,7 +950,7 @@ function parseA1111Params(text) {
   return { positive, negative, steps, cfg, sampler, seed, width, height };
 }
 
-const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 
 // ── Prompt adaptation ────────────────────────────────────────────────────────
@@ -1016,7 +1024,7 @@ router.get('/api/adapt-status', (req, res) => {
 });
 
 router.post('/api/adapt-prompt', async (req, res) => {
-  const { positive, negative, use_llm } = req.body;
+  const { positive, negative, use_llm, target_model } = req.body;
   const ruled = ruleBasedAdapt(positive, negative);
 
   if (!use_llm) return res.json({ ok: true, positive: ruled.positive, negative: ruled.negative, method: 'rule' });
@@ -1038,10 +1046,11 @@ router.post('/api/adapt-prompt', async (req, res) => {
 
   const styleGuide = {
     flux:    'natural language prose paragraphs. Flux uses a T5 encoder that understands sentences — avoid keyword lists.',
+    booru:   'comma-separated booru-style tags only (e.g. long_hair, large_breasts, naked, missionary). No prose sentences. Use underscores for multi-word tags. Prepend quality tags: masterpiece, best quality.',
     sdxl:    'detailed descriptive phrases separated by commas. Quality boosters like "masterpiece, best quality" work well.',
     sd15:    'concise comma-separated keywords and tags. Keep it under 77 tokens.',
     unknown: 'natural language prose.',
-  }[workflowType] || 'natural language prose.';
+  }[target_model && target_model !== 'auto' ? target_model : workflowType] || 'natural language prose.';
 
   const systemPrompt = `You are a Stable Diffusion prompt engineer.
 Your job: take a structured prompt with labeled sections and rewrite it as a single unified description.
@@ -1090,7 +1099,15 @@ Respond with ONLY valid JSON: {"positive": "...", "negative": "..."}`;
   res.json({ ok: true, positive: ruled.positive, negative: ruled.negative, method: 'rule' });
 });
 
-router.post('/api/import-png', memUpload.single('image'), (req, res) => {
+router.post('/api/import-png', (req, res, next) => {
+  memUpload.single('image')(req, res, err => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'File too large (max 50MB)' : err.message;
+      return res.status(413).json({ error: msg });
+    }
+    next();
+  });
+}, (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   const chunks = parsePngTextChunks(req.file.buffer);
   const originalFilename = req.file.originalname || '';

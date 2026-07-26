@@ -23,6 +23,9 @@
   .pill-toggle:hover { border-color:var(--muted); color:var(--text); }
   .pill-toggle.active { background:var(--accent); border-color:var(--accent); color:#fff; }
   .pill-toggle input[type=checkbox] { display:none; }
+  .mode-btn { background:none; border:none; color:var(--muted); font-family:var(--font); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:5px 12px; cursor:pointer; transition:all .15s; }
+  .mode-btn.active { background:var(--accent); color:#fff; }
+  .mode-btn:hover:not(.active) { color:var(--text); }
 
   /* Category tab row */
   .cat-tab-row {
@@ -112,8 +115,8 @@
   <input type="number" id="subj-w" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
   <span class="gen-label">Men</span>
   <input type="number" id="subj-m" value="1" min="0" max="6" class="gen-input gen-num" oninput="previewSubj()">
-  <span id="interracial-wrap" style="display:inline-flex;align-items:center;gap:5px">
-    <input type="checkbox" id="interracial" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer" onchange="if(typeof previewSubj==='function')previewSubj();">
+  <span id="interracial-wrap" data-mode="realistic" style="display:inline-flex;align-items:center;gap:5px">
+    <input type="checkbox" id="interracial" class="mod-check" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer" onchange="if(typeof previewSubj==='function')previewSubj();">
     <label for="interracial" class="gen-label" style="cursor:pointer">Interracial</label>
   </span>
   <span id="subj-preview" class="gen-preview"></span>
@@ -135,9 +138,15 @@
 
 <div id="act-warning"></div>
 
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:0 2px">
+  <div id="mode-toggle" style="display:inline-flex;border:1px solid var(--border2);border-radius:3px;overflow:hidden">
+    <button id="mode-realistic" class="mode-btn active" onclick="setMode('realistic')">Realistic</button>
+    <button id="mode-anime" class="mode-btn" onclick="setMode('anime')">Anime</button>
+  </div>
+</div>
 <div class="cat-tab-row">
   <button class="cat-tab active" data-cat="race" onclick="selectCat('race',this)">
-    <span class="cat-tab-name">Race</span>
+    <span class="cat-tab-name" id="tab-race-label">Race</span>
     <span class="cat-tab-val" id="tabval-race">Any</span>
   </button>
   <button class="cat-tab" data-cat="bodytype" onclick="selectCat('bodytype',this)">
@@ -164,6 +173,10 @@
     <span class="cat-tab-name">Style</span>
     <span class="cat-tab-val" id="tabval-style">Random</span>
   </button>
+  <button class="cat-tab" data-cat="lighting" onclick="selectCat('lighting',this)">
+    <span class="cat-tab-name">Lighting</span>
+    <span class="cat-tab-val" id="tabval-lighting">Random</span>
+  </button>
   <button class="cat-tab" data-cat="view" onclick="selectCat('view',this)">
     <span class="cat-tab-name">View</span>
     <span class="cat-tab-val" id="tabval-view">Random</span>
@@ -171,11 +184,17 @@
 </div>
 
 <div class="cat-panel">
-  <!-- Race -->
+  <!-- Race / Character Type -->
   <div id="cat-pane-race" class="cat-pane active">
     <div class="opt-item"><input type="radio" name="race" id="race_none" value="" checked><label for="race_none">Any</label></div>
     <% raceCategories.forEach(c => { %>
-    <div class="opt-item">
+    <div class="opt-item" data-mode="realistic">
+      <input type="radio" name="race" id="race_<%= c.name %>" value="<%= c.name %>">
+      <label for="race_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+    <% charTypeCategories.forEach(c => { %>
+    <div class="opt-item" data-mode="anime" style="display:none">
       <input type="radio" name="race" id="race_<%= c.name %>" value="<%= c.name %>">
       <label for="race_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
     </div>
@@ -208,7 +227,7 @@
     <div class="opt-item"><input type="radio" name="role" id="role_none" value=""><label for="role_none">None</label></div>
     <div class="opt-item"><input type="radio" name="role" id="role_random" value="random" checked><label for="role_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% roleCategories.forEach(c => { %>
-    <div class="opt-item">
+    <div class="opt-item" data-mode="<%= c.mode || 'all' %>">
       <input type="radio" name="role" id="role_<%= c.name %>" value="<%= c.name %>">
       <label for="role_<%= c.name %>"><%= c.label.split(' —')[0] %></label>
     </div>
@@ -256,9 +275,21 @@
     <div class="opt-item"><input type="radio" name="style" id="style_none" value=""><label for="style_none" style="color:var(--muted);font-style:italic">None</label></div>
     <div class="opt-item"><input type="radio" name="style" id="style_random" value="random" checked><label for="style_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% styleCategories.forEach(c => { %>
-    <div class="opt-item">
+    <div class="opt-item" data-mode="<%= c.mode || 'all' %>">
       <input type="radio" name="style" id="style_<%= c.id %>" value="<%= c.name %>">
       <label for="style_<%= c.id %>"><%= c.label.split(' —')[0] %></label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Lighting -->
+  <div id="cat-pane-lighting" class="cat-pane">
+    <div class="opt-item"><input type="radio" name="lighting" id="lighting_none" value="" checked><label for="lighting_none" style="color:var(--muted);font-style:italic">None</label></div>
+    <div class="opt-item"><input type="radio" name="lighting" id="lighting_random" value="random"><label for="lighting_random" style="font-style:italic;color:var(--muted)">Random</label></div>
+    <% lightingCategories.forEach(c => { %>
+    <div class="opt-item" data-mode="<%= c.mode || 'all' %>">
+      <input type="radio" name="lighting" id="lighting_<%= c.id %>" value="<%= c.name %>">
+      <label for="lighting_<%= c.id %>"><%= c.label.split(' —')[0] %></label>
     </div>
     <% }) %>
   </div>
@@ -403,16 +434,16 @@ function selectCat(cat, btn) {
   document.getElementById('cat-pane-' + cat).classList.add('active');
 }
 
-var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random', view:'Random' };
+var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random', lighting:'None', view:'Random' };
 
 function syncTabVals() {
-  ['race','role','act','scene','theme','style','view'].forEach(function(cat) {
+  ['race','role','act','scene','theme','style','lighting','view'].forEach(function(cat) {
     var checked = document.querySelector('input[name="' + cat + '"]:checked');
     var hasVal = !!(checked && checked.value !== '');
     var labelEl = checked ? checked.closest('.opt-item').querySelector('label') : null;
     var labelText = labelEl ? (labelEl.firstChild.nodeValue || labelEl.textContent).trim() : DEFAULT_VALS[cat];
     var el = document.getElementById('tabval-' + cat);
-    if (el) el.textContent = hasVal ? labelText : DEFAULT_VALS[cat];
+    if (el) el.textContent = checked ? labelText : DEFAULT_VALS[cat];
     var tab = document.querySelector('[data-cat="' + cat + '"]');
     if (tab) tab.classList.toggle('has-val', hasVal);
   });
@@ -458,6 +489,7 @@ function startGenerate() {
   var age      = (document.querySelector('input[name="age"]:checked') || {}).value || '';
   var role     = (document.querySelector('input[name="role"]:checked') || {}).value      || '';
   var style       = (document.querySelector('input[name="style"]:checked') || {}).value      || '';
+  var lighting    = (document.querySelector('input[name="lighting"]:checked') || {}).value   || '';
   var hair_color         = (document.querySelector('input[name="hair_color"]:checked') || {}).value         || '';
   var facial_expression  = (document.querySelector('input[name="facial_expression"]:checked') || {}).value  || '';
   var eye_color          = (document.querySelector('input[name="eye_color"]:checked') || {}).value           || '';
@@ -490,6 +522,7 @@ function startGenerate() {
   if (bodytype) params.set('bodytype', bodytype);
   if (role)        params.set('role',        role);
   if (style && style !== 'random') params.set('style', style);
+  if (lighting && lighting !== 'random') params.set('lighting', lighting);
   if (hair_color)        params.set('hair_color',        hair_color);
   if (facial_expression) params.set('facial_expression', facial_expression);
   if (eye_color)         params.set('eye_color',         eye_color);
@@ -499,6 +532,7 @@ function startGenerate() {
   if (hair_style)        params.set('hair_style',        hair_style);
   if (interracial)       params.set('interracial',       interracial);
   if (hand_action)       params.set('hand_action',     hand_action);
+  params.set('mode', _genMode || 'realistic');
 
   var es = new EventSource('/prompts/generate/run?' + params);
 
@@ -626,6 +660,46 @@ function buildSubject() {
   return women || men || '';
 }
 
+var _genMode = localStorage.getItem('gen_mode') || 'realistic';
+function setMode(mode) {
+  _genMode = mode;
+  localStorage.setItem('gen_mode', mode);
+  document.getElementById('mode-realistic').classList.toggle('active', mode === 'realistic');
+  document.getElementById('mode-anime').classList.toggle('active', mode === 'anime');
+  var raceLabel = document.getElementById('tab-race-label');
+  if (raceLabel) raceLabel.textContent = mode === 'anime' ? 'Type' : 'Race';
+  document.querySelectorAll('[data-mode]').forEach(function(el) {
+    var m = el.getAttribute('data-mode');
+    el.style.display = (m === 'all' || m === mode) ? '' : 'none';
+  });
+  // clear race if selected item is now hidden
+  var checkedRace = document.querySelector('input[name="race"]:checked');
+  if (checkedRace && checkedRace.value) {
+    var wrap = checkedRace.closest('[data-mode]');
+    if (wrap && wrap.style.display === 'none') {
+      var raceNone = document.getElementById('race_none');
+      if (raceNone) { raceNone.checked = true; if(typeof syncTabVals==='function') syncTabVals(); }
+    }
+  }
+  // clear role/style if hidden
+  ['role','style'].forEach(function(nm) {
+    var el = document.querySelector('input[name="'+nm+'"]:checked');
+    if (el && el.value && el.value !== 'random') {
+      var wrap = el.closest('[data-mode]');
+      if (wrap && wrap.style.display === 'none') {
+        var rand = document.querySelector('input[name="'+nm+'"][value="random"]');
+        if (rand) { rand.checked = true; if(typeof syncTabVals==='function') syncTabVals(); }
+      }
+    }
+  });
+  // Anime mode: style defaults to none (photo-style categories don't belong in booru tags)
+  if (mode === 'anime') {
+    var styleNone = document.getElementById('style_none');
+    if (styleNone) { styleNone.checked = true; if(typeof syncTabVals==='function') syncTabVals(); }
+  }
+  if(typeof refreshPresets==='function')refreshPresets();
+}
+
 function previewSubj() {
   try { updateHandAction(); } catch(e) {}
   var el = document.getElementById('subj-preview');
@@ -634,7 +708,7 @@ function previewSubj() {
   var m = Math.max(0, parseInt(document.getElementById('subj-m').value) || 0);
   var wrap = document.getElementById('interracial-wrap');
   if (wrap) {
-    var multi = (w + m) > 1;
+    var multi = (w + m) > 1 && _genMode !== 'anime';
     wrap.style.display = multi ? 'inline-flex' : 'none';
     if (!multi) { document.getElementById('interracial').checked = false; wrap.classList.remove('active'); }
     else { wrap.classList.toggle('active', !!document.getElementById('interracial').checked); }
@@ -673,6 +747,7 @@ function checkActWarning() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  setMode(_genMode);
   previewSubj();
   syncTabVals();
 });
@@ -702,11 +777,14 @@ function getFormState() {
     skin_tone: (document.querySelector('input[name="skin_tone"]:checked')||{}).value||'',
     hair_length: (document.querySelector('input[name="hair_length"]:checked')||{}).value||'',
     hair_style: (document.querySelector('input[name="hair_style"]:checked')||{}).value||'',
-    hand_action: (document.querySelector('input[name="hand_action"]:checked')||{}).value||''
+    hand_action: (document.querySelector('input[name="hand_action"]:checked')||{}).value||'',
+    lighting: (document.querySelector('input[name="lighting"]:checked')||{}).value||'',
+    mode: _genMode
   };
   return state;
 }
 function applyFormState(s) {
+  if(s.mode && s.mode !== _genMode)setMode(s.mode);
   function setNum(id,val){var el=document.getElementById(id);if(el)el.value=val;}
   function setChk(id,val){var el=document.getElementById(id);if(el)el.checked=!!val;}
   function chkRadio(name,val){var el=document.querySelector('input[name="'+name+'"][value="'+val+'"]');if(el){el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));}}
@@ -719,7 +797,7 @@ function applyFormState(s) {
   chkRadio('bodytype',s.bodytype||'');
   document.querySelectorAll('.mod-check').forEach(function(e){e.checked=(s.modifiers||[]).indexOf(e.value)>=0;});
   ['role','act','scene','theme','style','view'].forEach(function(a){chkRadio(a,s[a]||'random');});
-  ['age','hair_color','facial_expression','eye_color','skin_tone','hair_length','hair_style','hand_action'].forEach(function(a){chkRadio(a,s[a]||'');});
+  ['age','hair_color','facial_expression','eye_color','skin_tone','hair_length','hair_style','hand_action','lighting'].forEach(function(a){chkRadio(a,s[a]||'');});
   if(typeof previewSubj==='function')previewSubj();
   if(typeof syncTabVals==='function'){syncTabVals();setTimeout(syncTabVals,50);}
 }
@@ -728,8 +806,10 @@ function refreshPresets() {
     _presets=list;
     var sel=document.getElementById('preset-select'),cur=sel.value;
     sel.innerHTML='<option value="">— load —</option>';
-    list.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
-    if(cur)sel.value=cur;
+    list.filter(function(p){
+      try{var cfg=typeof p.config==='string'?JSON.parse(p.config):p.config;return (cfg.mode||'realistic')===_genMode;}catch(e){return _genMode==='realistic';}
+    }).forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
+    if(cur&&sel.querySelector('option[value="'+cur+'"]'))sel.value=cur;
   });
 }
 function loadPreset(id) {
@@ -771,7 +851,7 @@ document.addEventListener('DOMContentLoaded',function(){refreshPresets();updateH
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('input[type="radio"], input[type="checkbox"]:not(.bt-check):not(.mod-check)').forEach(function(el) {
-    if (el.value !== '' && el.value !== 'random' && el.name !== 'bodytype' && el.name !== 'age' && el.name !== 'race' && el.name !== 'act') {
+    if (el.value !== '' && el.value !== 'random' && el.name !== 'bodytype' && el.name !== 'age' && el.name !== 'race' && el.name !== 'act' && el.name !== 'style' && el.name !== 'lighting') {
       el.disabled = true;
       el.parentElement.style.opacity = '0.3';
       el.parentElement.style.cursor = 'not-allowed';
