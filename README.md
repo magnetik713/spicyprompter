@@ -48,11 +48,7 @@ To use Anime mode, configure two additional settings:
   | `noobai` | `masterpiece, best quality, newest, rating:explicit` | NoobAI Epsilon |
   | `pony` | `score_9, score_8_up, score_7_up, score_6_up, source_anime, rating:explicit` | Pony Diffusion v6 XL |
 
-- **ComfyUI Workflow** — select a workflow JSON for the anime model you're running. Included workflows:
-  | File | Model | Sampler | Resolution |
-  |---|---|---|---|
-  | `wai-illustrious-t2i.json` | WAI-Illustrious SDXL v17 | Euler a / Karras, 30+20 steps | 832×1216 → 1080×1584 |
-  | `noobai-t2i.json` | NoobAI Epsilon 1.1 | DPM++ 2M / Karras, 25+15 steps | 832×1216 → 1080×1584 |
+- **ComfyUI Workflow** — upload your own workflow JSON in Settings. Any ComfyUI workflow works — point it at your anime model checkpoint and SpicyPrompter injects the generated prompt into the positive text node automatically.
 
 Anime mode outputs **booru-style tags** (comma-separated, underscored) with automatic photography term filtering — no realistic prose bleeds into anime prompts.
 
@@ -91,8 +87,8 @@ Also available as a standalone free tool: [LoRA Dataset Builder](https://github.
 
 - **Local LLMs:** Ollama, LM Studio, llama.cpp
 - **Cloud LLMs:** Venice.ai, Groq, OpenRouter, any OpenAI-compatible API
-- **Realistic models:** Stable Diffusion 1.5, SDXL, FLUX — includes ready-to-use ComfyUI workflow JSONs
-- **Anime models:** Pony Diffusion v6 XL, WAI-Illustrious SDXL, NoobAI Epsilon — includes workflow JSONs with hi-res pass
+- **Realistic models:** Stable Diffusion 1.5, SDXL, FLUX — upload your ComfyUI workflow JSON in Settings
+- **Anime models:** Pony Diffusion v6 XL, WAI-Illustrious SDXL, NoobAI Epsilon — upload your workflow JSON, set Image Model Compatibility to match
 
 ## Data & Privacy
 
