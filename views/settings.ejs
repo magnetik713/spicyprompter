@@ -257,6 +257,7 @@
           <option value=noobai      <%= config.image_model_compat === 'noobai' ? 'selected' : '' %>>NoobAI</option>
         </select>
         <div class=hint>Sets quality tags for anime prompts. Illustrious: masterpiece/best quality. Pony: score_9/score_8_up. NoobAI: masterpiece/newest.</div>
+        <div id="compat-mismatch" style="display:none;margin-top:6px;font-size:12px;color:#f0a500">&#9888; Workflow expects <span id="compat-expected"></span> — compat mismatch may affect quality tags.</div>
       </div>
 
       <div class="field">
@@ -460,6 +461,27 @@ async function loadWorkflows(selectVal) {
 loadWorkflows().then(loadTriggerWords);
 
 document.getElementById('comfy-wf').addEventListener('change', loadTriggerWords);
+document.getElementById('image-model-compat').addEventListener('change', function() {
+  const filename = document.getElementById('comfy-wf').value;
+  if (!filename) return;
+  fetch('/prompts/api/comfyui/workflow-meta?filename=' + encodeURIComponent(filename))
+    .then(function(r) { return r.json(); })
+    .then(function(d) { checkCompatMismatch(d.suggested_compat || null); })
+    .catch(function() {});
+});
+
+function checkCompatMismatch(suggested) {
+  const warn = document.getElementById('compat-mismatch');
+  const exp  = document.getElementById('compat-expected');
+  const sel  = document.getElementById('image-model-compat');
+  if (!warn || !sel) return;
+  if (suggested && sel.value !== suggested) {
+    exp.textContent = suggested;
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+}
 
 async function loadTriggerWords() {
   const filename = document.getElementById('comfy-wf').value;
@@ -479,6 +501,7 @@ async function loadTriggerWords() {
         setTimeout(function() { compatSel.style.outline = ''; }, 2000);
       }
     }
+    checkCompatMismatch(d.suggested_compat || null);
   } catch(e) {}
 }
 
