@@ -86,7 +86,6 @@
   @media (max-width:600px) { .attrs-grid { grid-template-columns:1fr; } }
   .attr-panel { border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; }
   .attr-label { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:var(--font); margin-bottom:0; display:block; }
-  .attr-panel details { margin:0; }
   summary.attr-label { cursor:pointer; user-select:none; list-style:none; display:flex; align-items:center; justify-content:space-between; }
   summary.attr-label::-webkit-details-marker, summary.attr-label::marker { display:none; }
   summary.attr-label::after { content:"▾"; opacity:.45; font-size:11px; }
@@ -315,8 +314,7 @@
 
 <span class="section-lbl" style="margin-top:4px">Attributes</span>
 <div class="attrs-grid">
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Age</summary>
+  <details class="attr-panel" open><summary class="attr-label">Age</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="age" id="age_none" value="" checked><label for="age_none" style="color:var(--muted);font-style:italic">Any</label></div>
       <div class="opt-item"><input type="radio" name="age" id="age_teen" value="late_teens"><label for="age_teen">Teen (18+)</label></div>
@@ -326,9 +324,7 @@
       <div class="opt-item"><input type="radio" name="age" id="age_50s" value="50s"><label for="age_50s">50s+</label></div>
     </div>
   </details>
-  </div>
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Hair Length</summary>
+  <details class="attr-panel" open><summary class="attr-label">Hair Length</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_any"    value="" checked><label for="hl_any" style="color:var(--muted);font-style:italic">Any</label></div>
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_short"  value="short"><label for="hl_short">Short</label></div>
@@ -337,9 +333,7 @@
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_vlong"  value="very_long"><label for="hl_vlong">Very Long</label></div>
     </div>
   </details>
-  </div>
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Hair Style</summary>
+  <details class="attr-panel" open><summary class="attr-label">Hair Style</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_any"      value="" checked><label for="hs_any" style="color:var(--muted);font-style:italic">Any</label></div>
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_straight" value="straight"><label for="hs_straight">Straight</label></div>
@@ -348,9 +342,7 @@
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_braids"   value="braids"><label for="hs_braids">Braids</label></div>
     </div>
   </details>
-  </div>
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Hair Color</summary>
+  <details class="attr-panel" open><summary class="attr-label">Hair Color</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_none"     value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">Any</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_black"    value="black"><label for="hc_black">Black</label></div>
@@ -364,9 +356,7 @@
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_blue"     value="blue"><label for="hc_blue">Blue / Teal</label></div>
     </div>
   </details>
-  </div>
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Expression</summary>
+  <details class="attr-panel" open><summary class="attr-label">Expression</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none"        value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">Any</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_moaning"     value="moaning"><label for="fe_moaning">Moaning / O-face</label></div>
@@ -381,9 +371,7 @@
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_blissful"    value="blissful"><label for="fe_blissful">Blissful / Serene</label></div>
     </div>
   </details>
-  </div>
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Eye Color</summary>
+  <details class="attr-panel" open><summary class="attr-label">Eye Color</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_none"  value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">Any</label></div>
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_brown" value="brown"><label for="ec_brown">Brown</label></div>
@@ -395,9 +383,7 @@
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_dark"  value="dark"><label for="ec_dark">Dark / Black</label></div>
     </div>
   </details>
-  </div>
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Skin Tone</summary>
+  <details class="attr-panel" open><summary class="attr-label">Skin Tone</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="skin_tone" id="st_none"   value="" checked><label for="st_none" style="color:var(--muted);font-style:italic">Any</label></div>
       <div class="opt-item"><input type="radio" name="skin_tone" id="st_pale"   value="pale"><label for="st_pale">Pale / Fair</label></div>
@@ -407,9 +393,7 @@
       <div class="opt-item"><input type="radio" name="skin_tone" id="st_dark"   value="dark"><label for="st_dark">Dark</label></div>
     </div>
   </details>
-  </div>
-  <div class="attr-panel">
-    <details open><summary class="attr-label">Hand Action</summary>
+  <details class="attr-panel" open><summary class="attr-label">Hand Action</summary>
     <div class="attr-opts" id="hand-action-opts">
       <div class="opt-item"><input type="radio" name="hand_action" id="ha_none"      value=""           checked><label for="ha_none"      style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="hand_action" id="ha_random"    value="random"            ><label for="ha_random"   >Random</label></div>
@@ -426,7 +410,6 @@
       <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_butt"   value="butt_grab"         ><label for="ha_butt"     >Butt Grab</label></div>
     </div>
   </details>
-  </div>
 </div>
 
 <% if (!paid) { %>
