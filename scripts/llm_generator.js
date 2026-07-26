@@ -78,7 +78,7 @@ const RACE_LABELS = {
   puerto_rican: 'Puerto Rican',
 };
 
-const INTERRACIAL_DARK  = ['ebony','ethiopian','caribbean','moroccan'];
+const INTERRACIAL_DARK  = ['ethiopian','caribbean'];
 const INTERRACIAL_LIGHT = ['scandinavian','eastern_european','french','celtic','russian'];
 const INTERRACIAL_MID   = ['latina','east_asian','indian','arabic','brazilian','persian'];
 
@@ -482,7 +482,14 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat) {
     interracialRule = `
 INTERRACIAL CAST (ABSOLUTE): The subjects have contrasting racial backgrounds — ${label1} and ${label2}. Describe each person's race, skin tone, and physical features explicitly. The racial contrast is visually prominent.`;
   }
-  const cameraAngleRule     = CAMERA_VIEW_ARG       ? `\nCAMERA ANGLE (ABSOLUTE): Shoot this scene from ${CAMERA_VIEW_ARG.replace(/_/g, ' ')} — this is the primary viewpoint. Describe the composition from this exact angle.` : '';
+  const isSoloF = skeleton.subject ? isSoloFemale(skeleton.subject) : false;
+  const isMulti = skeleton.subject ? personCount(skeleton.subject) > 1 : false;
+  const povSelfie = (CAMERA_VIEW_ARG === 'pov' && isSoloF)
+    ? ' Solo female selfie: she holds the camera toward herself — she is the sole subject, completely alone. CRITICAL: do NOT write the word "pov" anywhere in the output — image models associate that term with a male viewer. Instead describe this as a selfie, self-shot, self-portrait, or front-camera photo. Output MUST include "solo", "alone", and "1girl". No male viewer, no male hands, no male body parts, no implied male presence anywhere in frame.'
+    : (CAMERA_VIEW_ARG === 'pov' && isMulti)
+    ? ' Group POV/selfie mix: one participant holds the camera toward the group. Blends first-person POV with a selfie angle — camera-holder perspective implied while all subjects visible. Intimate close-range framing.'
+    : '';
+  const cameraAngleRule     = CAMERA_VIEW_ARG       ? `\nCAMERA ANGLE (ABSOLUTE): Shoot this scene from ${CAMERA_VIEW_ARG.replace(/_/g, ' ')}${povSelfie} — this is the primary viewpoint. Describe the composition from this exact angle.` : '';
   const hairColorRule       = HAIR_COLOR_ARG        ? `\nHAIR COLOR (ABSOLUTE): The subject has ${HAIR_COLOR_ARG.replace(/_/g, ' ')} hair. Describe it explicitly — do not substitute or omit.` : '';
   const expressionRule      = FACIAL_EXPRESSION_ARG ? `\nFACIAL EXPRESSION (ABSOLUTE): The subject's face shows ${FACIAL_EXPRESSION_ARG.replace(/_/g, ' ')} — describe this expression explicitly in the prompt.` : '';
   const eyeColorRule        = EYE_COLOR_ARG         ? `\nEYE COLOR (ABSOLUTE): The subject has ${EYE_COLOR_ARG.replace(/_/g, ' ')} eyes. Mention eye color explicitly — do not substitute or omit.` : '';
