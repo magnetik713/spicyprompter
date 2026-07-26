@@ -470,6 +470,14 @@ async function loadTriggerWords() {
     const r = await fetch('/prompts/api/comfyui/workflow-meta?filename=' + encodeURIComponent(filename));
     const d = await r.json();
     document.getElementById('trigger-words-input').value = d.trigger_words || '';
+    if (d.suggested_compat) {
+      const compatSel = document.getElementById('image-model-compat');
+      if (compatSel && compatSel.value !== d.suggested_compat) {
+        compatSel.value = d.suggested_compat;
+        compatSel.style.outline = '2px solid var(--accent)';
+        setTimeout(function() { compatSel.style.outline = ''; }, 2000);
+      }
+    }
   } catch(e) {}
 }
 

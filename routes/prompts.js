@@ -419,8 +419,18 @@ router.get('/api/comfyui/workflow-meta', (req, res) => {
   const wfPath = require('path').join(__dirname, '../uploads/workflows', fname);
   try {
     const wf = JSON.parse(require('fs').readFileSync(wfPath, 'utf8'));
-    res.json({ trigger_words: (wf['_spicy'] && wf['_spicy'].trigger_words) || '' });
-  } catch(e) { res.json({ trigger_words: '' }); }
+    let suggested_compat = null;
+    for (const node of Object.values(wf)) {
+      if (node && node.class_type === 'CheckpointLoaderSimple') {
+        const ckpt = ((node.inputs && node.inputs.ckpt_name) || '').toLowerCase();
+        if (ckpt.includes('noobai') || ckpt.includes('noob')) suggested_compat = 'noobai';
+        else if (ckpt.includes('pony')) suggested_compat = 'pony';
+        else if (ckpt.includes('illustrious') || ckpt.includes('wai') || ckpt.includes('nai')) suggested_compat = 'illustrious';
+        break;
+      }
+    }
+    res.json({ trigger_words: (wf['_spicy'] && wf['_spicy'].trigger_words) || '', suggested_compat });
+  } catch(e) { res.json({ trigger_words: '', suggested_compat: null }); }
 });
 
 router.post('/api/comfyui/workflow-meta', (req, res) => {
