@@ -76,6 +76,12 @@
 
 <div class="detail-layout">
   <div class="detail-hero">
+    <div id="regen-status" style="display:none;margin-bottom:8px">
+      <div style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:6px" id="regen-status-text"></div>
+      <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;width:100%">
+        <div id="regen-bar" style="height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width 0.4s ease"></div>
+      </div>
+    </div>
     <% if (prompt.image_path) { %>
       <a href="/prompts/<%= prompt.image_path %>" download style="display:block;line-height:0">
         <img src="/prompts/<%= prompt.image_path %>" alt="<%= prompt.name %>" style="cursor:pointer">
@@ -132,13 +138,6 @@
       <div class="prompt-box" style="color:var(--dim);font-style:italic"><%= prompt.notes %></div>
     </div>
     <% } %>
-  </div>
-</div>
-
-<div id="regen-status" style="display:none;margin-top:10px">
-  <div style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:6px" id="regen-status-text"></div>
-  <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;width:100%">
-    <div id="regen-bar" style="height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width 0.4s ease"></div>
   </div>
 </div>
 <style>

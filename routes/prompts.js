@@ -554,7 +554,9 @@ router.post('/api/comfyui/queue', async (req, res) => {
   const cfgOverride     = req.body.regen_cfg   !== undefined && req.body.regen_cfg   !== '' ? parseFloat(req.body.regen_cfg)   : parseFloat(cfg.get('comfyui_cfg') || '') || 0;
   const denoiseRaw      = req.body.regen_denoise !== undefined && req.body.regen_denoise !== '' ? req.body.regen_denoise : cfg.get('comfyui_denoise');
   const denoiseOverride = denoiseRaw !== '' && denoiseRaw != null ? parseFloat(denoiseRaw) : NaN;
-  const samplerOverride = (req.body.regen_sampler || cfg.get('comfyui_sampler') || '').trim();
+  const _A1111_SAMPLERS = {'euler a':'euler_ancestral','euler':'euler','lms':'lms','heun':'heun','dpm2':'dpm_2','dpm2 a':'dpm_2_ancestral','dpm++ 2s a':'dpmpp_2s_ancestral','dpm++ 2m':'dpmpp_2m','dpm++ sde':'dpmpp_sde','dpm++ 2m sde':'dpmpp_2m_sde','dpm++ 3m sde':'dpmpp_3m_sde','ddim':'ddim','ddpm':'ddpm','lcm':'lcm','uni pc':'uni_pc','plms':'euler'};
+  const _rawSampler = (req.body.regen_sampler || cfg.get('comfyui_sampler') || '').trim();
+  const samplerOverride = _A1111_SAMPLERS[_rawSampler.toLowerCase()] || _rawSampler;
   for (const node of Object.values(workflow)) {
     if (node.class_type === 'KSampler' || node.class_type === 'KSamplerAdvanced') {
       const fixedSeed = req.body.regen_seed ? parseInt(req.body.regen_seed) : null;
