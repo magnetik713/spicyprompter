@@ -12,7 +12,7 @@
     <% if (paid && prompt.positive && !prompt.starred) { %>
     <button id="regen-btn" class="btn btn-secondary" onclick="regenPrompt(false)" title="Regenerate using your currently configured workflow in Settings">&#x21BA; Regenerate</button>
     <% if (hasSaveImage) { %><button id="regen-orig-btn" class="btn btn-secondary" onclick="regenPrompt(true)" title="Regenerate using this prompt's original embedded workflow" style="font-size:12px">&#x21BA; Original</button><% } else if (prompt.tags && prompt.tags.includes('imported')) { %><span style="font-size:11px;color:#e09a3a;align-self:center" title="Imported without a ComfyUI workflow — regenerating uses your Settings workflow">⚠ external workflow</span><% } %>
-<% if (prompt.tags && prompt.tags.includes('imported') && !prompt.workflow_json_path) { %><button type="button" class="btn btn-secondary" onclick="adaptDetail()" id="adapt-detail-btn" style="font-size:12px">✦ Adapt</button><% } %>
+<% if (prompt.tags && prompt.tags.includes('imported')) { %><select id="adapt-target-sel" style="font-size:12px;padding:2px 6px;border-radius:4px;border:1px solid var(--border,rgba(255,255,255,0.15));background:var(--bg2,rgba(0,0,0,0.3));color:var(--text)"><option value="flux">→ Flux</option><option value="booru">→ Booru</option></select><button type="button" class="btn btn-secondary" onclick="adaptDetail()" id="adapt-detail-btn" style="font-size:12px">✦ Adapt</button><% } %>
 
     <% } %>
     <% if (!prompt.starred) { %>
@@ -57,10 +57,15 @@
   <label style="color:var(--muted);display:flex;align-items:center;gap:4px">Seed
     <input type="number" id="regen-seed" value="" placeholder="random" min="0" style="width:110px;font-family:monospace;font-size:11px;padding:2px 4px">
   </label>
+  <label style="color:var(--muted);display:flex;align-items:center;gap:4px">Workflow
+    <select id="regen-workflow" style="width:180px;font-size:11px;padding:2px 4px;background:var(--bg2,#1a1a1a);color:inherit;border:1px solid var(--border,rgba(255,255,255,0.15));border-radius:3px">
+      <option value="">Settings default</option>
+    </select>
+  </label>
 </div>
 
 <div id="adapt-result" style="display:none;margin:0 0 12px;padding:12px;border-radius:6px;background:var(--bg2,rgba(255,255,255,0.05));border:1px solid var(--border,rgba(255,255,255,0.12))">
-  <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Adapted prompt — review and accept or discard:</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Adapted prompt (<span id="adapt-target-label"></span>) — review and accept or discard:</div>
   <div id="adapt-warn" style="display:none;font-size:11px;color:#e09a3a;margin-bottom:8px;padding:4px 8px;background:rgba(224,154,58,0.1);border-radius:3px"></div>
   <label style="font-size:11px;color:var(--muted)">Positive</label>
   <div id="adapt-pos-preview" style="white-space:pre-wrap;font-size:13px;margin:4px 0 10px;padding:8px;background:var(--bg,rgba(0,0,0,0.2));border-radius:4px;max-height:200px;overflow-y:auto"></div>
@@ -75,6 +80,35 @@
 </div>
 
 <div class="detail-layout">
+  <div class="detail-main">
+    <% if (prompt.positive) { %>
+    <div class="section">
+      <div class="section-label">
+        Positive Prompt
+        <span style="display:flex;gap:6px;align-items:center">
+          <button class="copy-btn" data-target="positive-text">Copy</button>
+          <% if (!prompt.starred) { %><button class="copy-btn" id="save-prompt-btn" onclick="savePrompt()">Save</button><% } %>
+        </span>
+      </div>
+      <textarea class="prompt-box positive" id="positive-text" style="resize:vertical;width:100%;background:transparent;font-family:var(--font-mono);font-size:13px;color:inherit;border:none;outline:none;padding:0;display:block;overflow:hidden"<% if (prompt.starred) { %> readonly<% } %>><%= prompt.positive %></textarea>
+    </div>
+    <% } %>
+    <% if (prompt.negative) { %>
+    <div class="section">
+      <div class="section-label">
+        Negative Prompt
+        <button class="copy-btn negative" data-target="negative-text">Copy</button>
+      </div>
+      <div class="prompt-box negative" id="negative-text"><%= prompt.negative %></div>
+    </div>
+    <% } %>
+    <% if (prompt.notes) { %>
+    <div class="section">
+      <div class="section-label">Notes</div>
+      <div class="prompt-box" style="color:var(--dim);font-style:italic"><%= prompt.notes %></div>
+    </div>
+    <% } %>
+  </div>
   <div class="detail-hero">
     <div id="regen-status" style="display:none;margin-bottom:8px">
       <div style="font-size:12px;color:var(--muted);font-family:var(--font-mono);margin-bottom:6px" id="regen-status-text"></div>
@@ -109,35 +143,6 @@
       </div>
       <% } %>
     </div>
-  </div>
-  <div class="detail-main">
-    <% if (prompt.positive) { %>
-    <div class="section">
-      <div class="section-label">
-        Positive Prompt
-        <span style="display:flex;gap:6px;align-items:center">
-          <button class="copy-btn" data-target="positive-text">Copy</button>
-          <% if (!prompt.starred) { %><button class="copy-btn" id="save-prompt-btn" onclick="savePrompt()">Save</button><% } %>
-        </span>
-      </div>
-      <textarea class="prompt-box positive" id="positive-text" rows="8" style="resize:vertical;width:100%;background:transparent;font-family:var(--font-mono);font-size:13px;color:inherit;border:none;outline:none;padding:0;display:block"<% if (prompt.starred) { %> readonly<% } %>><%= prompt.positive %></textarea>
-    </div>
-    <% } %>
-    <% if (prompt.negative) { %>
-    <div class="section">
-      <div class="section-label">
-        Negative Prompt
-        <button class="copy-btn negative" data-target="negative-text">Copy</button>
-      </div>
-      <div class="prompt-box negative" id="negative-text"><%= prompt.negative %></div>
-    </div>
-    <% } %>
-    <% if (prompt.notes) { %>
-    <div class="section">
-      <div class="section-label">Notes</div>
-      <div class="prompt-box" style="color:var(--dim);font-style:italic"><%= prompt.notes %></div>
-    </div>
-    <% } %>
   </div>
 </div>
 <style>
@@ -184,13 +189,15 @@ async function regenPrompt(useOriginalWorkflow) {
   const regenCfg     = document.getElementById('regen-cfg')?.value.trim();
   const regenSampler = document.getElementById('regen-sampler')?.value.trim();
   const regenDenoise = document.getElementById('regen-denoise')?.value.trim();
-  const regenSeed    = document.getElementById('regen-seed')?.value.trim();
+  const regenSeed     = document.getElementById('regen-seed')?.value.trim();
+  const regenWorkflow = document.getElementById('regen-workflow')?.value.trim();
   const body = { prompt_text: document.getElementById('positive-text').value, prompt_db_id: '<%= prompt.id %>', ...(useOriginalWorkflow ? { use_prompt_workflow: true } : {}),
-    ...(regenSteps   ? { regen_steps:   regenSteps   } : {}),
-    ...(regenCfg     ? { regen_cfg:     regenCfg     } : {}),
-    ...(regenSampler ? { regen_sampler: regenSampler } : {}),
-    ...(regenDenoise ? { regen_denoise: regenDenoise } : {}),
-    ...(regenSeed    ? { regen_seed:    regenSeed    } : {}),
+    ...(regenSteps    ? { regen_steps:    regenSteps    } : {}),
+    ...(regenCfg      ? { regen_cfg:      regenCfg      } : {}),
+    ...(regenSampler  ? { regen_sampler:  regenSampler  } : {}),
+    ...(regenDenoise  ? { regen_denoise:  regenDenoise  } : {}),
+    ...(regenSeed     ? { regen_seed:     regenSeed     } : {}),
+    ...(!useOriginalWorkflow && regenWorkflow ? { regen_workflow: regenWorkflow } : {}),
   };
   try {
     const r = await fetch('/prompts/api/comfyui/queue', {
@@ -273,10 +280,12 @@ async function adaptDetail() {
   try {
     const r = await fetch('/prompts/api/adapt-prompt', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ positive, negative, use_llm: true }),
+      body: JSON.stringify({ positive, negative, use_llm: true, target_model: (document.getElementById('adapt-target-sel') || {}).value || 'flux' }),
     });
     const d = await r.json();
     if (!d.ok) { alert('Adapt failed: ' + (d.error || 'unknown')); return; }
+    const tLabel = document.getElementById('adapt-target-label');
+    if (tLabel) tLabel.textContent = (document.getElementById('adapt-target-sel') || {}).value || 'flux';
     _adaptedPositive = d.positive;
     _adaptedNegative = d.negative || '';
     document.getElementById('adapt-pos-preview').textContent = d.positive;
@@ -305,5 +314,22 @@ async function acceptAdapt() {
   else alert('Save failed: ' + d.error);
 }
 
+(function() {
+  var ta = document.getElementById('positive-text');
+  if (!ta) return;
+  function fit() { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+  fit();
+  ta.addEventListener('input', fit);
+})();
+
+(function() {
+  var sel = document.getElementById('regen-workflow');
+  if (!sel) return;
+  fetch('/prompts/api/comfyui/workflows').then(function(r){ return r.json(); }).then(function(files) {
+    files.forEach(function(f) {
+      var o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o);
+    });
+  }).catch(function(){});
+})();
 </script>
 <%- include('../partials/footer') %>

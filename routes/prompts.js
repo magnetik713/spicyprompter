@@ -483,10 +483,13 @@ router.post('/api/comfyui/queue', async (req, res) => {
   let workflowFile, wfPath;
   const overrideId = req.body.workflow_id ? parseInt(req.body.workflow_id) : null;
   const usePromptWf = req.body.use_prompt_workflow && req.body.prompt_db_id;
+  const regenWorkflow = req.body.regen_workflow ? req.body.regen_workflow.replace(/[/\\]/g, '').replace(/\.\./g, '').trim() : null;
   if (usePromptWf) {
     const pRow = db.prepare('SELECT workflow_json_path FROM prompts WHERE id = ?').get(parseInt(req.body.prompt_db_id));
     if (!pRow || !pRow.workflow_json_path) return res.status(400).json({ error: 'No workflow linked to this prompt.' });
     wfPath = require('path').join(__dirname, '..', pRow.workflow_json_path);
+  } else if (regenWorkflow) {
+    wfPath = require('path').join(__dirname, '../uploads/workflows', regenWorkflow);
   } else if (overrideId) {
     const wfRow = db.prepare('SELECT workflow_json_path FROM workflows WHERE id = ?').get(overrideId);
     if (!wfRow || !wfRow.workflow_json_path) return res.status(400).json({ error: 'Linked workflow not found.' });

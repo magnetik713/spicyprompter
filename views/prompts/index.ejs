@@ -656,8 +656,8 @@ async function handlePngImport(file) {
       _importImagePath = d.image_path || null;
       _importSourceFormat = d.source_format || 'unknown';
       const fmtNote = document.getElementById('import-format-note');
-      // Show adapt button for non-ComfyUI imports
-      if (d.source_format !== 'comfyui' && d.has_prompt) {
+      // Show adapt button for any import with a prompt
+      if (d.has_prompt) {
         fetch('/prompts/api/adapt-status').then(r=>r.json()).then(s=>{
           _adaptStatus = s;
           const btn = document.getElementById('import-adapt-btn');
