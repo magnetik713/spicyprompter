@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "archiver": "^8.0.0",
-    "better-sqlite3": "^9.4.3",
+    "better-sqlite3": "^12.11.1",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "method-override": "^3.0.0",
