@@ -15,22 +15,34 @@ if exist "%~dp0runtime\node.exe" (
 )
 
 node --version >nul 2>&1
-if not errorlevel 1 (
+if errorlevel 1 goto :getnode
+
+:: Only use the system Node if better-sqlite3 ships a prebuilt binary for it.
+for /f "tokens=1 delims=." %%v in ('node --version') do set "NODEMAJ=%%v"
+set "NODEMAJ=%NODEMAJ:v=%"
+set "NODEOK=0"
+for %%m in (22 24 25 26) do if "%NODEMAJ%"=="%%m" set "NODEOK=1"
+
+if "%NODEOK%"=="1" (
     set "NODE_EXE=node"
-    echo Node.js found:
-    node --version
+    echo Node.js v%NODEMAJ% found.
     goto :install
 )
 
+echo Node.js v%NODEMAJ% is installed, but SpicyPrompter needs Node 22, 24, 25 or 26.
+echo Your Node.js will be left alone - a private copy is used instead.
+echo.
+
+:getnode
 :: Download portable Node.js
-echo Node.js not found. Downloading portable Node.js LTS...
+echo Setting up portable Node.js...
 echo This requires an internet connection.
 echo.
 
 set SP_DIR=%~dp0
 (
 echo $dir = '%SP_DIR%'
-echo $url = 'https://nodejs.org/dist/v20.19.3/node-v20.19.3-win-x64.zip'
+echo $url = 'https://nodejs.org/dist/v24.21.0/node-v24.21.0-win-x64.zip'
 echo $zip = Join-Path $dir 'runtime.zip'
 echo $tmp = Join-Path $dir 'runtime_tmp'
 echo $rt  = Join-Path $dir 'runtime'
@@ -38,7 +50,7 @@ echo Write-Host 'Downloading...'
 echo Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
 echo Write-Host 'Extracting...'
 echo Expand-Archive -Path $zip -DestinationPath $tmp -Force
-echo Move-Item "$tmp\node-v20.19.3-win-x64" $rt
+echo Move-Item "$tmp\node-v24.21.0-win-x64" $rt
 echo Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 echo Remove-Item $zip -Force
 echo Write-Host 'Done.'
