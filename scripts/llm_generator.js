@@ -57,6 +57,8 @@ const PROMPT_WORDS         = parseInt(getArg('--prompt_words', '110'), 10);
 const RAW_OUTPUT           = hasFlag('--raw_output');
 const ALLOW_TOYS           = hasFlag('--allow_toys');
 const INTERRACIAL          = hasFlag('--interracial');
+let NO_THINK               = hasFlag('--no_think');
+let LAST_SKIP_REASON       = '';
 const DATASET_MODE         = hasFlag('--dataset');
 const GENDER_ARG           = getArg('--gender', 'women');
 const CLOTHING_ARG         = getArg('--clothing', null);
@@ -560,15 +562,51 @@ IMPORTANT: Use the EXACT setting, subject, race, body_type, role, theme, hair_co
   if (TOP_P && parseFloat(TOP_P) > 0) reqBody.top_p = parseFloat(TOP_P);
   if (MIN_P && parseFloat(MIN_P) > 0) reqBody.min_p = parseFloat(MIN_P);
   if (REPETITION_PENALTY > 1.0) reqBody.repetition_penalty = REPETITION_PENALTY;
-  const r = await fetch(`${LITELLM_URL}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LITELLM_KEY}` },
-    body: JSON.stringify(reqBody)
-  });
-  if (!r.ok) throw new Error(`LiteLLM error ${r.status}: ${await r.text()}`);
-  const data = await r.json();
-  const raw = data.choices?.[0]?.message?.content ?? '';
-  const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  if (NO_THINK) reqBody.reasoning_effort = 'none';
+  const send = async (body) => {
+    const r = await fetch(`${LITELLM_URL}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${LITELLM_KEY}` },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error(`LiteLLM error ${r.status}: ${await r.text()}`);
+    return r.json();
+  };
+
+  let data = await send(reqBody);
+  let msg = data.choices?.[0]?.message ?? {};
+  const reasoningOf = (m) => m.reasoning || m.reasoning_content || '';
+
+  // Reasoning models can burn the entire token budget thinking, which leaves
+  // content empty — the thinking comes back in a separate `reasoning` field.
+  // Retry once with thinking off, then stay off for the rest of the run.
+  if (!NO_THINK && !(msg.content || '').trim() && reasoningOf(msg)) {
+    try {
+      const retry = await send({ ...reqBody, reasoning_effort: 'none' });
+      const retryMsg = retry.choices?.[0]?.message ?? {};
+      if ((retryMsg.content || '').trim()) {
+        NO_THINK = true;
+        data = retry;
+        msg = retryMsg;
+        process.stdout.write('\n    [info] model used its whole token budget thinking - thinking disabled for the rest of this run\n');
+      }
+    } catch (e) {
+      LAST_SKIP_REASON = `retry without thinking failed: ${e.message}`;
+    }
+  }
+
+  const raw = msg.content ?? '';
+  if (!raw.trim()) {
+    const rz = reasoningOf(msg);
+    LAST_SKIP_REASON = rz
+      ? `model returned ${rz.length} chars of thinking and no answer (finish_reason=${data.choices?.[0]?.finish_reason}) - raise --max_tokens or pass --no_think`
+      : `model returned empty content (finish_reason=${data.choices?.[0]?.finish_reason})`;
+  }
+  // Strip thinking tags, including an unterminated one from a truncated reply.
+  const cleaned = raw
+    .replace(/<think>[\s\S]*?<\/think>/g, '')
+    .replace(/<think>[\s\S]*$/, '')
+    .trim();
   return stripMetaCommentary(cleaned);
 }
 
@@ -862,12 +900,15 @@ async function main() {
       let prompt = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         const candidate = await generatePrompt(skeleton, resolvedActCat, sceneCat, resolvedThemeCat, loopRoleCat, loopLightingCat);
-        if (!candidate || candidate.length < 40) continue;
+        if (!candidate || candidate.length < 40) {
+          if (candidate && candidate.trim()) LAST_SKIP_REASON = `only ${candidate.length} chars: ${JSON.stringify(candidate.slice(0, 80))}`;
+          continue;
+        }
         prompt = candidate;
         if (MODE_ARG === 'anime') prompt = filterAnimeTags(prompt, skeleton.subject || SUBJECT_ARG);
         break;
       }
-      if (!prompt) { console.log('skip'); failed++; continue; }
+      if (!prompt) { console.log(`skip - ${LAST_SKIP_REASON || 'no usable output from model'}`); LAST_SKIP_REASON = ''; failed++; continue; }
       if (exists.get(prompt)) { console.log('duplicate'); continue; }
       const name = prompt.slice(0, 60).replace(/\n/g, ' ').trim();
       const tagParts = [];
