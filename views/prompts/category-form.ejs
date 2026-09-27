@@ -5,7 +5,7 @@
 </div>
 <style>
   .cat-form label { display:block; font-size:13px; color:var(--muted); margin-bottom:4px; margin-top:16px }
-  .cat-form input[type=text], .cat-form textarea { width:100%; box-sizing:border-box; padding:8px 10px; background:var(--input-bg,#1a1a1a); border:1px solid var(--border); color:var(--text); border-radius:4px; font-size:14px; font-family:inherit }
+  .cat-form input[type=text], .cat-form textarea, .cat-form select { width:100%; box-sizing:border-box; padding:8px 10px; background:var(--input-bg,#1a1a1a); border:1px solid var(--border); color:var(--text); border-radius:4px; font-size:14px; font-family:inherit }
   .cat-form textarea { min-height:80px; resize:vertical }
   .cat-form .hint { font-size:11px; color:var(--muted); margin-top:3px }
 </style>
@@ -19,6 +19,14 @@
 
   <label>Display Label</label>
   <input type="text" name="label" value="<%= cat.label || '' %>" required placeholder="e.g. Nurse Roleplay — hospital, uniform, explicit">
+
+  <label>Type — which picker this category appears under</label>
+  <select name="type" required>
+    <% catTypes.forEach(function(t) { %>
+    <option value="<%= t[0] %>" <%= (cat.type || 'scene') === t[0] ? 'selected' : '' %>><%= t[1] %></option>
+    <% }) %>
+  </select>
+  <div class="hint">Pick Race / Ethnicity to have it show up in the Race picker, Body Type for Body Type, and so on.</div>
 
   <label>Emphasis — key instruction sent to LLM for every prompt in this category</label>
   <textarea name="emphasis" required placeholder="Describe the core scenario, what to focus on, specific acts to include..."><%= cat.emphasis || '' %></textarea>

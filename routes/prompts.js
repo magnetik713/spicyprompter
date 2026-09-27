@@ -138,8 +138,17 @@ const DEMO_ALLOWED = {
   style:    new Set(['film_grain','golden_hour','studio_flash','natural_window','candlelight','low_key','ring_light','warm_indoor','blue_hour','overcast','harsh_sun']),
 };
 
+// Category types, and which picker each one feeds. Used by the category form.
+const CAT_TYPES = [
+  ['act', 'Act'], ['scene', 'Scene'], ['theme', 'Theme'], ['role', 'Role'],
+  ['style', 'Style'], ['lighting', 'Lighting'], ['body_type', 'Body Type'],
+  ['race', 'Race / Ethnicity'], ['character_type', 'Character Type (Anime)'],
+];
+const CAT_TYPE_NAMES = new Set(CAT_TYPES.map(t => t[0]));
+const cleanCatType = (t) => (CAT_TYPE_NAMES.has(t) ? t : 'scene');
+
 router.get('/generate', (req, res) => { try {
-  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' AND name NOT IN ('asian','ebony','latina') ORDER BY label").all();
+  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' ORDER BY label").all();
   const charTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='character_type' ORDER BY label").all();
   const styleCategories    = db.prepare("SELECT id,name,label,COALESCE(mode,'all') as mode FROM llm_categories WHERE type='style'     ORDER BY label").all();
   const lightingCategories = db.prepare("SELECT id,name,label,COALESCE(mode,'all') as mode FROM llm_categories WHERE type='lighting'   ORDER BY label").all();
@@ -278,7 +287,7 @@ router.get('/generate/run', async (req, res) => {
 
 // ── Dataset Builder ─────────────────────────────────────────────────────────
 router.get('/dataset', (req, res) => {
-  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' AND name NOT IN ('asian','ebony','latina') ORDER BY label").all();
+  const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' ORDER BY label").all();
   const DATASET_BODY_ALLOW = new Set(['athletic','busty','chubby','curvy','mature','muscular','petite','piercings','plus_size','slim','tattoos']);
   const bodyTypeCategories = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='body_type' ORDER BY label").all()
     .filter(r => DATASET_BODY_ALLOW.has(r.name));
@@ -785,15 +794,15 @@ router.get('/categories', (req, res) => {
 
 router.get('/categories/new', (req, res) => {
   if (!cfg.isPaid()) return res.redirect('/prompts/categories?locked=1');
-  res.render('prompts/category-form', { cat: {}, title: 'New Category' });
+  res.render('prompts/category-form', { cat: {}, catTypes: CAT_TYPES, title: 'New Category' });
 });
 
 router.post('/categories', (req, res) => {
   if (!cfg.isPaid()) return res.redirect('/prompts/categories?locked=1');
-  const { name, label, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
+  const { name, label, type, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
   const slug = name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
-  db.prepare(`INSERT OR REPLACE INTO llm_categories (name, label, subjects, settings, clothing, styles, lighting, emphasis)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(slug, label, subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis);
+  db.prepare(`INSERT OR REPLACE INTO llm_categories (name, label, type, subjects, settings, clothing, styles, lighting, emphasis)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(slug, label, cleanCatType(type), subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis);
   res.redirect('/prompts/categories');
 });
 
@@ -807,13 +816,13 @@ router.get('/categories/:id/edit', (req, res) => {
   if (!cfg.isPaid()) return res.redirect('/prompts/categories?locked=1');
   const cat = db.prepare('SELECT * FROM llm_categories WHERE id = ?').get(req.params.id);
   if (!cat) return res.status(404).send('Not found');
-  res.render('prompts/category-form', { cat, title: `Edit ${cat.label}` });
+  res.render('prompts/category-form', { cat, catTypes: CAT_TYPES, title: `Edit ${cat.label}` });
 });
 
 router.post('/categories/:id', (req, res) => {
-  const { label, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
-  db.prepare(`UPDATE llm_categories SET label=?, subjects=?, settings=?, clothing=?, styles=?, lighting=?, emphasis=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`)
-    .run(label, subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis, req.params.id);
+  const { label, type, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
+  db.prepare(`UPDATE llm_categories SET label=?, type=?, subjects=?, settings=?, clothing=?, styles=?, lighting=?, emphasis=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`)
+    .run(label, cleanCatType(type), subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis, req.params.id);
   res.redirect('/prompts/categories');
 });
 
