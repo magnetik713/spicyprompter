@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test tests/app.test.js",
-    "package": "node scripts/build-package.js"
+    "package": "node scripts/build-package.js",
+    "check-seed": "node scripts/check-seed.js"
   },
   "dependencies": {
     "archiver": "^8.0.0",
