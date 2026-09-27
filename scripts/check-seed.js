@@ -57,6 +57,22 @@ if (fs.existsSync(DB_PATH)) {
     ok(`no unexplained local-only categories (${rows.length} local, ${seed.length} in seed)`);
   }
   for (const r of held) console.log(`held  ${r.name} - ${INTENTIONALLY_LOCAL[r.name]}`);
+
+  // A category reclassified locally keeps its old type for everyone else,
+  // because INSERT OR IGNORE never updates an existing row. Six categories
+  // sat in the wrong picker for every user this way.
+  const seedType = Object.fromEntries(seed.map(r => [r.name, r.type]));
+  const retyped = rows.filter(r => seedType[r.name] && seedType[r.name] !== r.type);
+  if (retyped.length) {
+    fail(`${retyped.length} categories have a different type locally than the seed ships:`);
+    for (const r of retyped.sort((a, b) => a.name.localeCompare(b.name)))
+      console.log(`        ${r.name.padEnd(22)} seed=${seedType[r.name].padEnd(10)} local=${r.type}`);
+    console.log('        Users keep whichever type they were first seeded with, so they see');
+    console.log('        these in a different picker. Update the seed and add a one-time');
+    console.log('        retype to the SEED_VERSION block in db.js.');
+  } else {
+    ok('no category type disagreements between seed and local database');
+  }
 } else {
   console.log('skip  no local database at ' + DB_PATH + ' - skipping drift check');
 }

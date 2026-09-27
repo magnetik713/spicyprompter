@@ -185,8 +185,19 @@ router.get('/generate/run', async (req, res) => {
     }
   }
 
+  // Without a model there is nothing to call. Say so, rather than firing a
+  // request at a model name the user has never heard of.
+  if (!(model || cfg.get('llm_default_model') || '').trim()) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+    res.write('data: ' + JSON.stringify({ type: 'error', msg: 'No model selected. Choose one in Settings before generating.' }) + '\n\n');
+    return res.end();
+  }
+
   const safeCount   = cfg.isPaid() ? Math.min(999, Math.max(1, parseInt(count) || 5)) : Math.min(5, Math.max(1, parseInt(count) || 5));
-  const safeModel   = (model || 'qwen3.6:35b-a3b').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
+  const safeModel   = (model || cfg.get('llm_default_model') || '').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
   const safeSubject = (subject || '').replace(/[^a-zA-Z0-9 _,-]/g, '').trim();
   const paid = cfg.isPaid();
   const safeCats     = paid ? (cats     || '').replace(/[^a-zA-Z0-9_,]/g, '') : '';
@@ -300,7 +311,7 @@ router.get('/dataset/run', async (req, res) => {
   const { count, model, race, bodytype, clothing, gender, age, hair_length, hair_style, facial_hair, clean_bg, hair_color, facial_expression, eye_color, skin_tone, camera_view } = req.query;
 
   const safeCount   = Math.min(999, Math.max(1, parseInt(count) || 10));
-  const safeModel   = (model || 'qwen3.6:35b-a3b').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
+  const safeModel   = (model || cfg.get('llm_default_model') || '').replace(/[^a-zA-Z0-9.:/@_-]/g, '');
   const safeRace    = (race     || '').replace(/[^a-z_]/g, '');
   const safeBodytype = (bodytype || '').replace(/[^a-z_,]/g, '');
   const safeClothing  = (clothing || '').replace(/[^a-z_]/g, '');

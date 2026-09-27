@@ -131,7 +131,7 @@ try {
   // runs once per release rather than on every start, so a built-in category
   // the user deleted stays deleted until the next bump. INSERT OR IGNORE means
   // categories the user has edited are never overwritten.
-  const SEED_VERSION = '3';
+  const SEED_VERSION = '4';
   const count = db.prepare('SELECT COUNT(*) as n FROM llm_categories').get().n;
   const seenSeed = (db.prepare('SELECT value FROM config WHERE key=?').get('categories_seed_version') || {}).value;
   if (count === 0 || seenSeed !== SEED_VERSION) {
@@ -151,6 +151,13 @@ try {
       });
       insertAll(rows);
     }
+    // These six were reclassified from style to lighting after they had already
+    // shipped. INSERT OR IGNORE never updates an existing row, so installs that
+    // already had them kept showing them in the Style picker. Correct them once,
+    // and only where they still carry the old type.
+    const retype = db.prepare("UPDATE llm_categories SET type='lighting' WHERE name=? AND type='style'");
+    for (const n of ['candlelight','golden_hour','low_key','natural_window','neon_light','studio_flash'])
+      retype.run(n);
     db.prepare('INSERT OR REPLACE INTO config (key,value) VALUES (?,?)').run('categories_seed_version', SEED_VERSION);
   }
 } catch (e) { console.error('llm_categories init error:', e.message); }

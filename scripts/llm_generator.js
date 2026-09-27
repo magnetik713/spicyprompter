@@ -6,11 +6,15 @@ const path = require('path');
 
 const os = require('os');
 const fs = require('fs');
-const DATA_DIR = process.platform === 'win32' && process.env.APPDATA
-  ? require('path').join(process.env.APPDATA, 'SpicyPrompter')
-  : require('path').join(os.homedir(), '.spicyprompter');
+// Mirrors db.js so NODE_ENV=test isolates this script too. Without it a test
+// run writes straight into the real prompt library.
+const DATA_DIR = process.env.NODE_ENV === 'test'
+  ? require('path').join(__dirname, '..')
+  : (process.platform === 'win32' && process.env.APPDATA
+      ? require('path').join(process.env.APPDATA, 'SpicyPrompter')
+      : require('path').join(os.homedir(), '.spicyprompter'));
 fs.mkdirSync(DATA_DIR, { recursive: true });
-const DB_PATH = require('path').join(DATA_DIR, 'prompts.db');
+const DB_PATH = require('path').join(DATA_DIR, process.env.NODE_ENV === 'test' ? 'test.db' : 'prompts.db');
 
 const args = process.argv.slice(2);
 const getArg = (flag, def) => { const i = args.indexOf(flag); return i >= 0 ? args[i+1] : def; };

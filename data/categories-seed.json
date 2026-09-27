@@ -261,7 +261,7 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Candlelight only. Warm flickering orange light, deep shadows, intimate atmosphere. Describe the dancing light on skin, shadow play, and warm intimate mood.",
-    "type": "style"
+    "type": "lighting"
   },
   {
     "name": "car",
@@ -690,7 +690,7 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Shot in golden hour light. Warm amber and orange tones, long dramatic shadows, sun low on horizon. Skin glows warm. Describe the light quality and how it falls on the subject.",
-    "type": "style"
+    "type": "lighting"
   },
   {
     "name": "gym",
@@ -899,7 +899,7 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Low key lighting. Mostly dark, subject lit by single source. Heavy shadows obscure parts of body. Dramatic, moody, mysterious. Describe what is lit and what disappears into shadow.",
-    "type": "style"
+    "type": "lighting"
   },
   {
     "name": "maid",
@@ -987,7 +987,7 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Natural window light. Soft diffused daylight from a window. Soft shadows, even skin tones. Morning or afternoon indoor feel. Clean, real, intimate.",
-    "type": "style"
+    "type": "lighting"
   },
   {
     "name": "neon_light",
@@ -998,7 +998,7 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Neon lighting. Colored light \u2014 pink, blue, purple \u2014 from signs or LEDs. Urban night aesthetic. Describe the colored light on skin, shadows between colors, dark background.",
-    "type": "style"
+    "type": "lighting"
   },
   {
     "name": "nightclub",
@@ -1636,7 +1636,7 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Studio flash lighting. Clean white light, high-key, sharp shadows. Professional studio. No ambient light. Clinical or editorial aesthetic. Every detail visible.",
-    "type": "style"
+    "type": "lighting"
   },
   {
     "name": "swingers",
