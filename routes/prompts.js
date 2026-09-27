@@ -10,7 +10,6 @@ try { db.prepare('ALTER TABLE workflows ADD COLUMN guidance REAL').run(); } catc
 try { db.prepare('ALTER TABLE prompts ADD COLUMN workflow_json_path TEXT').run(); } catch(e) {}
 
 const cfg = require('../config');
-const usage = require('../usage');
 
 const router = express.Router();
 
@@ -71,12 +70,11 @@ router.get('/', async (req, res) => {
   const categoryRows = db.prepare("SELECT DISTINCT category FROM prompts WHERE category IS NOT NULL AND category != '' ORDER BY category").all();
   const categories = categoryRows.map(r => r.category);
 
-  const promptTotal = db.prepare('SELECT COUNT(*) as n FROM prompts').get().n;
   res.render('prompts/index', {
     prompts, categories,
     selectedTags, selectedCategory, selectedSort, showStarred, q: q || '',
     page: safePage, totalPages, total,
-    promptTotal, paid: cfg.isPaid(), demoLimit: usage.DEMO_LIMIT,
+    paid: cfg.isPaid(),
     title: 'Prompt Library'
   });
 });
@@ -137,6 +135,10 @@ const CAT_TYPES = [
 ];
 const CAT_TYPE_NAMES = new Set(CAT_TYPES.map(t => t[0]));
 const cleanCatType = (t) => (CAT_TYPE_NAMES.has(t) ? t : 'scene');
+// Which generator mode a role, style or lighting entry shows up in.
+const CAT_MODES = ['all', 'realistic', 'anime'];
+const cleanCatMode = (m) => (CAT_MODES.includes(m) ? m : 'all');
+const flag = (v) => (v ? 1 : 0);
 
 router.get('/generate', (req, res) => { try {
   const raceCategories     = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='race' ORDER BY label").all();
@@ -149,12 +151,11 @@ router.get('/generate', (req, res) => { try {
   const sceneCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='scene'     ORDER BY label").all();
   const themeCategories    = db.prepare("SELECT id,name,label FROM llm_categories WHERE type='theme'     ORDER BY label").all();
   const defaultModel = cfg.get('llm_default_model') || '';
-  const genPromptTotal = usage.getCount();
   const paid = cfg.isPaid();
   res.render('prompts/generate', {
     raceCategories, charTypeCategories, bodyTypeCategories, roleCategories,
     actCategories, sceneCategories, themeCategories, styleCategories, lightingCategories,
-    defaultModel, paid, promptTotal: genPromptTotal, demoLimit: usage.DEMO_LIMIT, title: 'Generate Prompts'
+    defaultModel, paid, title: 'Generate Prompts'
   });
   } catch(e) {
     res.status(500).send('<div style="font-family:sans-serif;padding:40px"><h2>Setup incomplete</h2><p>The database is not ready. Restart the server using <code>install.bat</code> and refresh this page.</p><pre style="color:red">' + e.message + '</pre></div>');
@@ -162,19 +163,8 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, bodytype, role, style, lighting, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial, hand_action, mode } = req.query;
+  const { cats, count, model, subject, race, race_random, bodytype, bodytype_random, role, style, lighting, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial, hand_action, mode } = req.query;
 
-
-  if (!cfg.isPaid()) {
-    if (usage.isAtLimit()) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.flushHeaders();
-      res.write('data: ' + JSON.stringify({ type: 'limit', msg: 'Free tier limit reached (' + usage.DEMO_LIMIT + ' prompts). Purchase a license to generate unlimited prompts.' }) + '\n\n');
-      return res.end();
-    }
-  }
 
   // Without a model there is nothing to call. Say so, rather than firing a
   // request at a model name the user has never heard of.
@@ -248,6 +238,8 @@ router.get('/generate/run', async (req, res) => {
   // Random is available to everyone: the demo gate in generate.ejs leaves radios
   // whose value is 'random' enabled, so demo users pick Any or Random for the
   // pickers they cannot choose from specifically.
+  if (race_random     === '1') args.push('--race_random');
+  if (bodytype_random === '1') args.push('--bodytype_random');
   if (act_random   === '1') args.push('--act_random');
   if (scene_random === '1') args.push('--scene_random');
   if (theme_random === '1') args.push('--theme_random');
@@ -272,7 +264,6 @@ router.get('/generate/run', async (req, res) => {
   const send = (data) => res.write('data: ' + JSON.stringify(data) + '\n\n');
   send({ type: 'start', args: args.join(' ') });
 
-  if (!cfg.isPaid()) usage.increment(safeCount);
   const child = spawn(process.execPath, [GENERATOR, ...args], { cwd: PROJ_DIR });
 
   child.stdout.on('data', d => {
@@ -362,7 +353,6 @@ router.get('/dataset/run', async (req, res) => {
   const send = (data) => res.write('data: ' + JSON.stringify(data) + '\n\n');
   send({ type: 'start', args: args.join(' ') });
 
-  if (!cfg.isPaid()) usage.increment(safeCount);
   const child = spawn(process.execPath, [GENERATOR, ...args], { cwd: PROJ_DIR });
   child.stdout.on('data', d => {
     d.toString().split('\n').filter(Boolean).forEach(line => {
@@ -803,10 +793,13 @@ router.get('/categories/new', (req, res) => {
 
 router.post('/categories', (req, res) => {
   if (!cfg.isPaid()) return res.redirect('/prompts/categories?locked=1');
-  const { name, label, type, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
+  const { name, label, type, mode, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
   const slug = name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
-  db.prepare(`INSERT OR REPLACE INTO llm_categories (name, label, type, subjects, settings, clothing, styles, lighting, emphasis)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(slug, label, cleanCatType(type), subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis);
+  db.prepare(`INSERT OR REPLACE INTO llm_categories (name, label, type, mode, solo_compatible, ff_only, multi_required, subjects, settings, clothing, styles, lighting, emphasis)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+      slug, label, cleanCatType(type), cleanCatMode(mode),
+      flag(req.body.solo_compatible), flag(req.body.ff_only), flag(req.body.multi_required),
+      subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis);
   res.redirect('/prompts/categories');
 });
 
@@ -825,9 +818,11 @@ router.get('/categories/:id/edit', (req, res) => {
 
 router.post('/categories/:id', (req, res) => {
   if (!cfg.isPaid()) return res.redirect('/prompts/categories?locked=1');
-  const { label, type, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
-  db.prepare(`UPDATE llm_categories SET label=?, type=?, subjects=?, settings=?, clothing=?, styles=?, lighting=?, emphasis=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`)
-    .run(label, cleanCatType(type), subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis, req.params.id);
+  const { label, type, mode, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
+  db.prepare(`UPDATE llm_categories SET label=?, type=?, mode=?, solo_compatible=?, ff_only=?, multi_required=?, subjects=?, settings=?, clothing=?, styles=?, lighting=?, emphasis=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`)
+    .run(label, cleanCatType(type), cleanCatMode(mode),
+      flag(req.body.solo_compatible), flag(req.body.ff_only), flag(req.body.multi_required),
+      subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis, req.params.id);
   res.redirect('/prompts/categories');
 });
 

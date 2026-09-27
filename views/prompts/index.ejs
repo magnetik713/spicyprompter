@@ -93,7 +93,7 @@
 <div class="page-header">
   <h1>Prompt Library</h1>
   <% if (!paid) { %>
-  <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)"><%= promptTotal %> / <%= demoLimit %> prompts &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></span>
+  <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">Demo: 5 prompts per batch &mdash; <a href="/prompts/settings" style="color:var(--accent)">unlock batches up to 999</a></span>
   <% } %>
   <div style="display:flex;gap:8px">
     <button id="select-toggle" class="btn btn-secondary" onclick="toggleSelect()">Select</button>
@@ -434,6 +434,17 @@ async function queueSelected(btn) {
   if (withImage.length) overwrite = confirm(withImage.length + ' of ' + rows.length + ' selected prompt' + (rows.length !== 1 ? 's' : '') + ' already have images. Regenerate and overwrite them?');
   const toQueue = overwrite ? [...withoutImage, ...withImage] : withoutImage;
   const skipped = rows.length - toQueue.length;
+  if (!toQueue.length) {
+    // Nothing left after skipping. Regenerating overwrites (image_path is a
+    // single column), so declining leaves nothing to do. Keep the selection
+    // rather than clearing it for a run that never happened.
+    btn.textContent = withImage.length ? '\u2014 all have images' : '\u2014 nothing to queue';
+    alert(withImage.length
+      ? 'All ' + withImage.length + ' selected prompt' + (withImage.length !== 1 ? 's' : '') + ' already have an image, so nothing was queued.\n\nRegenerating replaces the existing image \u2014 choose OK at the overwrite prompt to do that.\n\nYour selection has been kept.'
+      : 'Nothing to queue from the current selection.');
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+    return;
+  }
   for (const row of toQueue) {
     btn.textContent = '⚡ ' + (ok + fail + 1) + '/' + toQueue.length;
     const comfyBtn = document.querySelector('.row-btn.comfy[data-id="' + row.id + '"]');

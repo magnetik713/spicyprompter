@@ -8,6 +8,9 @@
   .cat-form input[type=text], .cat-form textarea, .cat-form select { width:100%; box-sizing:border-box; padding:8px 10px; background:var(--input-bg,#1a1a1a); border:1px solid var(--border); color:var(--text); border-radius:4px; font-size:14px; font-family:inherit }
   .cat-form textarea { min-height:80px; resize:vertical }
   .cat-form .hint { font-size:11px; color:var(--muted); margin-top:3px }
+  .cat-form .cat-flags { display:flex; flex-direction:column; gap:6px; margin-top:4px }
+  .cat-form .cat-flags .flag { display:flex; align-items:center; gap:7px; margin:0; font-size:13px; color:var(--text) }
+  .cat-form .cat-flags input[type=checkbox] { width:auto; margin:0 }
 </style>
 <form method="POST" action="<%= cat.id ? '/prompts/categories/' + cat.id : '/prompts/categories' %>" class="cat-form" style="max-width:800px">
   <% if (!cat.id) { %>
@@ -27,6 +30,22 @@
     <% }) %>
   </select>
   <div class="hint">Pick Race / Ethnicity to have it show up in the Race picker, Body Type for Body Type, and so on.</div>
+
+  <label>Mode — which generator mode this appears in</label>
+  <select name="mode" required>
+    <option value="all"       <%= (cat.mode || 'all') === 'all'       ? 'selected' : '' %>>Both Realistic and Anime</option>
+    <option value="realistic" <%= cat.mode === 'realistic'            ? 'selected' : '' %>>Realistic only</option>
+    <option value="anime"     <%= cat.mode === 'anime'                ? 'selected' : '' %>>Anime only</option>
+  </select>
+  <div class="hint">Applies to Role, Style and Lighting. Other types ignore it.</div>
+
+  <label>Subject compatibility</label>
+  <div class="cat-flags">
+    <label class="flag"><input type="checkbox" name="solo_compatible" value="1" <%= (cat.id ? cat.solo_compatible === 1 : true) ? 'checked' : '' %>> Works with a solo subject</label>
+    <label class="flag"><input type="checkbox" name="ff_only" value="1" <%= cat.ff_only === 1 ? 'checked' : '' %>> Female-only — skip when a man is present</label>
+    <label class="flag"><input type="checkbox" name="multi_required" value="1" <%= cat.multi_required === 1 ? 'checked' : '' %>> Needs three or more people</label>
+  </div>
+  <div class="hint">Applies to Acts and Themes. If "works with a solo subject" is off, the generator quietly picks a different one whenever the subject is alone.</div>
 
   <label>Emphasis — key instruction sent to LLM for every prompt in this category</label>
   <textarea name="emphasis" required placeholder="Describe the core scenario, what to focus on, specific acts to include..."><%= cat.emphasis || '' %></textarea>

@@ -122,16 +122,27 @@ try {
     "  styles TEXT, lighting TEXT," +
     "  emphasis TEXT NOT NULL," +
     "  type TEXT DEFAULT 'scene'," +
+    "  mode TEXT," +
+    "  solo_compatible INTEGER DEFAULT 0," +
+    "  ff_only INTEGER DEFAULT 0," +
+    "  multi_required INTEGER DEFAULT 0," +
     "  created_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
     "  updated_at DATETIME" +
     ")"
   );
+  // Databases created before these columns existed still need them. The app has
+  // read `mode` since 2.0.0 and writes all four from the category editor, so
+  // without this the pickers fail with "no such column: mode".
+  for (const col of ['mode TEXT', 'solo_compatible INTEGER DEFAULT 0',
+                     'ff_only INTEGER DEFAULT 0', 'multi_required INTEGER DEFAULT 0']) {
+    try { db.exec('ALTER TABLE llm_categories ADD COLUMN ' + col); } catch (e) {}
+  }
   // Seed on a fresh install, and top up when the shipped seed gains entries.
   // Bump SEED_VERSION whenever categories-seed.json changes: the top-up then
   // runs once per release rather than on every start, so a built-in category
   // the user deleted stays deleted until the next bump. INSERT OR IGNORE means
   // categories the user has edited are never overwritten.
-  const SEED_VERSION = '4';
+  const SEED_VERSION = '5';
   const count = db.prepare('SELECT COUNT(*) as n FROM llm_categories').get().n;
   const seenSeed = (db.prepare('SELECT value FROM config WHERE key=?').get('categories_seed_version') || {}).value;
   if (count === 0 || seenSeed !== SEED_VERSION) {
@@ -142,12 +153,13 @@ try {
       const rows = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
       const ins = db.prepare(
         'INSERT OR IGNORE INTO llm_categories ' +
-        '(name,label,subjects,settings,clothing,styles,lighting,emphasis,type) ' +
-        'VALUES (?,?,?,?,?,?,?,?,?)'
+        '(name,label,subjects,settings,clothing,styles,lighting,emphasis,type,mode,solo_compatible,ff_only,multi_required) ' +
+        'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)'
       );
       const insertAll = db.transaction(function(rows) {
         for (const r of rows)
-          ins.run(r.name, r.label, r.subjects||'', r.settings||'', r.clothing||'', r.styles||'', r.lighting||'', r.emphasis, r.type||'scene');
+          ins.run(r.name, r.label, r.subjects||'', r.settings||'', r.clothing||'', r.styles||'', r.lighting||'', r.emphasis, r.type||'scene',
+                  r.mode||'all', r.solo_compatible?1:0, r.ff_only?1:0, r.multi_required?1:0);
       });
       insertAll(rows);
     }
@@ -155,6 +167,21 @@ try {
     // shipped. INSERT OR IGNORE never updates an existing row, so installs that
     // already had them kept showing them in the Style picker. Correct them once,
     // and only where they still carry the old type.
+    // These four columns never existed in the schema, so every pre-existing row
+    // has NULL/0 regardless of what the seed intends. Apply the seed's values
+    // once. Safe because nothing could edit them before the category editor
+    // gained these fields; from here on the user's choice is preserved.
+    try {
+      const backfill = db.prepare('UPDATE llm_categories SET mode=?, solo_compatible=?, ff_only=?, multi_required=? WHERE name=?');
+      const backfillAll = db.transaction(function(rows) {
+        for (const r of rows)
+          backfill.run(r.mode || 'all', r.solo_compatible ? 1 : 0, r.ff_only ? 1 : 0, r.multi_required ? 1 : 0, r.name);
+      });
+      const path2 = require('path');
+      const fs2 = require('fs');
+      const sp = path2.join(__dirname, 'data', 'categories-seed.json');
+      if (fs2.existsSync(sp)) backfillAll(JSON.parse(fs2.readFileSync(sp, 'utf8')));
+    } catch (e) { console.error('category flag backfill skipped:', e.message); }
     const retype = db.prepare("UPDATE llm_categories SET type='lighting' WHERE name=? AND type='style'");
     for (const n of ['candlelight','golden_hour','low_key','natural_window','neon_light','studio_flash'])
       retype.run(n);

@@ -8,7 +8,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Affair or forbidden encounter. Cheating dynamic \u2014 hotel room, hidden phones, risk of discovery. Describe the secrecy, urgency, guilt-tinged passion, and explicit act.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "age_gap",
@@ -19,7 +23,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Age gap dynamic. Significant age difference between partners \u2014 all legal adults. Describe the experience contrast, mentorship energy, and explicit acts with attention to the gap.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "airplane",
@@ -30,7 +38,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Airplane or mile-high club. Cramped lavatory, altitude, turbulence. Describe the tiny bathroom, vibration, and explicit act at altitude.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "amateur",
@@ -41,7 +53,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Amateur or candid aesthetic. Raw, unposed, real. Shaky camera feel, bad lighting, authentic. Describe as if caught on phone camera or hidden cam. No production polish.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "realistic",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "amazon",
@@ -52,7 +68,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Amazon build \u2014 tall, powerful, long legs, commanding presence. Describe her height advantage, strong thighs, dominant physicality. Explicitly confident and imposing.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anal",
@@ -63,7 +83,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|candlelight|studio softbox lighting",
     "emphasis": "Explicit anal sex. Describe the specific act and position graphically. Penetration detail, anatomical explicitness.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "arabic",
@@ -74,7 +98,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Arabic or Middle Eastern. You MUST describe her distinctly \u2014 olive or warm tan skin, dark eyes, dark hair, distinctly Middle Eastern features.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "asian",
@@ -85,7 +113,11 @@
     "styles": "editorial photography|candid photography|intimate photography",
     "lighting": "natural window light|studio softbox lighting|neon signs at night",
     "emphasis": "The woman in this scene is Asian. You MUST describe her as Asian with specific physical features (dark hair, almond-shaped eyes, skin tone). Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "athletic",
@@ -96,7 +128,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Athletic, toned woman. Defined muscles, flat stomach, fit physique. Describe muscle tone, abs, and athletic build explicitly. Sporty and confident.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "barn",
@@ -107,7 +143,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Barn or farm setting. Hay bales, wooden beams, rural isolation, natural light through slats. Describe the rustic raw environment and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "bbw",
@@ -118,7 +158,11 @@
     "styles": "intimate photography|editorial photography|boudoir photography",
     "lighting": "studio softbox lighting|natural window light|candlelight",
     "emphasis": "BBW \u2014 full-figured, plus-size woman. Celebrate curves. Explicit, confident, nude or nearly nude.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "beach",
@@ -129,7 +173,11 @@
     "styles": "candid photography|lifestyle photography|editorial photography",
     "lighting": "golden hour sunlight|harsh midday sun|soft overcast daylight",
     "emphasis": "Beach or poolside. Tanned skin. Water, sand. Topless or nude. Relaxed and sensual.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "bedroom",
@@ -140,7 +188,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Bedroom or hotel room. Intimate private setting. Low warm lighting, rumpled sheets, bed as focal point. Most explicit acts happen here \u2014 describe the space and acts graphically.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "biracial",
@@ -151,7 +203,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is mixed or biracial. You MUST describe her distinct interracial features \u2014 blended skin tone, unique facial features combining two ethnicities. Specify the mix. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "body_worship",
@@ -162,7 +218,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Body worship scene. Partner worships body \u2014 kissing, licking, praising every curve. Slow, reverent, explicit. Describe each body part being worshipped in detail.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "bondage",
@@ -173,7 +233,11 @@
     "styles": "editorial photography|artistic nude|intimate photography",
     "lighting": "dramatic side lighting|candlelight|studio softbox lighting",
     "emphasis": "BDSM or bondage scene. Rope bondage, restraints, or power dynamic. Dominant and submissive roles. Describe restraints, position, and power exchange explicitly.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "boudoir",
@@ -184,7 +248,11 @@
     "styles": "editorial photography|boudoir photography|professional photoshoot|intimate photography",
     "lighting": "studio softbox lighting|natural window light|candlelight|golden hour sunlight",
     "emphasis": "Boudoir style. Sensual, elegant. Lingerie or partial nudity. Soft feminine aesthetic. Bedroom or studio.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "realistic",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "brazilian",
@@ -195,7 +263,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Brazilian. You MUST describe her distinctly \u2014 tanned olive skin, dark hair, voluptuous curves, vivacious energy, distinctly South American beauty. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "breeding",
@@ -206,7 +278,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Breeding fantasy. Primal, raw, unprotected. Internal finish emphasized. Describe the urgency, animalistic energy, and explicit internal cumshot detail.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "bukakke",
@@ -217,7 +293,11 @@
     "styles": "candid photography|documentary style",
     "lighting": "studio softbox lighting|natural window light",
     "emphasis": "Bukakke scene. Multiple men finishing on a woman. Describe the act, the woman's expression, and aftermath explicitly.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 1
   },
   {
     "name": "busty",
@@ -228,7 +308,11 @@
     "styles": "editorial photography|lifestyle photography|candid photography",
     "lighting": "natural window light|golden hour sunlight|studio softbox lighting",
     "emphasis": "Busty subject with large natural breasts. Emphasize chest explicitly. Topless or nude. Real, natural.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "bw",
@@ -239,7 +323,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Black and white photography. No color \u2014 pure contrast, shadows, highlights. Describe the scene in terms of light and dark, texture and form. Timeless, artistic, explicit.",
-    "type": "style"
+    "type": "style",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "cabin",
@@ -250,7 +338,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Cabin or camping setting. Rustic wood interior, firelight, remote wilderness. Sleeping bag, log walls, intimate isolation. Describe the raw environment and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "candlelight",
@@ -261,7 +353,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Candlelight only. Warm flickering orange light, deep shadows, intimate atmosphere. Describe the dancing light on skin, shadow play, and warm intimate mood.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "car",
@@ -272,7 +368,11 @@
     "styles": "candid photography|voyeuristic candid|documentary style",
     "lighting": "neon signs at night|blue hour|harsh midday sun|natural window light",
     "emphasis": "Car or vehicle setting. Sex in backseat, van, or SUV. Cramped, intimate, raw. Explicit positions in confined space.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "cheerleader",
@@ -283,7 +383,11 @@
     "styles": "candid photography|editorial photography",
     "lighting": "natural window light|studio softbox lighting|harsh midday sun",
     "emphasis": "Cheerleader uniform fantasy. Sporty, athletic woman. Uniform removed or lifted explicitly. Energetic, playful.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "chubby",
@@ -294,7 +398,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Chubby, soft body. Slight belly, soft thighs, natural rolls. Embrace the softness explicitly. Real, unfiltered body. Warm and sensual.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "cinematic",
@@ -305,7 +413,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Cinematic production quality. Moody dramatic lighting, shallow depth of field, film grain. Describe the scene as a movie shot \u2014 composed, atmospheric, explicitly sexual.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "college",
@@ -316,7 +428,11 @@
     "styles": "candid photography|lifestyle photography|amateur photography",
     "lighting": "natural window light|neon signs at night|soft overcast daylight",
     "emphasis": "College dorm or campus. 18+ student. Casual, youthful, uninhibited. Explicit, raw amateur feel.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "cosplay",
@@ -327,7 +443,11 @@
     "styles": "editorial photography|candid photography",
     "lighting": "studio softbox lighting|dramatic side lighting|neon signs at night",
     "emphasis": "Cosplay or costume fantasy. Specific costume \u2014 anime, superhero, fantasy character. Describe costume and its explicit removal or exposure.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "cowgirl",
@@ -338,7 +458,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit cowgirl position. Woman on top riding, facing her partner. Describe her movement, body angle, hands placement, penetration graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "creampie",
@@ -349,7 +473,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|candlelight|studio softbox lighting",
     "emphasis": "Creampie scene. Internal finish, explicit aftermath. Describe the scene graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "cuckold",
@@ -360,7 +488,11 @@
     "styles": "candid photography|documentary style",
     "lighting": "natural window light|candlelight",
     "emphasis": "Hotwife/cuckold scenario. Wife explicit with another man. Describe acts graphically. Voyeur element.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 1
   },
   {
     "name": "cum_play",
@@ -371,7 +503,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Cum play focus. Swallowing, tasting, spreading finish on skin. Explicit and graphic description of handling the finish. Woman expression and reaction prominent.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "curvy",
@@ -382,7 +518,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Curvy hourglass figure. Defined narrow waist, full hips, balanced proportions. Emphasize the waist-to-hip ratio, soft curves, classic feminine silhouette explicitly.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "daddy_bg",
@@ -393,7 +533,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Daddy/babygirl dynamic. Protective dominant older partner, submissive younger adult partner. Describe the power framing, pet names, and explicit acts within the dynamic.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "dancer",
@@ -404,7 +548,11 @@
     "clothing": "in leotard|topless|fully nude|in sheer fabric",
     "styles": "artistic nude|editorial photography|lifestyle photography",
     "lighting": "natural window light|studio softbox lighting|soft overcast daylight",
-    "emphasis": "Dancer body \u2014 ballet or contemporary. Long limbs, graceful posture, extremely flexible. Toned but not bulky. Describe the elegant physique, flexibility, and trained movement explicitly."
+    "emphasis": "Dancer body \u2014 ballet or contemporary. Long limbs, graceful posture, extremely flexible. Toned but not bulky. Describe the elegant physique, flexibility, and trained movement explicitly.",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "dirty_talk",
@@ -415,7 +563,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Dirty talk scene. Verbal explicit language as key element. Describe what is being said \u2014 commands, degradation, praise \u2014 alongside the physical acts. Words and action combined.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "doggy_style",
@@ -426,7 +578,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit doggy style position. Rear entry from behind. Woman on hands and knees or bent over surface. Describe hip angle, grip, penetration depth graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "dorm",
@@ -437,7 +593,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Dorm room. Small cramped space, bunk bed, college posters. Youthful, 18+ collegiate setting. Describe the messy intimate space and uninhibited explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "dp",
@@ -448,7 +608,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit double penetration scene. Two men simultaneously penetrating one woman. Describe positions and acts graphically with anatomical detail.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 1
   },
   {
     "name": "dressing_room",
@@ -459,7 +623,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Dressing room or fitting room. Mirror reflections, curtain, retail environment. Semi-public risk. Describe the cramped space, mirror angles, and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "dungeon",
@@ -470,7 +638,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Dungeon or BDSM basement. Dark stone or concrete, chains, hooks, dim red lighting. Restraint furniture. Describe the oppressive intimate space and explicit acts within it.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "east_asian",
@@ -481,7 +653,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is East Asian \u2014 Japanese, Korean, or Chinese. You MUST describe her distinctly \u2014 fair to light skin, dark hair, distinctly East Asian facial features.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "eastern_european",
@@ -492,7 +668,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Eastern European or Russian. You MUST describe her distinctly \u2014 fair skin, light eyes, high cheekbones, distinctly Slavic features.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ebony",
@@ -503,7 +683,11 @@
     "styles": "editorial photography|intimate photography|candid photography",
     "lighting": "natural window light|golden hour sunlight|studio softbox lighting",
     "emphasis": "The woman in this scene is Black. You MUST describe her as Black with specific physical features (skin tone, features). Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "edge_of_bed",
@@ -514,7 +698,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit edge of bed position. Woman lying at edge of bed, partner standing. Describe height alignment, standing partner grip, penetration angle graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "edging",
@@ -525,7 +713,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Edging or orgasm denial. Prolonged buildup, denied release. Describe the tension, desperation, physical response, and explicit control dynamic graphically.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "exhibitionism",
@@ -536,7 +728,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Exhibitionist scene. Intentional public nudity or flashing. Describe the public setting, who might see, the thrill of exposure, and the explicit act of revealing.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "face_sitting",
@@ -547,7 +743,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Face sitting or queening. Woman sits on partner face, full weight. Describe the positioning, smothering, oral act, and power dynamic graphically.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "facial",
@@ -558,7 +758,11 @@
     "styles": "candid photography|intimate photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit cumshot or facial scene. Woman receiving cum on face or body. Describe aftermath explicitly.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "femdom",
@@ -569,7 +773,11 @@
     "styles": "editorial photography|artistic nude",
     "lighting": "dramatic side lighting|candlelight|neon signs at night",
     "emphasis": "Female domination scene. Confident dominant woman, submissive male. Power exchange. Describe acts, restraints, humiliation explicitly.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "filipina",
@@ -580,7 +788,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Filipina or Southeast Asian \u2014 Thai, Vietnamese, or Filipino. You MUST describe her \u2014 warm golden-brown skin, dark hair, petite or curvy frame, distinctly Southeast Asian features. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "film_grain",
@@ -591,7 +803,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Analog film aesthetic. Visible grain, slightly muted colors, 35mm feel. Describe the film grain texture, slightly soft focus, and vintage photographic quality throughout.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "fingering",
@@ -602,7 +818,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Fingering scene. Manual stimulation of woman. Describe hand position, finger detail, expression, and explicit anatomical response graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "flat_chested",
@@ -613,7 +833,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Flat-chested subject. Small or no breasts, slim upper body. Describe petite chest explicitly. Contrast with other features \u2014 hips, ass, face.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "footfetish",
@@ -624,7 +848,11 @@
     "styles": "editorial photography|intimate photography|candid photography",
     "lighting": "studio softbox lighting|natural window light|candlelight",
     "emphasis": "Foot fetish scene. Explicit focus on bare feet, painted nails, stockings, heels. Describe foot detail prominently.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "forest",
@@ -635,7 +863,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Forest or woodland setting. Dappled sunlight through trees, soft ground, secluded clearing. Natural sounds. Describe the outdoor isolation and explicit act in nature.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "freeuse",
@@ -646,7 +878,11 @@
     "styles": "candid photography|documentary style|lifestyle photography",
     "lighting": "natural window light|studio softbox lighting",
     "emphasis": "Free use fantasy. Woman used casually during normal activities \u2014 cooking, working, watching TV. Describe the mundane activity and explicit sexual act happening simultaneously.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "french",
@@ -657,7 +893,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is French. You MUST describe her distinctly \u2014 effortless Parisian beauty, natural makeup, chic aesthetic, light to medium skin, refined European features. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "gentle",
@@ -668,7 +908,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Soft and gentle scene. Tender, slow, intimate. Loving eye contact, whispers, gentle touch. Explicitly sexual but emotionally warm. Not aggressive. Describe the emotional connection alongside the physical.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "glamour",
@@ -679,7 +923,11 @@
     "styles": "editorial photography|professional photoshoot|artistic nude|fashion photography",
     "lighting": "studio softbox lighting|dramatic side lighting|golden hour sunlight",
     "emphasis": "Glamour or fashion nude. High production. Studio or luxury setting. Artistic, editorial aesthetic.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "realistic",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "golden_hour",
@@ -690,7 +938,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Shot in golden hour light. Warm amber and orange tones, long dramatic shadows, sun low on horizon. Skin glows warm. Describe the light quality and how it falls on the subject.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "gym",
@@ -701,7 +953,11 @@
     "styles": "candid photography|documentary style|lifestyle photography",
     "lighting": "harsh midday sun|studio softbox lighting|natural window light",
     "emphasis": "Gym or locker room setting. Athletic, sweaty body. Post-workout nude or undressing. Fit physique, explicit.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "handjob",
@@ -712,7 +968,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|candlelight|studio softbox lighting",
     "emphasis": "Handjob scene. Woman manually stimulating man. Explicit, graphic, close detail.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "hourglass",
@@ -723,7 +983,11 @@
     "clothing": "in corset|in tight dress|fully nude|in lingerie|topless",
     "styles": "boudoir photography|editorial photography|intimate photography",
     "lighting": "candlelight|studio softbox lighting|golden hour sunlight",
-    "emphasis": "Extreme hourglass figure. Very narrow waist, full hips, large bust. Dramatic silhouette. Describe the waist-to-hip contrast explicitly. Classic pinup proportions, voluptuous and feminine."
+    "emphasis": "Extreme hourglass figure. Very narrow waist, full hips, large bust. Dramatic silhouette. Describe the waist-to-hip contrast explicitly. Classic pinup proportions, voluptuous and feminine.",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "indian",
@@ -734,7 +998,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Indian or South Asian. You MUST describe her distinctly \u2014 warm brown skin, dark hair, dark eyes, distinctly South Asian features.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "interracial",
@@ -745,7 +1013,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Interracial scene. Emphasize the visual contrast between partners skin tones. Describe the pairing explicitly, highlight the ethnic contrast as a visual element throughout.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "italian",
@@ -756,7 +1028,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Italian or Mediterranean. You MUST describe her distinctly \u2014 olive skin, dark hair, dark eyes, distinctly Southern European features.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "japanese",
@@ -767,7 +1043,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Japanese. You MUST describe her distinctly \u2014 porcelain or fair skin, dark straight hair, delicate features, distinctly Japanese aesthetic. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "joi",
@@ -778,7 +1058,11 @@
     "styles": "POV photography|editorial photography|intimate photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "JOI \u2014 jerk off instruction scene. Woman directly addresses camera viewer. Intimate, commanding, explicit. POV feel.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "kitchen",
@@ -789,7 +1073,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Kitchen setting. Counter, table, or floor. Domestic environment. Apron optional. Natural window light. Describe food prep interrupted by or combined with explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "korean",
@@ -800,7 +1088,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Korean. You MUST describe her distinctly \u2014 glass skin, refined features, K-beauty aesthetic, dark hair, slim elegant build. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "latex",
@@ -811,7 +1103,11 @@
     "styles": "editorial photography|fashion photography|artistic nude",
     "lighting": "dramatic side lighting|studio softbox lighting|neon signs at night",
     "emphasis": "Latex or rubber outfit. Shiny, skin-tight material. Describe the texture, fit, and how it is removed or worn. Explicit.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "latina",
@@ -822,7 +1118,11 @@
     "styles": "candid photography|editorial photography|lifestyle photography",
     "lighting": "golden hour sunlight|natural window light|candlelight",
     "emphasis": "The woman in this scene is Latina. You MUST describe her as Latina with specific physical features (skin tone, features). Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "legs_up",
@@ -833,7 +1133,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit legs-up position. Woman on back with legs raised straight up or over partner shoulders. Describe the deep angle, leg positioning, full penetration graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "library",
@@ -844,7 +1148,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Library setting. Tall bookshelves, quiet atmosphere, risk of discovery. Between the stacks or on a reading table. Describe the hushed risky environment and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "limo",
@@ -855,7 +1163,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Limousine or luxury car. Leather backseat, tinted privacy windows, moving vehicle. Describe the opulent cramped space and explicit act inside.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "lingerie",
@@ -866,7 +1178,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Lingerie focus. Elaborate bra, panties, corset, or bodysuit. Describe the garment in detail \u2014 lace, straps, fit \u2014 and how it is removed or worn during explicit act.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "livingroom",
@@ -877,7 +1193,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Living room or couch. Domestic casual setting. Sofa, rug, TV in background. Spontaneous and uninhibited. Describe the ordinary environment contrasting with explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "lotus",
@@ -888,7 +1208,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit lotus position. Partners seated face to face, woman straddling man with legs wrapped around. Describe the intimate closeness, rocking motion, eye contact graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "low_key",
@@ -899,7 +1223,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Low key lighting. Mostly dark, subject lit by single source. Heavy shadows obscure parts of body. Dramatic, moody, mysterious. Describe what is lit and what disappears into shadow.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "maid",
@@ -910,7 +1238,11 @@
     "styles": "editorial photography|lifestyle photography|candid photography",
     "lighting": "natural window light|studio softbox lighting",
     "emphasis": "Maid uniform scenario. Cleaning uniform being removed or lifted. Explicit service role. Costume detail.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "massage",
@@ -921,7 +1253,11 @@
     "styles": "intimate photography|lifestyle photography|editorial photography",
     "lighting": "candlelight|studio softbox lighting|natural window light",
     "emphasis": "Massage setting. Oiled skin, massage table. Sensual touch escalating to explicit. Nude and glistening.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "mature",
@@ -932,7 +1268,11 @@
     "styles": "intimate photography|editorial photography|lifestyle photography",
     "lighting": "natural window light|candlelight|studio softbox lighting",
     "emphasis": "Mature woman 40s-50s. Confident, experienced, sensual. Real body, natural. Explicitly sexual.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "medical",
@@ -943,7 +1283,11 @@
     "styles": "editorial photography|documentary style|candid photography",
     "lighting": "studio softbox lighting|natural window light",
     "emphasis": "Medical setting. Nurse or doctor scenario. Examination table, clinical environment. Costume removed explicitly.",
-    "type": "role"
+    "type": "role",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "milf",
@@ -954,7 +1298,11 @@
     "styles": "candid photography|lifestyle photography|intimate photography",
     "lighting": "natural window light|golden hour sunlight|soft overcast daylight",
     "emphasis": "MILF. Mature woman 35-50, confident, sensual. Domestic or home setting. Experienced, explicitly sexual.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "missionary",
@@ -965,7 +1313,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit missionary position. Man on top, face to face, full penetration. Describe body positioning, eye contact, leg placement, depth and rhythm graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "muscular",
@@ -976,7 +1328,11 @@
     "clothing": "fully nude|in sports bra and shorts|topless|in tiny bikini",
     "styles": "editorial photography|lifestyle photography|sports photography",
     "lighting": "studio softbox lighting|harsh sun|natural window light",
-    "emphasis": "Muscular, ripped woman. Visibly defined abs, strong arms, powerful legs. Bodybuilder or powerlifter physique. Describe muscle definition and physical power explicitly. Confident and dominant."
+    "emphasis": "Muscular, ripped woman. Visibly defined abs, strong arms, powerful legs. Bodybuilder or powerlifter physique. Describe muscle definition and physical power explicitly. Confident and dominant.",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "natural_window",
@@ -987,7 +1343,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Natural window light. Soft diffused daylight from a window. Soft shadows, even skin tones. Morning or afternoon indoor feel. Clean, real, intimate.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "neon_light",
@@ -998,7 +1358,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Neon lighting. Colored light \u2014 pink, blue, purple \u2014 from signs or LEDs. Urban night aesthetic. Describe the colored light on skin, shadows between colors, dark background.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "nightclub",
@@ -1009,7 +1373,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Nightclub or dance floor. Dark environment, neon and strobe lights, pounding music implied. Crowd present or nearby. Public risk. Describe the electric atmosphere and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "office",
@@ -1020,7 +1388,11 @@
     "styles": "candid photography|editorial photography|lifestyle photography",
     "lighting": "studio softbox lighting|natural window light|blue hour",
     "emphasis": "Office or workplace scenario. Professional attire being removed. Power dynamic. Secretary/boss. Explicit and detailed.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "oiled",
@@ -1031,7 +1403,11 @@
     "styles": "editorial photography|artistic nude|lifestyle photography",
     "lighting": "studio softbox lighting|golden hour sunlight|dramatic side lighting",
     "emphasis": "Oiled body. Glistening, slick skin from body oil. Describe the sheen and how light plays off oiled skin explicitly.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "oral",
@@ -1042,7 +1418,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|candlelight|studio softbox lighting",
     "emphasis": "Explicit oral sex scene. Graphic description of the act \u2014 fellatio or cunnilingus. Describe position, eye contact, and explicit anatomical detail.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "outdoor",
@@ -1053,7 +1433,11 @@
     "styles": "candid photography|documentary style|lifestyle photography|voyeuristic candid",
     "lighting": "golden hour sunlight|natural window light|soft overcast daylight|harsh midday sun|blue hour",
     "emphasis": "Outdoor setting. Natural light. Nude or topless in nature. Candid, unposed feel.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "pegging",
@@ -1064,7 +1448,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|candlelight|studio softbox lighting",
     "emphasis": "Pegging scene. Woman penetrating man with strap-on. Explicit, describe positions and acts graphically. Role reversal.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "persian",
@@ -1075,7 +1463,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Persian or Iranian. You MUST describe her distinctly \u2014 olive skin, dark thick hair, striking dark eyes, strong brows, distinctly Persian beauty. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "pet_play",
@@ -1086,7 +1478,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Pet play scenario. Collar, leash, on all fours. Submissive role-play with animal-adjacent dynamic. Describe the costume elements and submissive explicit acts.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "petite",
@@ -1097,7 +1493,11 @@
     "styles": "intimate photography|editorial photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|golden hour sunlight",
     "emphasis": "Petite subject. Small, slim frame. Compact body. Explicit nudity, full detail of petite physique.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "petite_teen",
@@ -1108,7 +1508,11 @@
     "styles": "candid photography|lifestyle photography|intimate photography",
     "lighting": "natural window light|golden hour sunlight|soft overcast daylight",
     "emphasis": "Subject is 18-19 years old, legal adult. Young, fresh, candid. Explicit nudity. College or dorm setting.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "pile_driver",
@@ -1119,7 +1523,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit pile driver position. Woman on back with legs folded back over her head. Maximum penetration depth. Describe the extreme angle and deep thrusting graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "pinup",
@@ -1130,7 +1538,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Retro pinup aesthetic. 1950s-60s style \u2014 victory rolls, red lips, high-waisted shorts or corset. Classic pose with modern explicit detail. Warm vintage tones.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "realistic",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "plus_size",
@@ -1141,7 +1553,11 @@
     "clothing": "in lingerie|fully nude|topless|in sheer fabric",
     "styles": "editorial photography|lifestyle photography|boudoir photography",
     "lighting": "natural window light|studio softbox lighting|golden hour sunlight",
-    "emphasis": "Plus-size woman. Mainstream plus aesthetic \u2014 full figure, confident posture, soft curves. Different from BBW framing \u2014 less exaggerated, more editorial. Describe her body positively and explicitly."
+    "emphasis": "Plus-size woman. Mainstream plus aesthetic \u2014 full figure, confident posture, soft curves. Different from BBW framing \u2014 less exaggerated, more editorial. Describe her body positively and explicitly.",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "pool",
@@ -1152,7 +1568,11 @@
     "styles": "lifestyle photography|candid photography|editorial photography",
     "lighting": "golden hour sunlight|neon signs at night|harsh midday sun",
     "emphasis": "Pool or hot tub setting. Wet skin. Poolside nude or topless. Summer, water, heat.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "pregnant",
@@ -1163,7 +1583,11 @@
     "styles": "intimate photography|artistic nude|editorial photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Visibly pregnant woman. Celebrate pregnant body. Nude or lingerie. Explicitly sensual. Round belly prominent.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "prone_bone",
@@ -1174,7 +1598,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit prone bone position. Woman lying face down flat, man on top entering from behind. Describe weight, depth, angle, full body contact graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "public",
@@ -1185,7 +1613,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Public or street exhibitionism. Urban setting \u2014 alley, park, stairwell. Risk of being seen. Describe the public environment, the thrill of exposure, and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "reverse_cowgirl",
@@ -1196,7 +1628,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit reverse cowgirl. Woman on top riding, facing away from partner. Describe her arched back, movement, partner view, penetration graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "rimming",
@@ -1207,7 +1643,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|candlelight|studio softbox lighting",
     "emphasis": "Rimming / analingus scene. Explicit oral-anal contact. Describe position and act graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_bartender",
@@ -1218,7 +1658,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Bartender or cocktail waitress. Bar or nightclub setting. Behind the bar or on the counter. Uniform removed or lifted. Confident and uninhibited.",
-    "type": "role"
+    "type": "role",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_boss",
@@ -1229,7 +1673,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Boss or CEO power dynamic. Office or executive suite. Business attire. Authority and submission. Describe the power imbalance and clothing removal explicitly.",
-    "type": "role"
+    "type": "role",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_bunnygirl",
@@ -1240,7 +1688,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Bunny girl scenario. Bunny ears, corset, cuffs, high heels. Playboy aesthetic. Describe costume in detail then removal or exposure. Playful and explicit.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_catgirl",
@@ -1251,7 +1703,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Catgirl or nekomimi scenario. Cat ears, tail, collar. Anime-adjacent aesthetic. Playful and submissive. Costume detail described then removed or worn during explicit act.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_elf",
@@ -1262,7 +1718,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Elf fantasy scenario. Pointed ears, ethereal beauty, fantasy setting \u2014 forest, castle, or magical environment. Costume or minimal clothing. Explicit with fantasy aesthetic.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_escort",
@@ -1273,7 +1733,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Escort or high-end model scenario. Luxury hotel or suite. Glamorous, polished. Professional but explicit. Describe the high-end setting and her composed confidence.",
-    "type": "role"
+    "type": "role",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_girlfriend",
@@ -1284,7 +1748,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Girlfriend experience \u2014 intimate, warm, personal. She wants to be there. Tender touches, soft eye contact, romantic framing. Explicit but emotionally connected. Not transactional.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_gymnast",
@@ -1295,7 +1763,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Gymnast scenario. Leotard, flexible body, gym or stage setting. Extreme flexibility described in explicit positions. Athletic, toned build. Leotard removed or pulled aside.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_hijab",
@@ -1306,7 +1778,11 @@
     "settings": "private apartment|hotel room|bedroom|bathroom",
     "clothing": "in hijab and modest dress|hijab removed revealing hair|partially undressed|fully nude",
     "styles": "intimate photography|candid photography|lifestyle photography",
-    "lighting": "natural window light|soft overcast daylight|candlelight"
+    "lighting": "natural window light|soft overcast daylight|candlelight",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_masseuse",
@@ -1317,7 +1793,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Masseuse scenario. Massage table, oil, spa setting. Professional touch turning explicit. Oiled skin, hands exploring. Describe the gradual escalation graphically.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_neighbor",
@@ -1328,7 +1808,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Neighbor scenario. Casual home setting. Spontaneous, unplanned encounter. Domestic environment. Clothes come off quickly. Real, raw, candid feel.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_niqab",
@@ -1339,7 +1823,11 @@
     "settings": "private apartment|hotel room|bedroom|rooftop at night",
     "clothing": "in full niqab|niqab partially lifted|face revealed beneath niqab|fully nude after full removal",
     "styles": "intimate photography|boudoir photography|editorial photography",
-    "lighting": "candlelight|natural window light|golden hour sunlight"
+    "lighting": "candlelight|natural window light|golden hour sunlight",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_nun",
@@ -1350,7 +1838,11 @@
     "settings": "confession booth|convent chapel|nun cell bedroom|monastery corridor",
     "clothing": "in full nun habit|habit partially removed|in white underdress|fully nude beneath habit",
     "styles": "intimate photography|candid photography|boudoir photography",
-    "lighting": "candlelight|soft overcast daylight|natural window light"
+    "lighting": "candlelight|soft overcast daylight|natural window light",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_police",
@@ -1361,7 +1853,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Police officer scenario. Uniform \u2014 badge, belt, tight pants. Authority figure. Uniform being removed or worn during explicit act. Power and dominance framing.",
-    "type": "role"
+    "type": "role",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_secretary",
@@ -1372,7 +1868,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Secretary or office worker scenario. Pencil skirt, blouse, heels. Office or boardroom. Professional attire removed explicitly. Power dynamic with employer.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_stewardess",
@@ -1383,7 +1883,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Stewardess or flight attendant scenario. Uniform being removed or already off. Airplane or hotel setting. Professional to explicit. Describe uniform detail and its removal.",
-    "type": "role"
+    "type": "role",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_succubus",
@@ -1394,7 +1898,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Succubus or demon fantasy. Dark supernatural setting. Horns, tail, glowing eyes. Seductive and dangerous. Explicitly sexual with fantasy creature elements.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_swimmer",
@@ -1405,7 +1913,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Swimmer or lifeguard scenario. Pool, beach, or lake setting. Wet swimsuit being removed or pulled aside. Athletic wet body. Chlorine smell, sun, water.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_trainer",
@@ -1416,7 +1928,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Personal trainer or yoga instructor scenario. Gym or studio. Athletic wear \u2014 leggings, sports bra. Workout turns explicit. Describe athletic body and clothing removal.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_witch",
@@ -1427,7 +1943,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Witch or sorceress scenario. Occult aesthetic \u2014 robe, hat, candles, dark setting. Mysterious and seductive. Costume removed or worn during explicit act.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "rooftop",
@@ -1438,7 +1958,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Rooftop setting. City skyline visible, open air, golden hour or night lights. Wind, expansive view. Describe the urban backdrop and explicit act with city below.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "rough",
@@ -1449,7 +1973,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Rough sex scene. Aggressive, intense, forceful. Hair-pulling, choking, slapping. Describe the raw physicality, sounds, marks, and explicit acts graphically. Consensual but intense.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "russian",
@@ -1460,7 +1988,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Russian. You MUST describe her distinctly \u2014 pale skin, sharp high cheekbones, light or grey eyes, intense Slavic features, cold but beautiful aesthetic. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "sauna",
@@ -1471,7 +2003,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Sauna setting. Intense heat, wooden benches, steam, sweat-glistening skin. Describe the oppressive heat, bodies slick with sweat, and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "scandinavian",
@@ -1482,7 +2018,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Scandinavian or Nordic. You MUST describe her distinctly \u2014 fair to pale skin, blonde or light hair, tall statuesque frame, blue or light eyes, clean Nordic features. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "scissoring",
@@ -1493,7 +2033,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Scissoring or tribbing. Two women grinding, legs interlocked. Lesbian-specific. Describe positioning, friction, closeness, and explicit detail graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 1,
+    "multi_required": 0
   },
   {
     "name": "sensory",
@@ -1504,7 +2048,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Sensory deprivation or play. Blindfold, feathers, temperature play. Heightened sensitivity. Describe what is felt not seen \u2014 texture, temperature, unexpected touch \u2014 alongside explicit acts.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "short_stack",
@@ -1515,7 +2063,11 @@
     "clothing": "in tiny lingerie|topless|fully nude|in tight clothing barely containing her figure",
     "styles": "intimate photography|candid photography|lifestyle photography",
     "lighting": "natural window light|golden hour sunlight|candlelight",
-    "emphasis": "Short stack \u2014 petite height combined with very full, curvy figure. Small frame, large bust, wide hips, thick thighs. Describe the contrast between small stature and abundant curves explicitly."
+    "emphasis": "Short stack \u2014 petite height combined with very full, curvy figure. Small frame, large bust, wide hips, thick thighs. Describe the contrast between small stature and abundant curves explicitly.",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "shower",
@@ -1526,7 +2078,11 @@
     "styles": "intimate photography|artistic nude|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Shower or bathroom. Nude and wet. Steam. Water on skin. Intimate and raw.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "sixty_nine",
@@ -1537,7 +2093,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "69 position. Both partners performing oral sex simultaneously. Describe the positioning, body orientation, and mutual acts graphically and explicitly.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "size_diff",
@@ -1548,7 +2108,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Size difference dynamic. Significant height or body size contrast between partners. Describe how the size difference affects positions, reach, and explicit acts graphically.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "slim",
@@ -1559,7 +2123,11 @@
     "clothing": "fully nude|in oversized shirt with nothing underneath|in tiny lingerie|topless",
     "styles": "editorial photography|candid photography|lifestyle photography",
     "lighting": "natural window light|golden hour sunlight|studio softbox lighting",
-    "emphasis": "Slim, slender woman. Lean frame, visible collarbones, long limbs, flat stomach. Not muscular \u2014 softly toned. Describe the delicate physicality explicitly. Elegant and lithe."
+    "emphasis": "Slim, slender woman. Lean frame, visible collarbones, long limbs, flat stomach. Not muscular \u2014 softly toned. Describe the delicate physicality explicitly. Elegant and lithe.",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "spa",
@@ -1570,7 +2138,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Spa or steam room. Wet tiles, steam, towels, relaxation setting. Oiled or damp skin. Describe the humid warm environment and explicit sensual act within it.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "spooning",
@@ -1581,7 +2153,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit spooning sex position. Both lying on side, rear entry. Describe the entwined bodies, slow intimate penetration, hands and closeness graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "squirting",
@@ -1592,7 +2168,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Squirting / female ejaculation. Explicit orgasm scene. Describe the act graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "standing",
@@ -1603,7 +2183,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Explicit standing sex position. Upright against wall, door, or surface. Describe leg positioning, height difference, grip, penetration angle graphically.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "stockings",
@@ -1614,7 +2198,11 @@
     "styles": "editorial photography|boudoir photography|artistic nude",
     "lighting": "studio softbox lighting|candlelight|natural window light",
     "emphasis": "Stockings, pantyhose, or garter belt focus. Hosiery on nude or nearly nude body. Describe texture and detail explicitly.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "stripclub",
@@ -1625,7 +2213,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Strip club. Pole on stage, neon lights, booth seating, dollar bills. Private dance or back room. Describe the club atmosphere, pole work, and explicit act.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "studio_flash",
@@ -1636,7 +2228,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Studio flash lighting. Clean white light, high-key, sharp shadows. Professional studio. No ambient light. Clinical or editorial aesthetic. Every detail visible.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "swingers",
@@ -1647,7 +2243,11 @@
     "styles": "candid photography|documentary style|lifestyle photography",
     "lighting": "candlelight|neon signs at night|natural window light",
     "emphasis": "Swinger lifestyle scene. Partner exchange, group sex between two couples. Explicit, consenting, detailed.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 1
   },
   {
     "name": "tantric",
@@ -1658,7 +2258,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Tantric sex. Slow, intentional, prolonged. Eye contact, synchronized breathing, minimal movement with maximum sensation. Describe the spiritual intimate connection and explicit union.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "tattoos",
@@ -1669,7 +2273,11 @@
     "styles": "editorial photography|artistic nude|candid photography",
     "lighting": "dramatic side lighting|studio softbox lighting|neon signs at night",
     "emphasis": "Heavily tattooed subject. Ink coverage prominent. Describe tattoos as visual element. Alt, edgy aesthetic. Explicit nudity.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "teacher",
@@ -1680,7 +2288,11 @@
     "styles": "editorial photography|candid photography|lifestyle photography",
     "lighting": "natural window light|studio softbox lighting",
     "emphasis": "Teacher-student power dynamic fantasy. Classroom or office setting. Professional clothing removed explicitly.",
-    "type": "role"
+    "type": "role",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "theme_religious",
@@ -1691,7 +2303,11 @@
     "settings": "church interior|confession booth|private chapel|cathedral nave|monastery garden",
     "clothing": null,
     "styles": "candid photography|intimate photography|editorial photography",
-    "lighting": "candlelight|soft overcast daylight|natural window light"
+    "lighting": "candlelight|soft overcast daylight|natural window light",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "thick",
@@ -1702,7 +2318,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Thick woman \u2014 wide hips, large round ass, thick thighs, not plus-size. Emphasize lower body curves explicitly. Big butt prominent in description.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "titfuck",
@@ -1713,7 +2333,11 @@
     "styles": "intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Titfuck / paizuri scene. Man between large breasts. Explicit, graphic detail. Describe act and position.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "trans",
@@ -1724,7 +2348,11 @@
     "styles": "editorial photography|intimate photography|candid photography",
     "lighting": "natural window light|studio softbox lighting|candlelight",
     "emphasis": "Trans woman subject. Explicit nudity. Describe body with full explicit detail including pre-op anatomy if relevant.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "voyeur",
@@ -1735,7 +2363,11 @@
     "styles": "voyeuristic candid|documentary style|candid photography",
     "lighting": "natural window light|neon signs at night|blue hour|soft overcast daylight",
     "emphasis": "Voyeuristic. Subject unaware. Hidden camera aesthetic. Candid, raw, unstaged.",
-    "type": "theme"
+    "type": "theme",
+    "mode": "realistic",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "yacht",
@@ -1746,7 +2378,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Boat, yacht, or sailboat. Ocean or lake setting. Deck, cabin below, sea breeze. Luxury or adventure feel. Describe the boat environment and explicit act on the water.",
-    "type": "scene"
+    "type": "scene",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "caucasian",
@@ -1757,7 +2393,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman is Caucasian, classic All-American look. You MUST describe her distinctly \u2014 fair skin, natural Western European features, approachable girl-next-door or classic American beauty aesthetic. Hair and eye color vary naturally. Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "solo",
@@ -1769,7 +2409,10 @@
     "lighting": null,
     "emphasis": "Solo masturbation scene. Self-pleasure with fingers, vibrator, or dildo. No partner. Describe the act graphically \u2014 position, toy detail, buildup, and climax.",
     "type": "act",
-    "solo_compatible": true
+    "solo_compatible": 1,
+    "mode": "all",
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "argentinian",
@@ -1780,7 +2423,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Argentinian. Describe her with fair to light olive skin, dark or light brown hair (often European descent), refined European-Latin features \u2014 strong jawline, expressive eyes. Predominantly Italian and Spanish ancestry. You MUST reference her Argentinian ethnicity.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "armenian",
@@ -1791,7 +2438,11 @@
     "styles": "editorial photography|candid photography|intimate photography",
     "lighting": "natural window light|golden hour sunlight|studio softbox lighting",
     "emphasis": "The woman in this scene is Armenian. You MUST describe her as Armenian with specific physical features (olive skin, dark hair, strong brows, defined facial features). Explicit scene.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "caribbean",
@@ -1802,7 +2453,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Caribbean / Afro-Caribbean. Describe her with deep brown or rich dark skin, natural or styled curly/coily hair, full lips, warm expressive features blending African and Caribbean heritage. You MUST reference her Caribbean or Afro-Caribbean ethnicity.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "celtic",
@@ -1813,7 +2468,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Celtic / Irish. Describe her with very fair pale skin, red, auburn, or light brown hair, light eyes (green, blue, or hazel), delicate freckles, soft rounded facial features. You MUST reference her Irish or Celtic heritage.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "colombian",
@@ -1824,7 +2483,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Colombian. Describe her with warm olive or tan skin, dark lustrous hair, expressive dark eyes, refined mixed Spanish and Indigenous features, confident sensual presence. You MUST reference her Colombian ethnicity.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ethiopian",
@@ -1835,7 +2498,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Ethiopian / East African. Describe her with rich dark brown to deep brown skin, high prominent cheekbones, elegant elongated facial structure, dark eyes, full lips, straight or slightly wavy dark hair. You MUST reference her Ethiopian or East African heritage. This is a DISTINCT look from West African.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "mexican",
@@ -1846,7 +2513,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Mexican. Describe her with warm medium to tan skin, dark brown or black hair, dark brown eyes, mestizo features blending Indigenous and Spanish heritage \u2014 high cheekbones, full lips, strong brow. You MUST reference her Mexican ethnicity.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "moroccan",
@@ -1857,7 +2528,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Moroccan / North African. Describe her with warm olive to light brown skin, dark wavy or curly hair, dark eyes with long lashes, prominent nose, full lips, Berber or Arab-Berber features. You MUST reference her Moroccan or North African heritage.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "native_american",
@@ -1868,7 +2543,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Native American / Indigenous. Describe her with warm bronze or copper skin tone, straight dark black hair, dark brown eyes, strong prominent cheekbones, broad facial structure. You MUST reference her Native American heritage.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "pacific_islander",
@@ -1879,7 +2558,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Pacific Islander / Polynesian. Describe her with warm brown skin, dark thick hair, full facial features, broad nose, strong build. Reference Polynesian, Hawaiian, Samoan, or Tongan heritage. You MUST describe her Pacific Islander ethnicity.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "puerto_rican",
@@ -1890,7 +2573,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Puerto Rican. Describe her Afro-Latina features \u2014 warm brown to medium skin, curly or wavy dark hair, full lips, expressive dark eyes, mixed African, Spanish, and Ta\u00edno Indigenous heritage. You MUST reference her Puerto Rican ethnicity.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "turkish",
@@ -1901,7 +2588,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "The woman in this scene is Turkish. Describe her as Turkish with olive to tan skin, dark brown or black hair, almond-shaped dark eyes, strong yet refined facial features, high cheekbones. You MUST reference her Turkish ethnicity.",
-    "type": "race"
+    "type": "race",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "masturbation",
@@ -1912,7 +2603,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Solo masturbation. Subject pleasures themselves with their hand(s) \u2014 no partner present. If female: describe hand movements, finger placement, expression, body language. If male: describe stroking grip, rhythm, expression. Explicit detail either way.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "posing",
@@ -1923,7 +2618,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Nude or erotic posing. Woman posed directly for the camera. Describe the pose, body position, expression, eye contact, lighting, and explicit exposure. Confident, deliberate.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "spread",
@@ -1934,7 +2633,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Explicit spread or open pose. Woman displaying herself fully. Describe the position \u2014 legs spread, body open \u2014 the lighting on skin, and the deliberate explicitness of the pose.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "stripping",
@@ -1945,7 +2648,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Striptease or undressing scene. Woman slowly removing clothing. Describe the reveal, garment details, the attitude, body confidence, and the moment of exposure.",
-    "type": "act"
+    "type": "act",
+    "mode": "all",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "piercings",
@@ -1956,7 +2663,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Subject has notable piercings \u2014 nipple piercings, navel ring, or intimate jewelry. Describe the piercings explicitly as visual and tactile details. Alt, edgy aesthetic. Explicit nudity.",
-    "type": "body_type"
+    "type": "body_type",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_android",
@@ -1967,7 +2678,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Android robot girl. Visible mechanical joints, digital or glowing eyes, circuit pattern skin markings.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_angel",
@@ -1978,7 +2693,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Angel character. Halo above head, white feathered wings, soft ethereal glow, pure aesthetic.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_bunny",
@@ -1989,7 +2708,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Bunny character type. Long rabbit ears growing from head, small fluffy tail.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_catgirl",
@@ -2000,7 +2723,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Nekomimi catgirl. Cat ears on head, cat tail, sometimes paw-like hands. Feline facial features.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_demon",
@@ -2011,7 +2738,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Demon girl. Curved horns, pointed tail, sometimes bat wings. Dark or crimson features, glowing eyes.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_dragon",
@@ -2022,7 +2753,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Dragon girl. Dragon horns, scaled tail, sometimes small wings, claw-like nails. Reptilian scale details on skin.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_elf",
@@ -2033,7 +2768,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Elf character. Long pointed ears, graceful slender features, ethereal beauty.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_fairy",
@@ -2044,7 +2783,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Fairy character. Delicate translucent insect-like wings, petite frame, magical sparkle aura.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_foxgirl",
@@ -2055,7 +2798,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Kitsune foxgirl. Fox ears, one or multiple bushy fox tails, amber or gold eyes.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_ghost",
@@ -2066,7 +2813,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Ghost or spirit girl. Translucent or pale ethereal appearance, wispy spiritual energy, haunting beauty.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_human",
@@ -2077,7 +2828,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Human character. No supernatural features. Natural human anatomy and proportions.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_mermaid",
@@ -2088,7 +2843,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Mermaid. Fish tail lower body with iridescent scales, flowing hair, underwater or shoreline setting.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_oni",
@@ -2099,7 +2858,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Oni girl. Single or dual curved horns, sometimes blue or red tinted skin, wild hair.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_succubus",
@@ -2110,7 +2873,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Succubus demon. Dark bat wings, pointed tail, small horns, seductive aura, dark magical energy.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ct_vampire",
@@ -2121,7 +2888,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Vampire girl. Pale skin, small fangs, red or violet eyes, dark elegant clothing. Gothic vampire aesthetic.",
-    "type": "character_type"
+    "type": "character_type",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "backlit",
@@ -2132,7 +2903,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Strong backlight. Rim or halo of light around subject, potential lens flare or haze. Describe the glowing outline against a bright background.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "blue_hour",
@@ -2143,7 +2918,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Blue hour twilight. Cool blue-purple ambient sky light just after sunset. Describe the soft cool glow, last daylight blending with artificial lights.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "dramatic_shadows",
@@ -2154,7 +2933,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "High-contrast dramatic shadows. Single strong light source. Deep blacks, sharp shadow lines. Intense, moody atmosphere.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "anime",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "firelight",
@@ -2165,7 +2948,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Firelight or candlefire glow. Warm orange flicker, dancing shadows, intimate rustic warmth. Describe the warm light on skin and shadow movement.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "harsh_sun",
@@ -2176,7 +2963,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Harsh direct sunlight. High contrast, bright bleached highlights, deep dark shadows. Describe strong overhead or direct sun and the squinting, vivid outdoor scene.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "magic_glow",
@@ -2187,7 +2978,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Magical luminescence. Glowing aura, runes, or energy particles. Fantasy light source. Otherworldly, ethereal glow.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "anime",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "moonlight",
@@ -2198,7 +2993,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Moonlit scene. Cool blue-silver light, night atmosphere. Describe the pale light on skin, deep shadows, serene or mysterious mood.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "all",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "neon_glow",
@@ -2209,7 +3008,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Neon-drenched environment. Vivid pink, purple, and blue neon light. Cyberpunk or urban night atmosphere. Glowing reflections on skin.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "anime",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "overcast",
@@ -2220,7 +3023,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Overcast daylight. Flat even diffusion, no hard shadows, muted desaturated tones. Describe the soft natural light and realistic skin rendering.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "phone_flash",
@@ -2231,7 +3038,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Harsh on-camera phone flash. Flat direct light, red-eye risk, amateur selfie aesthetic. Describe the blown-out foreground, dark background, raw unfiltered feel.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "ring_light",
@@ -2242,7 +3053,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Ring light illumination. Even flat beauty lighting, distinctive circular catchlights in eyes, clean skin rendering. Describe the polished beauty-style light.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "sakura_light",
@@ -2253,7 +3068,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Cherry blossom ambient light. Soft pink petals drifting. Spring sunlight filtering through flowering trees. Gentle, romantic.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "anime",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "spotlight",
@@ -2264,7 +3083,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Single spotlight. Theatrical beam of light isolating subject against dark background. Describe the dramatic pool of light, deep surrounding shadow.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "warm_indoor",
@@ -2275,7 +3098,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Warm tungsten indoor lighting. Amber and yellow tones, cozy intimate atmosphere. Describe the warm light on skin, soft room ambiance.",
-    "type": "lighting"
+    "type": "lighting",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_idol",
@@ -2286,7 +3113,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "J-pop idol. Colorful glittery stage costume, microphone, sparkles and lights. Energetic glamorous performance aesthetic.",
-    "type": "role"
+    "type": "role",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_kunoichi",
@@ -2297,7 +3128,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Female ninja. Dark form-fitting ninja outfit, kunai or katana, headband, stealth aesthetic.",
-    "type": "role"
+    "type": "role",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_magical_girl",
@@ -2308,7 +3143,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Mahou shoujo magical girl. Colorful magical costume, wand or staff, ribbons and stars, transformation aesthetic.",
-    "type": "role"
+    "type": "role",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_office_lady",
@@ -2319,7 +3158,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Japanese OL office lady. Smart blazer, pencil skirt, professional heels, glasses optional.",
-    "type": "role"
+    "type": "role",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_school_uniform",
@@ -2330,7 +3173,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Japanese school uniform. Sailor-style uniform or blazer with pleated skirt, school bag, knee socks.",
-    "type": "role"
+    "type": "role",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "role_shrine_maiden",
@@ -2341,7 +3188,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Miko shrine maiden. White haori jacket, red hakama pants, traditional hair accessories. Japanese shrine aesthetic.",
-    "type": "role"
+    "type": "role",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_cel_shading",
@@ -2352,7 +3203,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "cel shading, hard shadow cutoffs, anime shading style, clean linework, 2D animation aesthetic",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_chibi",
@@ -2363,7 +3218,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "chibi style, super deformed proportions, large head, small round body, cute exaggerated features, SD style",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_cyberpunk",
@@ -2374,7 +3233,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "cyberpunk anime, neon lights, futuristic setting, holographic elements, urban night, glowing accents",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_dark",
@@ -2385,7 +3248,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "dark fantasy anime, deep shadows, dramatic contrast, gothic aesthetic, moody atmospheric illustration",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_detailed",
@@ -2396,7 +3263,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "highly detailed anime illustration, intricate shading, rich vibrant colors, professional art quality, painterly",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_flat_color",
@@ -2407,7 +3278,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "flat_color, solid colors, bold outlines, minimal shading, clean lines, anime style illustration",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_ghibli",
@@ -2418,7 +3293,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Studio Ghibli inspired style, ghibli style, warm soft watercolor palette, painterly backgrounds, gentle character designs, natural lighting, hand-painted look, whimsical atmosphere",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_moe",
@@ -2429,7 +3308,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "moe anime style, soft rounded features, large expressive eyes, cute proportions, pastel color palette, warm gentle lighting, innocent sweet aesthetic, smooth clean lines, approachable character design",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_retro",
@@ -2440,7 +3323,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "1990s retro anime style, vintage cel animation aesthetic, classic anime art, film grain, aged look",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_semi_realistic",
@@ -2451,7 +3338,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "semi-realistic anime style, realistic proportions and anatomy, detailed shading, painterly quality, grounded aesthetic, more lifelike than typical anime",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_shonen",
@@ -2462,7 +3353,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "shonen anime style, thick bold outlines, dynamic high-energy composition, dramatic contrast, strong confident linework, intense expressions, vivid saturated colors",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_sketch",
@@ -2473,7 +3368,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "pencil sketch, detailed lineart, anime sketch style, monochrome, clean lines, draft aesthetic",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_soft_pastel",
@@ -2484,7 +3383,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "soft pastel colors, gentle delicate linework, dreamy atmosphere, light airy tones, shoujo aesthetic",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "anime_watercolor",
@@ -2495,7 +3398,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "watercolor anime illustration, soft edges, painted texture, flowing colors, artistic quality",
-    "type": "style"
+    "type": "style",
+    "mode": "anime",
+    "solo_compatible": 1,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "dark_moody",
@@ -2506,7 +3413,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Dark moody noir aesthetic. Deep crushed shadows, high contrast, rich dark tones. Describe the dramatic noir quality, heavy shadow areas with selective highlights, and graphic cinematic moodiness throughout.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "hyperrealistic",
@@ -2517,7 +3428,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Hyperrealistic photography. Extreme sharpness, visible skin texture and pores, fine hair detail, clinical precision. Describe microscopic skin detail, perfect focus, and ultra-realistic rendering as if 100MP medium format camera.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "infrared",
@@ -2528,7 +3443,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Infrared photography aesthetic. Skin glows luminous white, backgrounds shift surreal. Describe the ethereal dreamlike quality and unusual tonal rendering.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "lomography",
@@ -2539,7 +3458,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Lomography lo-fi aesthetic. Visible light leaks, color aberration, strong vignette, shifted hues. Describe the analog imperfections, light bleeding at edges, and the raw spontaneous lo-fi photographic quality.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "muted_tones",
@@ -2550,7 +3473,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Desaturated editorial aesthetic. Muted, faded color palette, washed tones, low saturation. Describe the understated color grading, soft contrast, and high-fashion editorial quality.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "soft_focus",
@@ -2561,7 +3488,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Soft focus dreamy aesthetic. Slight lens blur, glowing highlights, romantic haze. Describe the ethereal soft quality, dreamy out-of-focus edges, and warm glowing light diffusion throughout.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "teal_orange",
@@ -2572,7 +3503,11 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Teal and orange cinematic color grade. Warm amber skin tones contrasted against cool teal-green shadows. Describe the Hollywood color grading with the striking warm-cool contrast throughout the image.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   },
   {
     "name": "vintage_sepia",
@@ -2583,6 +3518,10 @@
     "styles": null,
     "lighting": null,
     "emphasis": "Vintage sepia photograph aesthetic. Warm brown-amber tones, aged print texture, slight fading at edges. Describe the nostalgic aged quality, warm monochromatic sepia palette, and antique photographic feel.",
-    "type": "style"
+    "type": "style",
+    "mode": "realistic",
+    "solo_compatible": 0,
+    "ff_only": 0,
+    "multi_required": 0
   }
 ]

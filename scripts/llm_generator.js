@@ -27,9 +27,14 @@ const COUNT        = parseInt(getArg('--count', '20'));
 const MODEL        = getArg('--model', 'qwen3.6:35b-a3b');
 const CAT_ARG      = getArg('--category', null);
 const SUBJECT_ARG  = getArg('--subject', null);
-const RACE_ARG     = getArg('--race', null);
-const BODYTYPE_ARG = getArg('--bodytype', null);
-const BODYTYPE_NAMES = BODYTYPE_ARG ? BODYTYPE_ARG.split(',').map(s => s.trim()).filter(Boolean) : [];
+// Reassigned per prompt when --race_random / --bodytype_random are set, so a
+// run varies instead of drawing once. Mirrors how --act_random works.
+let RACE_ARG     = getArg('--race', null);
+let BODYTYPE_ARG = getArg('--bodytype', null);
+let BODYTYPE_NAMES = BODYTYPE_ARG ? BODYTYPE_ARG.split(',').map(s => s.trim()).filter(Boolean) : [];
+const MODIFIER_BODYTYPES = new Set(['busty','flat_chested','piercings','pregnant','tattoos']);
+const RACE_RANDOM     = hasFlag('--race_random');
+const BODYTYPE_RANDOM = hasFlag('--bodytype_random');
 const ROLE_ARG     = getArg('--role', null);
 const ROLE_RANDOM  = ROLE_ARG === 'random';
 const STYLE_ARG      = getArg('--style', null);
@@ -93,7 +98,9 @@ const RACE_LABELS = {
   puerto_rican: 'Puerto Rican',
 };
 
-const INTERRACIAL_DARK  = ['ethiopian','caribbean'];
+// ebony is the generic Black race; omitting it made "Ebony + Interracial"
+// pick Ethiopian or Caribbean as the contrast - two Black subjects.
+const INTERRACIAL_DARK  = ['ebony','ethiopian','caribbean'];
 const INTERRACIAL_LIGHT = ['scandinavian','eastern_european','french','celtic','russian'];
 const INTERRACIAL_MID   = ['latina','east_asian','indian','arabic','brazilian','persian'];
 
@@ -826,7 +833,22 @@ async function main() {
 
   let inserted = 0, failed = 0;
 
+  const ALL_RACES     = RACE_RANDOM     ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'race' && !k.startsWith('ct_')) : null;
+  // Base body types only - the picker excludes modifiers and petite_teen from
+  // its base list, so a random base must too.
+  const ALL_BODYTYPES = BODYTYPE_RANDOM ? Object.keys(CATEGORIES).filter(k =>
+    CATEGORIES[k].type === 'body_type' && !MODIFIER_BODYTYPES.has(k) && k !== 'petite_teen') : null;
+  // Captured once: re-reading BODYTYPE_NAMES each pass would accumulate the
+  // modifiers from the previous prompt.
+  const USER_MODIFIERS = BODYTYPE_NAMES.filter(n => MODIFIER_BODYTYPES.has(n));
+  const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
   for (let i = 0; i < COUNT; i++) {
+    if (ALL_RACES && ALL_RACES.length) RACE_ARG = pickOne(ALL_RACES);
+    if (ALL_BODYTYPES && ALL_BODYTYPES.length) {
+      BODYTYPE_NAMES = [pickOne(ALL_BODYTYPES), ...USER_MODIFIERS];
+      BODYTYPE_ARG = BODYTYPE_NAMES.join(',');
+    }
     const actName   = ALL_ACTS   ? ALL_ACTS[Math.floor(Math.random()   * ALL_ACTS.length)]   : (actNames.length   ? pick(actNames)   : null);
     const sceneName = ALL_SCENES ? ALL_SCENES[Math.floor(Math.random() * ALL_SCENES.length)] : (sceneNames.length ? pick(sceneNames) : null);
     const themeName = ALL_THEMES ? ALL_THEMES[Math.floor(Math.random() * ALL_THEMES.length)] : (themeNames.length ? pick(themeNames) : null);

@@ -138,7 +138,7 @@
 </div>
 
 <% if (!paid) { %>
-<p style="font-size:10px;color:var(--muted);margin:6px 0 0;font-family:var(--font-mono)"><%= promptTotal %> / <%= demoLimit %> free prompts used &mdash; <a href="/prompts/settings" style="color:var(--accent)">upgrade for unlimited</a></p>
+<p style="font-size:10px;color:var(--muted);margin:6px 0 0;font-family:var(--font-mono)">Demo: 5 prompts per batch &mdash; <a href="/prompts/settings" style="color:var(--accent)">unlock batches up to 999</a></p>
 <% } %>
 
 <div id="act-warning"></div>
@@ -191,7 +191,8 @@
 <div class="cat-panel">
   <!-- Race / Character Type -->
   <div id="cat-pane-race" class="cat-pane active">
-    <div class="opt-item"><input type="radio" name="race" id="race_none" value="" checked><label for="race_none">Any</label></div>
+    <div class="opt-item"><input type="radio" name="race" id="race_none" value="" checked><label for="race_none">None</label></div>
+    <div class="opt-item"><input type="radio" name="race" id="race_random" value="random"><label for="race_random" style="font-style:italic;color:var(--muted)">Random</label></div>
     <% raceCategories.forEach(c => { %>
     <div class="opt-item" data-mode="realistic">
       <input type="radio" name="race" id="race_<%= c.name %>" value="<%= c.name %>">
@@ -209,7 +210,8 @@
   <!-- Body Type -->
   <div id="cat-pane-bodytype" class="cat-pane">
     <% var MODIFIER_NAMES = new Set(['busty','flat_chested','piercings','pregnant','tattoos']); %>
-    <div class="opt-item"><input type="radio" name="bodytype" id="bt_none" value="" checked><label for="bt_none" style="color:var(--muted);font-style:italic">Any</label></div>
+    <div class="opt-item"><input type="radio" name="bodytype" id="bt_none" value="" checked><label for="bt_none" style="color:var(--muted);font-style:italic">None</label></div>
+    <div class="opt-item"><input type="radio" name="bodytype" id="bt_random" value="random"><label for="bt_random" style="color:var(--muted);font-style:italic">Random</label></div>
     <% bodyTypeCategories.filter(c => !MODIFIER_NAMES.has(c.name) && c.name !== 'petite_teen').forEach(c => { %>
     <div class="opt-item">
       <input type="radio" name="bodytype" id="bt_<%= c.name %>" value="<%= c.name %>">
@@ -316,7 +318,7 @@
 <div class="attrs-grid">
   <details class="attr-panel" open><summary class="attr-label">Age</summary>
     <div class="attr-opts">
-      <div class="opt-item"><input type="radio" name="age" id="age_none" value="" checked><label for="age_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="age" id="age_none" value="" checked><label for="age_none" style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="age" id="age_teen" value="late_teens"><label for="age_teen">Teen (18+)</label></div>
       <div class="opt-item"><input type="radio" name="age" id="age_20s" value="20s"><label for="age_20s">20s</label></div>
       <div class="opt-item"><input type="radio" name="age" id="age_30s" value="30s"><label for="age_30s">30s</label></div>
@@ -326,7 +328,7 @@
   </details>
   <details class="attr-panel" open><summary class="attr-label">Hair Length</summary>
     <div class="attr-opts">
-      <div class="opt-item"><input type="radio" name="hair_length" id="hl_any"    value="" checked><label for="hl_any" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_any"    value="" checked><label for="hl_any" style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_short"  value="short"><label for="hl_short">Short</label></div>
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_medium" value="medium_length"><label for="hl_medium">Medium</label></div>
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_long"   value="long"><label for="hl_long">Long</label></div>
@@ -335,7 +337,7 @@
   </details>
   <details class="attr-panel" open><summary class="attr-label">Hair Color</summary>
     <div class="attr-opts">
-      <div class="opt-item"><input type="radio" name="hair_color" id="hc_none"     value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_none"     value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_black"    value="black"><label for="hc_black">Black</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_brunette" value="brunette"><label for="hc_brunette">Brunette</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_blonde"   value="blonde"><label for="hc_blonde">Blonde</label></div>
@@ -349,7 +351,7 @@
   </details>
   <details class="attr-panel" open><summary class="attr-label">Expression</summary>
     <div class="attr-opts">
-      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none"        value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none"        value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_moaning"     value="moaning"><label for="fe_moaning">Moaning / O-face</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_ahegao"      value="ahegao"><label for="fe_ahegao">Ahegao</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eyes_closed" value="eyes_closed"><label for="fe_eyes_closed">Eyes Closed, Lips Parted</label></div>
@@ -364,7 +366,7 @@
   </details>
   <details class="attr-panel" style="break-before:column" open><summary class="attr-label">Hair Style</summary>
     <div class="attr-opts">
-      <div class="opt-item"><input type="radio" name="hair_style" id="hs_any"      value="" checked><label for="hs_any" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_any"      value="" checked><label for="hs_any" style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_straight" value="straight"><label for="hs_straight">Straight</label></div>
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_wavy"     value="wavy"><label for="hs_wavy">Wavy</label></div>
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_curly"    value="curly"><label for="hs_curly">Curly</label></div>
@@ -373,7 +375,7 @@
   </details>
   <details class="attr-panel" open><summary class="attr-label">Eye Color</summary>
     <div class="attr-opts">
-      <div class="opt-item"><input type="radio" name="eye_color" id="ec_none"  value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_none"  value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_brown" value="brown"><label for="ec_brown">Brown</label></div>
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_blue"  value="blue"><label for="ec_blue">Blue</label></div>
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_green" value="green"><label for="ec_green">Green</label></div>
@@ -385,7 +387,7 @@
   </details>
   <details class="attr-panel" open><summary class="attr-label">Skin Tone</summary>
     <div class="attr-opts">
-      <div class="opt-item"><input type="radio" name="skin_tone" id="st_none"   value="" checked><label for="st_none" style="color:var(--muted);font-style:italic">Any</label></div>
+      <div class="opt-item"><input type="radio" name="skin_tone" id="st_none"   value="" checked><label for="st_none" style="color:var(--muted);font-style:italic">None</label></div>
       <div class="opt-item"><input type="radio" name="skin_tone" id="st_pale"   value="pale"><label for="st_pale">Pale / Fair</label></div>
       <div class="opt-item"><input type="radio" name="skin_tone" id="st_tan"    value="tan"><label for="st_tan">Tan / Sun-kissed</label></div>
       <div class="opt-item"><input type="radio" name="skin_tone" id="st_olive"  value="olive"><label for="st_olive">Olive</label></div>
@@ -431,7 +433,7 @@ function selectCat(cat, btn) {
   document.getElementById('cat-pane-' + cat).classList.add('active');
 }
 
-var DEFAULT_VALS = { race:'Any', bodytype:'Any', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random', lighting:'None', view:'Random' };
+var DEFAULT_VALS = { race:'None', bodytype:'None', role:'Random', act:'Random', scene:'Random', theme:'Random', style:'Random', lighting:'None', view:'Random' };
 
 function syncTabVals() {
   ['race','role','act','scene','theme','style','lighting','view'].forEach(function(cat) {
@@ -446,7 +448,7 @@ function syncTabVals() {
   });
   var btRadio = document.querySelector('input[name="bodytype"]:checked');
   var btVal = btRadio && btRadio.value ? btRadio : null;
-  var mods = Array.from(document.querySelectorAll('.mod-check:checked'));
+  var mods = Array.from(document.querySelectorAll('#cat-pane-bodytype .mod-check:checked'));
   var btEl = document.getElementById('tabval-bodytype');
   var btTab = document.querySelector('[data-cat="bodytype"]');
   if (!btVal && !mods.length) {
@@ -482,7 +484,8 @@ function startGenerate() {
   var subject  = buildSubject();
   var race     = (document.querySelector('input[name="race"]:checked') || {}).value      || '';
   var btBase   = (document.querySelector('input[name="bodytype"]:checked') || {}).value || '';
-  var bodytype = [btBase].concat(Array.from(document.querySelectorAll('.mod-check:checked')).map(function(el){return el.value;})).filter(Boolean).join(',');
+  var btRandom = btBase === 'random';
+  var bodytype = [btRandom ? '' : btBase].concat(Array.from(document.querySelectorAll('#cat-pane-bodytype .mod-check:checked')).map(function(el){return el.value;})).filter(Boolean).join(',');
   var age      = (document.querySelector('input[name="age"]:checked') || {}).value || '';
   var role     = (document.querySelector('input[name="role"]:checked') || {}).value      || '';
   var style       = (document.querySelector('input[name="style"]:checked') || {}).value      || '';
@@ -514,7 +517,9 @@ function startGenerate() {
   if (scene === 'random') params.set('scene_random', '1');
   if (theme === 'random') params.set('theme_random', '1');
   if (subject)  params.set('subject',  subject);
-  if (race)     params.set('race',     race);
+  if (race === 'random') params.set('race_random', '1');
+  else if (race)         params.set('race',        race);
+  if (btRandom) params.set('bodytype_random', '1');
   if (age)      params.set('age',      age);
   if (bodytype) params.set('bodytype', bodytype);
   if (role)        params.set('role',        role);
@@ -760,7 +765,7 @@ function getFormState() {
     model: (document.getElementById('model')||{}).value||'',
     race: (document.querySelector('input[name="race"]:checked')||{}).value||'',
     bodytype: (document.querySelector('input[name="bodytype"]:checked')||{}).value||'',
-    modifiers: Array.from(document.querySelectorAll('.mod-check:checked')).map(function(e){return e.value;}),
+    modifiers: Array.from(document.querySelectorAll('#cat-pane-bodytype .mod-check:checked')).map(function(e){return e.value;}),
     role: (document.querySelector('input[name="role"]:checked')||{}).value||'random',
     act: (document.querySelector('input[name="act"]:checked')||{}).value||'random',
     scene: (document.querySelector('input[name="scene"]:checked')||{}).value||'random',
@@ -792,7 +797,7 @@ function applyFormState(s) {
   var modelEl=document.getElementById('model');if(modelEl)modelEl.value=s.model||'';
   chkRadio('race',s.race||'');
   chkRadio('bodytype',s.bodytype||'');
-  document.querySelectorAll('.mod-check').forEach(function(e){e.checked=(s.modifiers||[]).indexOf(e.value)>=0;});
+  document.querySelectorAll('#cat-pane-bodytype .mod-check').forEach(function(e){e.checked=(s.modifiers||[]).indexOf(e.value)>=0;});
   ['role','act','scene','theme','style','view'].forEach(function(a){chkRadio(a,s[a]||'random');});
   ['age','hair_color','facial_expression','eye_color','skin_tone','hair_length','hair_style','hand_action','lighting'].forEach(function(a){chkRadio(a,s[a]||'');});
   if(typeof previewSubj==='function')previewSubj();
