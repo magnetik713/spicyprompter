@@ -131,7 +131,7 @@ try {
   // runs once per release rather than on every start, so a built-in category
   // the user deleted stays deleted until the next bump. INSERT OR IGNORE means
   // categories the user has edited are never overwritten.
-  const SEED_VERSION = '2';
+  const SEED_VERSION = '3';
   const count = db.prepare('SELECT COUNT(*) as n FROM llm_categories').get().n;
   const seenSeed = (db.prepare('SELECT value FROM config WHERE key=?').get('categories_seed_version') || {}).value;
   if (count === 0 || seenSeed !== SEED_VERSION) {
