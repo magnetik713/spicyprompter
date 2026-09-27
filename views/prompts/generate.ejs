@@ -845,6 +845,16 @@ function deletePreset() {
     refreshPresets();
   });
 }
+function updateHandAction() {
+  var w = parseInt(document.getElementById('subj-w').value) || 0;
+  var m = parseInt(document.getElementById('subj-m').value) || 0;
+  var solo = (w + m) <= 1;
+  document.querySelectorAll('.ha-partner').forEach(function(el) {
+    el.classList.toggle('disabled', solo);
+    var inp = el.querySelector('input');
+    if (solo && inp.checked) { document.getElementById('ha_none').checked = true; }
+  });
+}
 document.addEventListener('DOMContentLoaded',function(){refreshPresets();updateHandAction();});
 
 </script>
@@ -861,17 +871,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
-
-function updateHandAction() {
-  var w = parseInt(document.getElementById('subj-w').value) || 0;
-  var m = parseInt(document.getElementById('subj-m').value) || 0;
-  var solo = (w + m) <= 1;
-  document.querySelectorAll('.ha-partner').forEach(function(el) {
-    el.classList.toggle('disabled', solo);
-    var inp = el.querySelector('input');
-    if (solo && inp.checked) { document.getElementById('ha_none').checked = true; }
-  });
-}
 
 </script>
 <% } %>
