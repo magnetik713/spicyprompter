@@ -126,8 +126,15 @@ try {
     "  updated_at DATETIME" +
     ")"
   );
+  // Seed on a fresh install, and top up when the shipped seed gains entries.
+  // Bump SEED_VERSION whenever categories-seed.json changes: the top-up then
+  // runs once per release rather than on every start, so a built-in category
+  // the user deleted stays deleted until the next bump. INSERT OR IGNORE means
+  // categories the user has edited are never overwritten.
+  const SEED_VERSION = '2';
   const count = db.prepare('SELECT COUNT(*) as n FROM llm_categories').get().n;
-  if (count === 0) {
+  const seenSeed = (db.prepare('SELECT value FROM config WHERE key=?').get('categories_seed_version') || {}).value;
+  if (count === 0 || seenSeed !== SEED_VERSION) {
     const path = require('path');
     const fs = require('fs');
     const seedPath = path.join(__dirname, 'data', 'categories-seed.json');
@@ -144,6 +151,7 @@ try {
       });
       insertAll(rows);
     }
+    db.prepare('INSERT OR REPLACE INTO config (key,value) VALUES (?,?)').run('categories_seed_version', SEED_VERSION);
   }
 } catch (e) { console.error('llm_categories init error:', e.message); }
 
