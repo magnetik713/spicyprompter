@@ -129,15 +129,6 @@ const GENERATOR = require('path').join(__dirname, '../scripts/llm_generator.js')
 const PROJ_DIR  = require('path').join(__dirname, '..');
 
 
-// Demo-mode allowed values per filter
-const DEMO_ALLOWED = {
-  race:     new Set(['asian','ebony','latina','russian','french','scandinavian','brazilian','italian','korean','indian','persian']),
-  bodytype: new Set(['athletic','busty','curvy','petite','petite_teen','thick','milf','tattoos','mature','bbw','chubby','flat_chested']),
-  role:     new Set(['cheerleader','college','maid','role_girlfriend','teacher','cosplay','role_secretary','role_neighbor','role_trainer','role_stewardess']),
-  cats:     new Set(['cowgirl','doggy_style','missionary','oral','beach','bedroom','office','shower','boudoir','glamour','interracial','lingerie','pov','reverse_cowgirl','fingering','legs_up','spooning','standing','edge_of_bed','gym','car','outdoor','pool','dorm','massage','amateur','solo','oiled','stockings','voyeur']),
-  style:    new Set(['film_grain','golden_hour','studio_flash','natural_window','candlelight','low_key','ring_light','warm_indoor','blue_hour','overcast','harsh_sun']),
-};
-
 // Category types, and which picker each one feeds. Used by the category form.
 const CAT_TYPES = [
   ['act', 'Act'], ['scene', 'Scene'], ['theme', 'Theme'], ['role', 'Role'],
@@ -238,7 +229,7 @@ router.get('/generate/run', async (req, res) => {
   if (safeRace)     args.push('--race',     safeRace);
   if (interracial === '1') args.push('--interracial');
   if (safeBodytype) args.push('--bodytype', safeBodytype);
-  if (safeRole)     args.push('--role',     safeRole);
+  if (paid && safeRole) args.push('--role',  safeRole);
   if (safeStyle && safeStyle !== 'random') args.push('--style', safeStyle);
   if (safeLighting && safeLighting !== 'random') args.push('--lighting', safeLighting);
   if (paid && safeHairColor)        args.push('--hair_color',        safeHairColor);
@@ -249,12 +240,14 @@ router.get('/generate/run', async (req, res) => {
   if (paid && safeHairLength)       args.push('--hair_length',       safeHairLength);
   if (paid && safeHairStyle)        args.push('--hair_style',        safeHairStyle);
   if (paid && safeCameraView)       args.push('--camera_view',       safeCameraView);
-  if (safeHandAction && safeHandAction !== 'none') args.push('--hand_action', safeHandAction);
+  if (paid && safeHandAction && safeHandAction !== 'none') args.push('--hand_action', safeHandAction);
   const safeMode = (mode === 'anime') ? 'anime' : 'realistic';
   if (safeMode === 'anime') args.push('--mode', 'anime');
   const compatVal = cfg.get('image_model_compat') || 'illustrious';
   if (safeMode === 'anime' && compatVal !== 'illustrious') args.push('--compat', compatVal);
-  // only pass random flags for paid users — demo users get restricted cat pool above instead
+  // Random is available to everyone: the demo gate in generate.ejs leaves radios
+  // whose value is 'random' enabled, so demo users pick Any or Random for the
+  // pickers they cannot choose from specifically.
   if (act_random   === '1') args.push('--act_random');
   if (scene_random === '1') args.push('--scene_random');
   if (theme_random === '1') args.push('--theme_random');
