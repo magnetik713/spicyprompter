@@ -391,7 +391,14 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
   };
   if (CLOTHING_ARG) skeleton.clothing = CLOTHING_LABELS[CLOTHING_ARG] || CLOTHING_ARG.replace(/_/g, ' ');
   if (RACE_ARG) {
-    const raceLabel = (RACE_ARG && RACE_ARG.startsWith('ct_') && raceCatData) ? raceCatData.label : (RACE_LABELS[RACE_ARG] || RACE_ARG);
+    // ct_* keep their full label. Built-ins use the curated short label, which
+    // is not always the category label (ebony reads as "Black"). A user-added
+    // race has neither, so fall back to its own label before the bare slug -
+    // otherwise the prompt says "The woman is zz_sami".
+    const customRaceLabel = raceCatData && raceCatData.label ? raceCatData.label.split(' —')[0].trim() : '';
+    const raceLabel = (RACE_ARG && RACE_ARG.startsWith('ct_') && raceCatData)
+      ? raceCatData.label
+      : (RACE_LABELS[RACE_ARG] || customRaceLabel || RACE_ARG);
     const subj = skeleton.subject.toLowerCase();
     const hasWoman = subj.includes('woman') || subj.includes('women');
     if (hasWoman) {

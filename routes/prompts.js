@@ -824,6 +824,7 @@ router.get('/categories/:id/edit', (req, res) => {
 });
 
 router.post('/categories/:id', (req, res) => {
+  if (!cfg.isPaid()) return res.redirect('/prompts/categories?locked=1');
   const { label, type, subjects, settings, clothing, styles, lighting, emphasis } = req.body;
   db.prepare(`UPDATE llm_categories SET label=?, type=?, subjects=?, settings=?, clothing=?, styles=?, lighting=?, emphasis=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`)
     .run(label, cleanCatType(type), subjects || null, settings || null, clothing || null, styles || null, lighting || null, emphasis, req.params.id);
