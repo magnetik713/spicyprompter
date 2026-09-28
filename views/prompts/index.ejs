@@ -104,6 +104,7 @@
 <div id="select-bar" class="select-bar">
   <span id="sel-count">0 selected</span>
   <button class="btn btn-secondary" onclick="selectAll()">All</button>
+  <button class="btn btn-secondary" onclick="selectUngenerated()" title="Select only prompts with no image yet (skips starred, which cannot be queued)">No Image</button>
   <button class="btn btn-secondary" onclick="selectNone()">None</button>
   <button id="del-btn" class="btn" style="background:#c0392b;color:#fff;border-color:#c0392b" onclick="deleteSelected()" disabled>Delete</button>
   <button id="queue-btn" class="btn" style="background:var(--accent);color:#fff;border-color:var(--accent)" onclick="queueSelected(this)" disabled>&#x26A1; Queue</button>
@@ -331,6 +332,27 @@ function selectAll() {
   });
   saveStoredIds(stored);
   updateCount();
+}
+
+function selectUngenerated() {
+  const stored = getStoredIds();
+  let picked = 0, skippedImg = 0, skippedStar = 0;
+  document.querySelectorAll('.row-check').forEach(cb => {
+    const wrap = cb.closest('.prompt-row-wrap');
+    // `.dl` specifically - the workflow download button also uses .has-img
+    const hasImage = !!wrap.querySelector('.row-btn.dl.has-img');
+    const starred  = !!wrap.querySelector('.row-btn.star.on');
+    const want = !hasImage && !starred;
+    cb.checked = want;
+    wrap.querySelector('.prompt-row').classList.toggle('selected', want);
+    if (want) { stored.add(cb.value); picked++; }
+    else { stored.delete(cb.value); if (hasImage) skippedImg++; else if (starred) skippedStar++; }
+  });
+  saveStoredIds(stored);
+  updateCount();
+  if (!picked) {
+    alert('Every prompt on this page already has an image' + (skippedStar ? ' or is starred' : '') + '.');
+  }
 }
 
 function selectNone() {
