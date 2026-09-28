@@ -163,7 +163,8 @@ router.get('/generate', (req, res) => { try {
 });
 
 router.get('/generate/run', async (req, res) => {
-  const { cats, count, model, subject, race, race_random, bodytype, bodytype_random, role, style, lighting, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial, hand_action, mode } = req.query;
+  const { hair_color_random, hair_length_random, hair_style_random, facial_expression_random, eye_color_random,
+          cats, count, model, subject, race, race_random, bodytype, bodytype_random, role, style, lighting, act, act_random, scene_random, theme_random, hair_color, facial_expression, eye_color, skin_tone, camera_view, age, hair_length, hair_style, interracial, hand_action, mode } = req.query;
 
 
   // Without a model there is nothing to call. Say so, rather than firing a
@@ -239,6 +240,11 @@ router.get('/generate/run', async (req, res) => {
   // whose value is 'random' enabled, so demo users pick Any or Random for the
   // pickers they cannot choose from specifically.
   if (race_random     === '1') args.push('--race_random');
+  if (hair_color_random === '1') args.push('--hair_color_random');
+  if (hair_length_random === '1') args.push('--hair_length_random');
+  if (hair_style_random === '1') args.push('--hair_style_random');
+  if (facial_expression_random === '1') args.push('--facial_expression_random');
+  if (eye_color_random === '1') args.push('--eye_color_random');
   if (bodytype_random === '1') args.push('--bodytype_random');
   if (act_random   === '1') args.push('--act_random');
   if (scene_random === '1') args.push('--scene_random');

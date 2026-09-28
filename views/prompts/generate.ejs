@@ -329,6 +329,7 @@
   <details class="attr-panel" open><summary class="attr-label">Hair Length</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_any"    value="" checked><label for="hl_any" style="color:var(--muted);font-style:italic">None</label></div>
+      <div class="opt-item"><input type="radio" name="hair_length" id="hl_random" value="random"><label for="hl_random" style="font-style:italic;color:var(--muted)">Random</label></div>
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_short"  value="short"><label for="hl_short">Short</label></div>
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_medium" value="medium_length"><label for="hl_medium">Medium</label></div>
       <div class="opt-item"><input type="radio" name="hair_length" id="hl_long"   value="long"><label for="hl_long">Long</label></div>
@@ -338,6 +339,7 @@
   <details class="attr-panel" open><summary class="attr-label">Hair Color</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_none"     value="" checked><label for="hc_none" style="color:var(--muted);font-style:italic">None</label></div>
+      <div class="opt-item"><input type="radio" name="hair_color" id="hc_random" value="random"><label for="hc_random" style="font-style:italic;color:var(--muted)">Random</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_black"    value="black"><label for="hc_black">Black</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_brunette" value="brunette"><label for="hc_brunette">Brunette</label></div>
       <div class="opt-item"><input type="radio" name="hair_color" id="hc_blonde"   value="blonde"><label for="hc_blonde">Blonde</label></div>
@@ -352,6 +354,7 @@
   <details class="attr-panel" open><summary class="attr-label">Expression</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_none"        value="" checked><label for="fe_none" style="color:var(--muted);font-style:italic">None</label></div>
+      <div class="opt-item"><input type="radio" name="facial_expression" id="fe_random" value="random"><label for="fe_random" style="font-style:italic;color:var(--muted)">Random</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_moaning"     value="moaning"><label for="fe_moaning">Moaning / O-face</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_ahegao"      value="ahegao"><label for="fe_ahegao">Ahegao</label></div>
       <div class="opt-item"><input type="radio" name="facial_expression" id="fe_eyes_closed" value="eyes_closed"><label for="fe_eyes_closed">Eyes Closed, Lips Parted</label></div>
@@ -367,6 +370,7 @@
   <details class="attr-panel" style="break-before:column" open><summary class="attr-label">Hair Style</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_any"      value="" checked><label for="hs_any" style="color:var(--muted);font-style:italic">None</label></div>
+      <div class="opt-item"><input type="radio" name="hair_style" id="hs_random" value="random"><label for="hs_random" style="font-style:italic;color:var(--muted)">Random</label></div>
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_straight" value="straight"><label for="hs_straight">Straight</label></div>
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_wavy"     value="wavy"><label for="hs_wavy">Wavy</label></div>
       <div class="opt-item"><input type="radio" name="hair_style" id="hs_curly"    value="curly"><label for="hs_curly">Curly</label></div>
@@ -376,6 +380,7 @@
   <details class="attr-panel" open><summary class="attr-label">Eye Color</summary>
     <div class="attr-opts">
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_none"  value="" checked><label for="ec_none" style="color:var(--muted);font-style:italic">None</label></div>
+      <div class="opt-item"><input type="radio" name="eye_color" id="ec_random" value="random"><label for="ec_random" style="font-style:italic;color:var(--muted)">Random</label></div>
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_brown" value="brown"><label for="ec_brown">Brown</label></div>
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_blue"  value="blue"><label for="ec_blue">Blue</label></div>
       <div class="opt-item"><input type="radio" name="eye_color" id="ec_green" value="green"><label for="ec_green">Green</label></div>
@@ -403,13 +408,13 @@
       <div class="opt-item ha-solo"><input type="radio" name="hand_action" id="ha_wall"      value="wall_brace"        ><label for="ha_wall"     >Wall Brace</label></div>
       <div class="opt-item ha-solo"><input type="radio" name="hand_action" id="ha_self"      value="self_touch"        ><label for="ha_self"     >Self-Touch</label></div>
       <div class="opt-item ha-solo"><input type="radio" name="hand_action" id="ha_headboard" value="headboard"         ><label for="ha_headboard">Headboard</label></div>
-      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_hair"   value="hair_grab"         ><label for="ha_hair"     >Hair Grab</label></div>
-      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_hip"    value="hip_grip"          ><label for="ha_hip"      >Hip Grip</label></div>
-      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_wrist"  value="wrist_grip"        ><label for="ha_wrist"    >Wrist Grip</label></div>
-      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_face"   value="face_cup"          ><label for="ha_face"     >Face Cup</label></div>
-      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_thigh"  value="thigh_grip"        ><label for="ha_thigh"    >Thigh Grip</label></div>
-      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_breast" value="breast_grip"       ><label for="ha_breast"   >Breast Grip</label></div>
-      <div class="opt-item ha-partner"><input type="radio" name="hand_action" id="ha_butt"   value="butt_grab"         ><label for="ha_butt"     >Butt Grab</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_hair"   value="hair_grab"         ><label for="ha_hair"     >Hair Grab</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_hip"    value="hip_grip"          ><label for="ha_hip"      >Hip Grip</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_wrist"  value="wrist_grip"        ><label for="ha_wrist"    >Wrist Grip</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_face"   value="face_cup"          ><label for="ha_face"     >Face Cup</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_thigh"  value="thigh_grip"        ><label for="ha_thigh"    >Thigh Grip</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_breast" value="breast_grip"       ><label for="ha_breast"   >Breast Grip</label></div>
+      <div class="opt-item"><input type="radio" name="hand_action" id="ha_butt"   value="butt_grab"         ><label for="ha_butt"     >Butt Grab</label></div>
     </div>
   </details>
 </div>
@@ -525,13 +530,18 @@ function startGenerate() {
   if (role)        params.set('role',        role);
   if (style && style !== 'random') params.set('style', style);
   if (lighting && lighting !== 'random') params.set('lighting', lighting);
-  if (hair_color)        params.set('hair_color',        hair_color);
-  if (facial_expression) params.set('facial_expression', facial_expression);
-  if (eye_color)         params.set('eye_color',         eye_color);
+  if (hair_color === 'random') params.set('hair_color_random', '1');
+  else if (hair_color) params.set('hair_color', hair_color);
+  if (facial_expression === 'random') params.set('facial_expression_random', '1');
+  else if (facial_expression) params.set('facial_expression', facial_expression);
+  if (eye_color === 'random') params.set('eye_color_random', '1');
+  else if (eye_color) params.set('eye_color', eye_color);
   if (skin_tone)         params.set('skin_tone',         skin_tone);
   if (camera_view && camera_view !== 'random') params.set('camera_view', camera_view);
-  if (hair_length)       params.set('hair_length',       hair_length);
-  if (hair_style)        params.set('hair_style',        hair_style);
+  if (hair_length === 'random') params.set('hair_length_random', '1');
+  else if (hair_length) params.set('hair_length', hair_length);
+  if (hair_style === 'random') params.set('hair_style_random', '1');
+  else if (hair_style) params.set('hair_style', hair_style);
   if (interracial)       params.set('interracial',       interracial);
   if (hand_action)       params.set('hand_action',     hand_action);
   params.set('mode', _genMode || 'realistic');
@@ -762,7 +772,6 @@ function getFormState() {
     subj_m: (document.getElementById('subj-m')||{}).value||'1',
     interracial: !!(document.getElementById('interracial') && document.getElementById('interracial').checked),
     count: (document.getElementById('count')||{}).value||'5',
-    model: (document.getElementById('model')||{}).value||'',
     race: (document.querySelector('input[name="race"]:checked')||{}).value||'',
     bodytype: (document.querySelector('input[name="bodytype"]:checked')||{}).value||'',
     modifiers: Array.from(document.querySelectorAll('#cat-pane-bodytype .mod-check:checked')).map(function(e){return e.value;}),
@@ -794,7 +803,9 @@ function applyFormState(s) {
   setNum('subj-m',s.subj_m||'1');
   setChk('interracial',s.interracial);
   setNum('count',s.count||'5');
-  var modelEl=document.getElementById('model');if(modelEl)modelEl.value=s.model||'';
+  // Deliberately not restored: the model comes from Settings. Presets used to
+  // carry it, which meant a stale preset silently overrode the configured
+  // model after every model switch.
   chkRadio('race',s.race||'');
   chkRadio('bodytype',s.bodytype||'');
   document.querySelectorAll('#cat-pane-bodytype .mod-check').forEach(function(e){e.checked=(s.modifiers||[]).indexOf(e.value)>=0;});

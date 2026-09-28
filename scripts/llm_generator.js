@@ -33,6 +33,18 @@ let RACE_ARG     = getArg('--race', null);
 let BODYTYPE_ARG = getArg('--bodytype', null);
 let BODYTYPE_NAMES = BODYTYPE_ARG ? BODYTYPE_ARG.split(',').map(s => s.trim()).filter(Boolean) : [];
 const MODIFIER_BODYTYPES = new Set(['busty','flat_chested','piercings','pregnant','tattoos']);
+// Appearance attributes are hardcoded radio lists in the view, not category
+// rows, so their pools live here. Drawn per prompt, like --act_random.
+const HAIR_COLOR_POOL = ['black', 'brunette', 'blonde', 'red', 'auburn', 'platinum_blonde', 'silver', 'pink', 'blue'];
+const HAIR_LENGTH_POOL = ['short', 'medium_length', 'long', 'very_long'];
+const HAIR_STYLE_POOL = ['straight', 'wavy', 'curly', 'braids'];
+const FACIAL_EXPRESSION_POOL = ['moaning', 'ahegao', 'eyes_closed', 'biting_lip', 'eye_contact', 'looking_up', 'smirking', 'shy', 'pleading', 'blissful'];
+const EYE_COLOR_POOL = ['brown', 'blue', 'green', 'hazel', 'gray', 'amber', 'dark'];
+const HAIR_COLOR_RANDOM = hasFlag('--hair_color_random');
+const HAIR_LENGTH_RANDOM = hasFlag('--hair_length_random');
+const HAIR_STYLE_RANDOM = hasFlag('--hair_style_random');
+const FACIAL_EXPRESSION_RANDOM = hasFlag('--facial_expression_random');
+const EYE_COLOR_RANDOM = hasFlag('--eye_color_random');
 const RACE_RANDOM     = hasFlag('--race_random');
 const BODYTYPE_RANDOM = hasFlag('--bodytype_random');
 const ROLE_ARG     = getArg('--role', null);
@@ -47,9 +59,9 @@ const QUALITY_TAGS   = COMPAT_ARG === 'pony'
   : COMPAT_ARG === 'noobai'
   ? 'masterpiece, best quality, newest, rating:explicit'
   : 'masterpiece, best quality, newest, absurdres, rating:explicit';
-const HAIR_COLOR_ARG        = getArg('--hair_color', null);
-const FACIAL_EXPRESSION_ARG = getArg('--facial_expression', null);
-const EYE_COLOR_ARG         = getArg('--eye_color', null);
+let HAIR_COLOR_ARG        = getArg('--hair_color', null);
+let FACIAL_EXPRESSION_ARG = getArg('--facial_expression', null);
+let EYE_COLOR_ARG         = getArg('--eye_color', null);
 const SKIN_TONE_ARG         = getArg('--skin_tone', null);
 const CAMERA_VIEW_ARG       = getArg('--camera_view', null);
 const MODE_ARG               = getArg('--mode', 'realistic');
@@ -72,8 +84,8 @@ const DATASET_MODE         = hasFlag('--dataset');
 const GENDER_ARG           = getArg('--gender', 'women');
 const CLOTHING_ARG         = getArg('--clothing', null);
 const AGE_ARG              = getArg('--age', null);
-const HAIR_LENGTH_ARG      = getArg('--hair_length', null);
-const HAIR_STYLE_ARG       = getArg('--hair_style', null);
+let HAIR_LENGTH_ARG      = getArg('--hair_length', null);
+let HAIR_STYLE_ARG       = getArg('--hair_style', null);
 const FACIAL_HAIR_ARG      = getArg('--facial_hair', null);
 const CLEAN_BG             = hasFlag('--clean_bg');
 
@@ -512,7 +524,7 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat, lig
   const hasWomanSubject = /\bwoman\b|\bwomen\b|\bgirl\b/i.test(skeleton.subject || '');
   const isFinishAct = actCat && (FINISH_ACTS.test(actCat.name || '') || FINISH_ACTS.test(actCat.emphasis || ''));
   const cumRule = (isFinishAct && hasWomanSubject) ? '\nCUMSHOT RULE (ABSOLUTE): The finish is always received by the woman. Never on the man.' : '';
-  const soloNoCum = (!hasMaleSubject && isSoloFemale(skeleton.subject)) ? '\nSOLO FEMALE RULE (ABSOLUTE): No males, no penis, no cum, no semen, no ejaculate, no white fluid on skin. Female squirting is clear fluid only — never say ejaculation, cum, or semen. Never use the word \'orgasmic\' — instead say: ecstatic, overwhelmed by pleasure, lost in sensation. Skin moisture is sweat or water only — never describe skin as oily, oil-coated, or glazed. JOI scenes show only the woman teasing — no completion, no finish, no implied viewer orgasm. Include the phrase \'clean skin\' somewhere in the prompt to reinforce the image model.' : '';
+  const soloNoCum = (!hasMaleSubject && isSoloFemale(skeleton.subject)) ? '\nSOLO FEMALE RULE (ABSOLUTE): No males, no penis, no cum, no semen, no ejaculate, no white fluid on skin. Female squirting is clear fluid only — never say ejaculation, cum, or semen. Never use the word \'orgasmic\' — instead say: ecstatic, overwhelmed by pleasure, lost in sensation. Skin moisture is sweat or water only — never describe skin as oily, oil-coated, or glazed. Do NOT use \'glistening\', \'glistens\', \'wet\', \'slick\', \'sheen\', \'shiny\' or \'dripping\' for skin unless the scene contains real water (pool, shower, rain, ocean, bath) or she is visibly sweating from exertion — and when you do, name that source in the same sentence so it reads as water or sweat, never as fluid on her. Otherwise describe skin as matte, dry, soft or clean. JOI scenes show only the woman teasing — no completion, no finish, no implied viewer orgasm. Include the phrase \'clean skin\' somewhere in the prompt to reinforce the image model.\nSOLO FRAMING (ABSOLUTE): She is the ONLY person in the image. The prompt text MUST say so explicitly \u2014 say it as natural prose inside a sentence, for example \'she stands completely alone\', \'she is the only person in the frame\', \'no one else is present\'. Never stack it as an adjective before the noun: write \'a woman stands alone in the room\', never \'a completely alone woman\'. This is for the image model, which never sees these instructions, so the words must appear in the output itself. Never imply a second person: no photographer, no observer, no other hands, arms, shadows or reflections of anyone else. If the style is candid, amateur, voyeur or hidden-camera, the camera is unmanned \u2014 mounted, propped, on a timer or held by her \u2014 never operated by another person in the scene.' : '';
   let interracialRule = '';
   if (INTERRACIAL) {
     const isAfricanRace = RACE_ARG && INTERRACIAL_DARK.includes(RACE_ARG);
@@ -845,6 +857,11 @@ async function main() {
 
   for (let i = 0; i < COUNT; i++) {
     if (ALL_RACES && ALL_RACES.length) RACE_ARG = pickOne(ALL_RACES);
+    if (HAIR_COLOR_RANDOM) HAIR_COLOR_ARG = pickOne(HAIR_COLOR_POOL);
+    if (HAIR_LENGTH_RANDOM) HAIR_LENGTH_ARG = pickOne(HAIR_LENGTH_POOL);
+    if (HAIR_STYLE_RANDOM) HAIR_STYLE_ARG = pickOne(HAIR_STYLE_POOL);
+    if (FACIAL_EXPRESSION_RANDOM) FACIAL_EXPRESSION_ARG = pickOne(FACIAL_EXPRESSION_POOL);
+    if (EYE_COLOR_RANDOM) EYE_COLOR_ARG = pickOne(EYE_COLOR_POOL);
     if (ALL_BODYTYPES && ALL_BODYTYPES.length) {
       BODYTYPE_NAMES = [pickOne(ALL_BODYTYPES), ...USER_MODIFIERS];
       BODYTYPE_ARG = BODYTYPE_NAMES.join(',');
