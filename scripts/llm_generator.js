@@ -196,6 +196,10 @@ function loadCategories() {
       cats[r.name] = {
         label:    r.label,
         type:     r.type || 'scene',
+        // Without this the mode filters below see undefined and fall through to
+        // their realistic-only clause: every anime style leaked into realistic
+        // runs, and anime mode got no styles or lighting at all.
+        mode:     r.mode || 'all',
         emphasis: r.emphasis,
         subjects: r.subjects ? r.subjects.split('|') : null,
         solo_compatible: r.solo_compatible === 1,
@@ -211,6 +215,11 @@ function loadCategories() {
   } catch(e) { return {}; }
 }
 const CATEGORIES = loadCategories();
+
+// A category belongs in this run if it is mode-agnostic or matches the
+// requested mode. Every random selector uses this — anything that skips it
+// puts anime categories in realistic prompts and vice versa.
+function modeOk(cat) { return cat && (cat.mode === 'all' || cat.mode === MODE_ARG); }
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -287,6 +296,71 @@ const SCENE_LIGHTING_MAP = {
   public:       ['golden hour sunlight','soft overcast daylight','blue hour','neon signs at night'],
 };
 
+// SCENE_LIGHTING_MAP only fires when a scene CATEGORY was chosen. Settings that
+// come from a category's own list or from padPool()'s defaults need the same
+// constraint, derived from the setting text itself. Ordered — first match wins,
+// so "rooftop at night" is caught by the night rule before the outdoor one.
+// Returns null when nothing matches, which leaves the draw untouched.
+const SETTING_LIGHTING_RULES = [
+  [/\bat night\b|nightclub|strip club|urban alley|limousine|\blimo\b/i,
+    ['neon signs at night', 'blue hour']],
+  [/dungeon/i,
+    ['candlelight']],
+  [/sauna|\bspa\b|massage/i,
+    ['candlelight', 'natural window light']],
+  [/bathroom|shower|changing room|dressing room|locker/i,
+    ['natural window light', 'studio softbox lighting']],
+  [/beach|forest|\bpark\b|yacht|barn|garden|\bfield\b|balcony|rooftop|pool|street|outdoor/i,
+    ['golden hour sunlight', 'soft overcast daylight', 'blue hour']],
+  [/bedroom|hotel|motel|dorm|cabin|living room|apartment|\bhouse\b/i,
+    ['candlelight', 'natural window light', 'studio softbox lighting']],
+  [/office|library|boardroom|conference|\bdesk\b|classroom|kitchen|\bgym\b|studio|\bcar\b|airplane/i,
+    ['natural window light', 'studio softbox lighting']],
+];
+
+function lightingForSetting(setting) {
+  const s = setting || '';
+  for (const rule of SETTING_LIGHTING_RULES) if (rule[0].test(s)) return rule[1];
+  return null;
+}
+
+// What each lighting category implies about the physical light source, and the
+// phrase that describes it. 'any' is a look rather than a source (backlight,
+// low key) and suits any setting.
+const LIGHT_CAT_CLASS = {
+  golden_hour: 'day',    harsh_sun: 'day',     overcast: 'day',
+  moonlight: 'night',    blue_hour: 'night',
+  neon_light: 'urban_night', neon_glow: 'urban_night',
+  candlelight: 'indoor', firelight: 'indoor',  warm_indoor: 'indoor',
+  natural_window: 'indoor', studio_flash: 'indoor', ring_light: 'indoor', spotlight: 'indoor',
+  phone_flash: 'any',    backlit: 'any',       low_key: 'any',
+  dramatic_shadows: 'any', magic_glow: 'any',  sakura_light: 'any',
+};
+
+const LIGHT_CAT_PHRASE = {
+  golden_hour: 'golden hour sunlight',      harsh_sun: 'harsh direct sunlight',
+  overcast: 'soft overcast daylight',       moonlight: 'moonlight',
+  blue_hour: 'blue hour',                   neon_light: 'neon signs at night',
+  neon_glow: 'neon signs at night',         candlelight: 'candlelight',
+  firelight: 'firelight',                   warm_indoor: 'warm tungsten indoor lighting',
+  natural_window: 'natural window light',   studio_flash: 'studio flash lighting',
+  ring_light: 'ring light illumination',    spotlight: 'single spotlight',
+  phone_flash: 'harsh on-camera phone flash', backlit: 'strong backlight',
+  low_key: 'low key lighting',              dramatic_shadows: 'high-contrast dramatic shadows',
+  magic_glow: 'magical luminescence',       sakura_light: 'cherry blossom ambient light',
+};
+
+// Which light-source classes a setting can physically support.
+function settingLightClasses(setting) {
+  const s = setting || '';
+  // Neon belongs to built-up places. A beach or forest at night has
+  // moonlight and blue hour, never signage. A dungeon is lit indoors.
+  if (/\bat night\b|nightclub|strip club|urban alley|limousine|\blimo\b/i.test(s)) return ['urban_night', 'night', 'any'];
+  if (/street|rooftop|balcony|\bcity\b/i.test(s)) return ['day', 'night', 'urban_night', 'any'];
+  if (/beach|forest|\bpark\b|garden|\bfield\b|yacht|barn|pool|outdoor/i.test(s)) return ['day', 'night', 'any'];
+  return ['indoor', 'any'];
+}
+
 function resolveCategory(name) {
   const cat = CATEGORIES[name];
   if (!cat) { console.error(`Unknown category: "${name}". Run --list to see options.`); process.exit(1); }
@@ -335,6 +409,8 @@ function padPool(pool, min = 8) {
 }
 
 const MALE_ACT_RE = /\bman\b|\bmen\b|\bhim\b|\bhis\b/i;
+const BED_ACTION_RE  = /bedsheet|pillow|headboard|mattress/i;
+const BED_SETTING_RE = /bed|bedroom|hotel|motel|dorm|futon|apartment|bunk/i;  // not couch/sofa: no headboard or bedsheets there
 
 function isSoloFemale(subject) {
   const s = (subject || '').toLowerCase();
@@ -457,15 +533,29 @@ function buildSkeleton(actCat, sceneCat, themeCat, effectiveRole = ROLE_ARG, eff
     skeleton.camera_angle = CAMERA_VIEW_ARG.replace(/_/g, ' ');
   }
   if (HAND_ACTION_ARG) {
-    skeleton.hand_action = HAND_ACTION_ARG === 'random'
-      ? HAND_ACTIONS[Math.floor(Math.random() * HAND_ACTIONS.length)]
-      : (HAND_ACTION_MAP[HAND_ACTION_ARG] || null);
+    if (HAND_ACTION_ARG === 'random') {
+      // A random draw must never hand a solo subject a partnered gesture. The
+      // model obeys the CONFLICT RULE and "adapts" it, producing nonsense like
+      // fingers wrapped around her own wrist. An explicit pick is left alone —
+      // that one is a deliberate choice.
+      let pool = HAND_ACTIONS;
+      if (isSoloFemale(skeleton.subject)) pool = pool.filter(a => !/\bpartner\b/i.test(a));
+      // Bed furniture only exists in some settings. Offering "gripping the
+      // bedsheets" for a forest clearing puts a bed in the woods, and the
+      // SYSTEM prompt mandates the hand action verbatim, so it cannot be
+      // corrected downstream.
+      if (!BED_SETTING_RE.test(skeleton.setting || '')) pool = pool.filter(a => !BED_ACTION_RE.test(a));
+      if (!pool.length) pool = HAND_ACTIONS;
+      skeleton.hand_action = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+      skeleton.hand_action = HAND_ACTION_MAP[HAND_ACTION_ARG] || null;
+    }
     if (!skeleton.hand_action) delete skeleton.hand_action;
   }
   return skeleton;
 }
 
-const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, facial_expression, role, camera_angle, hand_action, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, facial expression, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. If hand_action is given, one or more subjects must have their hands doing exactly that — weave it naturally into the scene. If facial_expression is given, the subject's face must show that exact expression throughout. Realistic photography ONLY — no anime, no illustration, no cartoon. ONE subject only — never include observers, bystanders, unseen people, or any secondary figures. camera_angle=back_angle means: camera positioned behind the subject at upper-back/shoulder height — show their back, shoulder blades, and hair, with their face turned slightly toward camera or in profile. Write as rear three-quarter view or back angle — NEVER write over-the-shoulder, never imply a second person. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. CAST PRESENCE (ABSOLUTE): Every person listed in the subject MUST appear physically in the scene — described by position, body, and role. If subject is "a woman and a man", BOTH must be explicitly present and active. The man cannot be implied, off-screen, or absent. A partnered act requires both partners visibly described. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. (5) TITFUCK / PAIZURI (ABSOLUTE): The man's PENIS goes between the woman's breasts — she presses them together around his shaft. FORBIDDEN: man's head between breasts, man's face in cleavage, man buried in cleavage, any body part other than his penis between her breasts. His penis is sandwiched between her breasts from below — she looks down at him, he looks up at her. The woman is the performer; the man is the receiver of the act. (6) ORAL SEX DIRECTION (ABSOLUTE): Oral sex directed AT a man = fellatio — always. Oral sex directed AT a woman = cunnilingus — always, regardless of who performs it. Never write a man receiving cunnilingus or a woman receiving fellatio. The woman NEVER has a penis, shaft, member, or cock under any framing. If act is generic "oral" with a man and woman present, DEFAULT to fellatio (woman performing on man) — do NOT default to cunnilingus. Only write cunnilingus when the subject is two women or no man is present. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
+const SYSTEM = `You are a ComfyUI image generation prompt engineer. You write detailed, vivid prompts for photorealistic NSFW/explicit image generation. CRITICAL: You MUST use the EXACT setting, subject, race, body_type, hair_color, facial_expression, role, camera_angle, hand_action, and theme from the skeleton — never substitute or omit them. Output ONLY the raw prompt text — no intro, no quotes, no explanation. ${PROMPT_WORDS} words. Always end on a complete sentence. Include: subject description (incorporating race, body type, hair color, facial expression, role/character, and theme if given), clothing/nudity state, setting/environment, lighting quality, mood/atmosphere, camera/lens details. If camera_angle is given, compose the shot from that exact viewpoint. If hand_action is given, one or more subjects must have their hands doing exactly that — weave it naturally into the scene. If facial_expression is given, the subject's face must show that exact expression throughout. Realistic photography ONLY — no anime, no illustration, no cartoon. ONE subject only — never include observers, bystanders, unseen people, or any secondary figures. camera_angle=back_angle means: camera positioned behind the subject at upper-back/shoulder height — show their back, shoulder blades, and hair, with their face turned slightly toward camera or in profile. Write as rear three-quarter view or back angle — NEVER write over-the-shoulder, never imply a second person. SUBJECT RULE (ABSOLUTE): The subject field is the complete and exclusive cast. Do not invent or add any person not listed in subject. If subject is "woman", there is exactly one woman and no one else — no men, no additional characters. If subject is "two women", only two women. ADAPT the act to fit the subject — never add people to make an act work. A solo-subject act becomes self-pleasure${ALLOW_TOYS ? ', or tasteful prop/toy use (realistic sizes and use only — no extreme or grotesque descriptions)' : ''}. CONFLICT RULE: When act and subject are incompatible (e.g. partnered act with solo subject), adapt the act to be solo-compatible. Prioritize: subject > act > scene > theme. LOCATION RULE (ABSOLUTE): The setting field is the ONLY location. If clothing, act, or any other field names or implies a different place, keep the garment or state and DISCARD its location — never place the subject in two places in one scene. CAST PRESENCE (ABSOLUTE): Every person listed in the subject MUST appear physically in the scene — described by position, body, and role. If subject is "a woman and a man", BOTH must be explicitly present and active. The man cannot be implied, off-screen, or absent. A partnered act requires both partners visibly described. ANATOMY RULES (ABSOLUTE, NO EXCEPTIONS): (1) Women have a vagina, no penis ever. Men have a penis, no vagina ever. No character may have genitalia of the opposite sex. (2) Body type descriptors apply only to female characters — never to men. (3) When scene contains women AND men, all sexual acts must be heterosexual male-female only — no male-male acts. (4) Never write futa, futanari, or gender-mixed anatomy. (5) TITFUCK / PAIZURI (ABSOLUTE): The man's PENIS goes between the woman's breasts — she presses them together around his shaft. FORBIDDEN: man's head between breasts, man's face in cleavage, man buried in cleavage, any body part other than his penis between her breasts. His penis is sandwiched between her breasts from below — she looks down at him, he looks up at her. The woman is the performer; the man is the receiver of the act. (6) ORAL SEX DIRECTION (ABSOLUTE): Oral sex directed AT a man = fellatio — always. Oral sex directed AT a woman = cunnilingus — always, regardless of who performs it. Never write a man receiving cunnilingus or a woman receiving fellatio. The woman NEVER has a penis, shaft, member, or cock under any framing. If act is generic "oral" with a man and woman present, DEFAULT to fellatio (woman performing on man) — do NOT default to cunnilingus. Only write cunnilingus when the subject is two women or no man is present. SKELETON ECHO RULE (ABSOLUTE): NEVER output skeleton fields as standalone sentences. Forbidden sentence patterns: "The race is ...", "The body type is ...", "The role is ...", "The theme is ...", "The act is ...", "The scene is ...". Weave these details into the prose description only — never list them as separate statements.`;
 
 const SYSTEM_ANIME = `You are a booru-tag prompt engineer for anime image generation models (Pony Diffusion, NoobAI, Illustrious). You write ONLY comma-separated booru-style tags — never prose, never sentences. Output ONLY the raw tag list. No intro, no quotes, no explanation. Tags must be explicit and graphic for the requested act. Start every output with: ${QUALITY_TAGS}. Then character count (1girl, 2girls, 1boy 1girl, etc). Then character features, then act/scene tags, then style tags. Every tag is lowercase. Use underscores for multi-word tags (e.g. long_hair, spread_legs, cum_on_face). Be direct and explicit about anatomy and acts — this is for adult content generation. Never write a sentence. Never write a description. Tags only. FORBIDDEN tags — never include any of these: camera brands (canon, nikon, sony, leica, fuji, hasselblad), lens specs (50mm, 85mm, 35mm, 24mm), photography terms (depth_of_field, bokeh, f/1.8, f/2.8, dslr, mirrorless, shot_on, raw_photo, candid_photography, candid, documentary, lifestyle_photography, street_photography, intimate_photography, shallow_depth_of_field, editorial, editorial_photography, softbox, softbox_lighting, studio_lighting, studio_softbox, studio_flash, ring_light, lifestyle, realistic_anatomy, detailed_skin_texture, realistic_proportions, detailed_anatomy, photo_realistic, hyperrealistic). These are PHOTOGRAPHY terms and have no place in anime tags. For lighting and atmosphere use ONLY anime-appropriate terms like: warm_lighting, moonlight, candlelight, neon_lights, dramatic_shadows, soft_light, golden_light, dappled_sunlight, firelight, dim_lighting, backlight, rim_light, natural_light. TAG FORMAT: use_underscores_for_multi_word_tags (e.g. long_hair, spread_legs, large_breasts). Single-word tags have no underscore. Spaces between tags use commas only. GENDER RULE (ABSOLUTE): When subject contains both female AND male characters, ALL sexual acts must be heterosexual male-female. A woman and a man = 1boy 1girl — write only heterosexual pairings. Two women and a man = 1boy 2girls — man interacts with women heterosexually. A woman and two men = 2boys 1girl — men interact with woman heterosexually. NEVER write male-on-male acts when a female is present in the subject.`;
 
@@ -524,7 +614,7 @@ async function generatePrompt(skeleton, actCat, sceneCat, themeCat, roleCat, lig
   const hasWomanSubject = /\bwoman\b|\bwomen\b|\bgirl\b/i.test(skeleton.subject || '');
   const isFinishAct = actCat && (FINISH_ACTS.test(actCat.name || '') || FINISH_ACTS.test(actCat.emphasis || ''));
   const cumRule = (isFinishAct && hasWomanSubject) ? '\nCUMSHOT RULE (ABSOLUTE): The finish is always received by the woman. Never on the man.' : '';
-  const soloNoCum = (!hasMaleSubject && isSoloFemale(skeleton.subject)) ? '\nSOLO FEMALE RULE (ABSOLUTE): No males, no penis, no cum, no semen, no ejaculate, no white fluid on skin. Female squirting is clear fluid only — never say ejaculation, cum, or semen. Never use the word \'orgasmic\' — instead say: ecstatic, overwhelmed by pleasure, lost in sensation. Skin moisture is sweat or water only — never describe skin as oily, oil-coated, or glazed. Do NOT use \'glistening\', \'glistens\', \'wet\', \'slick\', \'sheen\', \'shiny\' or \'dripping\' for skin unless the scene contains real water (pool, shower, rain, ocean, bath) or she is visibly sweating from exertion — and when you do, name that source in the same sentence so it reads as water or sweat, never as fluid on her. Otherwise describe skin as matte, dry, soft or clean. JOI scenes show only the woman teasing — no completion, no finish, no implied viewer orgasm. Include the phrase \'clean skin\' somewhere in the prompt to reinforce the image model.\nSOLO FRAMING (ABSOLUTE): She is the ONLY person in the image. The prompt text MUST say so explicitly \u2014 say it as natural prose inside a sentence, for example \'she stands completely alone\', \'she is the only person in the frame\', \'no one else is present\'. Never stack it as an adjective before the noun: write \'a woman stands alone in the room\', never \'a completely alone woman\'. This is for the image model, which never sees these instructions, so the words must appear in the output itself. Never imply a second person: no photographer, no observer, no other hands, arms, shadows or reflections of anyone else. If the style is candid, amateur, voyeur or hidden-camera, the camera is unmanned \u2014 mounted, propped, on a timer or held by her \u2014 never operated by another person in the scene.' : '';
+  const soloNoCum = (!hasMaleSubject && isSoloFemale(skeleton.subject)) ? '\nSOLO FEMALE RULE (ABSOLUTE): No males, no penis, no cum, no semen, no ejaculate, no white fluid on skin. Female squirting is clear fluid only — never say ejaculation, cum, or semen. Never use the word \'orgasmic\' — instead say: ecstatic, overwhelmed by pleasure, lost in sensation. Skin moisture is sweat or water only — never describe skin as oily, oil-coated, or glazed. Do NOT use \'glistening\', \'glistens\', \'wet\', \'slick\', \'sheen\', \'shiny\' or \'dripping\' for skin unless the scene contains real water (pool, shower, rain, ocean, bath) or she is visibly sweating from exertion — and when you do, name that source in the same sentence so it reads as water or sweat, never as fluid on her. Otherwise describe skin as matte, dry, soft or clean. JOI scenes show only the woman teasing — no completion, no finish, no implied viewer orgasm. Include the phrase \'clean skin\' somewhere in the prompt to reinforce the image model.\nSOLO FRAMING (ABSOLUTE): She is the ONLY person in the image. The prompt text MUST say so explicitly \u2014 say it as natural prose inside a sentence, for example \'she is the only person in the frame\', \'no one else is present\', \'the room is empty apart from her\', \'she is entirely by herself\'. Vary this wording between prompts \u2014 do not open every prompt the same way. This statement describes WHO IS PRESENT, never her posture: it must not override the pose the act calls for, so if she is on all fours or kneeling do not also write that she stands. Never stack it as an adjective before the noun: write \'a woman kneels alone in the room\', never \'a completely alone woman\'. This is for the image model, which never sees these instructions, so the words must appear in the output itself. Never imply a second person: no photographer, no observer, no other hands, arms, shadows or reflections of anyone else. If the style is candid, amateur, voyeur or hidden-camera, the camera is unmanned \u2014 mounted, propped, on a timer or held by her \u2014 never operated by another person in the scene.' : '';
   let interracialRule = '';
   if (INTERRACIAL) {
     const isAfricanRace = RACE_ARG && INTERRACIAL_DARK.includes(RACE_ARG);
@@ -771,11 +861,11 @@ async function main() {
   const sceneNames = catNames ? catNames.filter(n => CATEGORIES[n]?.type === 'scene') : [];
   const themeNames = catNames ? catNames.filter(n => CATEGORIES[n]?.type === 'theme') : [];
 
-  const ALL_ROLES  = ROLE_RANDOM  ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'role')  : null;
+  const ALL_ROLES  = ROLE_RANDOM  ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'role' && modeOk(CATEGORIES[k]))  : null;
   const MALE_REQUIRED_ACTS  = new Set(['titfuck','handjob','facial','creampie','dp','bukakke']);
   const SOLO_ONLY_ACTS       = new Set(['joi','solo']);
   const MALE_REQUIRED_THEMES = new Set(['pegging','femdom','daddy_bg','breeding','cuckold']);
-  const ALL_ACTS_FULL = ACT_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'act') : null;
+  const ALL_ACTS_FULL = ACT_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'act' && modeOk(CATEGORIES[k])) : null;
   const ALL_ACTS = (() => {
     if (!ALL_ACTS_FULL || !SUBJECT_ARG) return ALL_ACTS_FULL;
     return ALL_ACTS_FULL.filter(k => {
@@ -789,8 +879,8 @@ async function main() {
       return true;
     });
   })();
-  const ALL_SCENES = SCENE_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'scene') : null;
-  const ALL_THEMES_FULL = THEME_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'theme') : null;
+  const ALL_SCENES = SCENE_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'scene' && modeOk(CATEGORIES[k])) : null;
+  const ALL_THEMES_FULL = THEME_RANDOM ? Object.keys(CATEGORIES).filter(k => CATEGORIES[k].type === 'theme' && modeOk(CATEGORIES[k])) : null;
   const ALL_THEMES = (() => {
     if (!ALL_THEMES_FULL || !SUBJECT_ARG) return ALL_THEMES_FULL;
     return ALL_THEMES_FULL.filter(k => {
@@ -805,11 +895,11 @@ async function main() {
   })();
   const ALL_STYLES = STYLE_RANDOM ? Object.keys(CATEGORIES).filter(k => {
     const cat = CATEGORIES[k];
-    return cat.type === 'style' && (cat.mode === 'all' || cat.mode === MODE_ARG || (!cat.mode && MODE_ARG === 'realistic'));
+    return cat.type === 'style' && modeOk(cat);
   }) : null;
   const ALL_LIGHTINGS = LIGHTING_RANDOM ? Object.keys(CATEGORIES).filter(k => {
     const cat = CATEGORIES[k];
-    return cat.type === 'lighting' && (cat.mode === 'all' || cat.mode === MODE_ARG || (!cat.mode && MODE_ARG === 'realistic'));
+    return cat.type === 'lighting' && modeOk(cat);
   }) : null;
   const roleCat = (ROLE_ARG && !ROLE_RANDOM) ? CATEGORIES[ROLE_ARG] : null;
   if (ROLE_ARG && !ROLE_RANDOM && !roleCat) { console.error(`Unknown role: "${ROLE_ARG}"`); process.exit(1); }
@@ -860,7 +950,14 @@ async function main() {
     if (HAIR_COLOR_RANDOM) HAIR_COLOR_ARG = pickOne(HAIR_COLOR_POOL);
     if (HAIR_LENGTH_RANDOM) HAIR_LENGTH_ARG = pickOne(HAIR_LENGTH_POOL);
     if (HAIR_STYLE_RANDOM) HAIR_STYLE_ARG = pickOne(HAIR_STYLE_POOL);
-    if (FACIAL_EXPRESSION_RANDOM) FACIAL_EXPRESSION_ARG = pickOne(FACIAL_EXPRESSION_POOL);
+    if (FACIAL_EXPRESSION_RANDOM) {
+      // ahegao is a manga convention, and the expression rule is ABSOLUTE, so a
+      // realistic run would be forced to render it photographically.
+      const exprPool = MODE_ARG === 'anime'
+        ? FACIAL_EXPRESSION_POOL
+        : FACIAL_EXPRESSION_POOL.filter(e => e !== 'ahegao');
+      FACIAL_EXPRESSION_ARG = pickOne(exprPool);
+    }
     if (EYE_COLOR_RANDOM) EYE_COLOR_ARG = pickOne(EYE_COLOR_POOL);
     if (ALL_BODYTYPES && ALL_BODYTYPES.length) {
       BODYTYPE_NAMES = [pickOne(ALL_BODYTYPES), ...USER_MODIFIERS];
@@ -874,13 +971,35 @@ async function main() {
     const themeCat  = themeName ? CATEGORIES[themeName] : null;
     const effectiveRole  = ROLE_RANDOM  ? ALL_ROLES[Math.floor(Math.random()  * ALL_ROLES.length)]  : ROLE_ARG;
     const effectiveStyle = (DATASET_MODE || !STYLE_RANDOM) ? STYLE_ARG : (ALL_STYLES?.length ? ALL_STYLES[Math.floor(Math.random() * ALL_STYLES.length)] : null);
-    const effectiveLighting = (DATASET_MODE || !LIGHTING_RANDOM) ? LIGHTING_ARG : (ALL_LIGHTINGS?.length ? ALL_LIGHTINGS[Math.floor(Math.random() * ALL_LIGHTINGS.length)] : null);
+    let effectiveLighting = (DATASET_MODE || !LIGHTING_RANDOM) ? LIGHTING_ARG : (ALL_LIGHTINGS?.length ? ALL_LIGHTINGS[Math.floor(Math.random() * ALL_LIGHTINGS.length)] : null);
 
     const skeleton  = buildSkeleton(actCat, sceneCat, themeCat, effectiveRole, effectiveStyle);
     if (sceneName && SCENE_SETTING_MAP[sceneName]) skeleton.setting = SCENE_SETTING_MAP[sceneName];
     if (sceneName && SCENE_LIGHTING_MAP[sceneName]) {
       const opts = SCENE_LIGHTING_MAP[sceneName];
       skeleton.lighting = opts[Math.floor(Math.random() * opts.length)];
+    } else if (LIGHTING_RANDOM && !DATASET_MODE) {
+      // Fallback for when no lighting category is available to speak for the
+      // setting. Dataset mode has its own lighting vocabulary, and an explicit
+      // --lighting is a deliberate choice, so neither is second-guessed.
+      const allowed = lightingForSetting(skeleton.setting);
+      if (allowed && !allowed.includes(skeleton.lighting)) {
+        skeleton.lighting = allowed[Math.floor(Math.random() * allowed.length)];
+      }
+    }
+
+    // The lighting category describes the light through its own `emphasis`, and
+    // it was drawn independently of skeleton.lighting, so the two disagreed in
+    // half of all prompts. Re-pick the category to suit the setting, then let it
+    // set skeleton.lighting as well — one source, one description.
+    if (LIGHTING_RANDOM && !DATASET_MODE && effectiveLighting) {
+      const classes = settingLightClasses(skeleton.setting);
+      const current = LIGHT_CAT_CLASS[effectiveLighting] || 'any';
+      if (!classes.includes(current)) {
+        const fits = (ALL_LIGHTINGS || []).filter(n => classes.includes(LIGHT_CAT_CLASS[n] || 'any'));
+        if (fits.length) effectiveLighting = fits[Math.floor(Math.random() * fits.length)];
+      }
+      if (LIGHT_CAT_PHRASE[effectiveLighting]) skeleton.lighting = LIGHT_CAT_PHRASE[effectiveLighting];
     }
     if (themeName) skeleton.theme = themeCat?.label?.split(' —')[0] || themeName;
 

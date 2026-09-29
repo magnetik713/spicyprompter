@@ -185,6 +185,16 @@
     if (pg > 1) parts.push('page=' + pg);
     return '/prompts' + (parts.length ? '?' + parts.join('&') : '');
   }
+  // carried into the detail page so its prev/next walk this same list
+  const rowQs = (() => {
+    const p = [];
+    if (q) p.push('q=' + encodeURIComponent(q));
+    selectedTags.forEach(t => p.push('tag=' + encodeURIComponent(t)));
+    if (selectedCategory) p.push('category=' + encodeURIComponent(selectedCategory));
+    if (selectedSort !== 'newest') p.push('sort=' + encodeURIComponent(selectedSort));
+    if (showStarred) p.push('starred=1');
+    return p.length ? '?' + p.join('&') : '';
+  })();
   function pageRange(cur, total) {
     const pages = new Set([1, total, cur-1, cur, cur+1].filter(p => p >= 1 && p <= total));
     const sorted = [...pages].sort((a,b) => a-b);
@@ -257,7 +267,7 @@
       <button class="row-btn dl<%= p.image_path ? ' has-img' : '' %>" data-src="<%= p.image_path ? '/prompts/' + p.image_path : '' %>" onclick="downloadRowImg(event,this)" title="Download image">&#x2B07;</button>
       <% if (p.workflow_json_path) { %><button class="row-btn has-img" data-src="/prompts/<%= p.workflow_json_path %>" onclick="downloadRowWf(event,this)" title="Download workflow JSON">&#x29B9;</button><% } %>
     </div>
-    <a href="/prompts/<%= p.id %>" class="prompt-row" style="flex:1" id="row-<%= p.id %>">
+    <a href="/prompts/<%= p.id %><%= rowQs %>" class="prompt-row" style="flex:1" id="row-<%= p.id %>">
       <div class="row-thumb" style="position:relative">
         <% if (p.image_path) { %>
           <img src="/prompts/<%= p.image_path %>" alt="">

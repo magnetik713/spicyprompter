@@ -21,22 +21,22 @@ const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const PAGE_SIZE = 24;
 
-router.get('/', async (req, res) => {
-  // background license check — downgrades silently if revoked
-  if (cfg.isPaid()) cfg.checkLicense().catch(() => {});
-  const { tag, q, page, category, sort, starred } = req.query;
-  const currentPage = Math.max(1, parseInt(page) || 1);
+// Shared by the library listing and the prompt detail prev/next navigation, so
+// that "next" follows whatever filters and sort the library is currently showing.
+function buildListQuery(query) {
+  const { tag, q, category, sort, starred } = query;
   const selectedTags = tag ? (Array.isArray(tag) ? tag : [tag]).filter(t => t && t !== 'All') : [];
   const selectedCategory = category || '';
   const selectedSort = ['newest','oldest','az','category','starred'].includes(sort) ? sort : 'newest';
   const showStarred = starred === '1';
 
-  const ORDER = {
-    newest:   'p.created_at DESC',
-    oldest:   'p.created_at ASC',
-    az:       'p.positive ASC',
-    category: 'p.category ASC, p.created_at DESC',
-    starred:  'p.starred DESC, p.created_at DESC',
+  // p.id breaks ties so paging and prev/next stay deterministic
+  const order = {
+    newest:   'p.created_at DESC, p.id DESC',
+    oldest:   'p.created_at ASC, p.id ASC',
+    az:       'p.positive ASC, p.id ASC',
+    category: 'p.category ASC, p.created_at DESC, p.id DESC',
+    starred:  'p.starred DESC, p.created_at DESC, p.id DESC',
   }[selectedSort];
 
   let where = 'WHERE 1=1';
@@ -56,6 +56,48 @@ router.get('/', async (req, res) => {
   if (showStarred) {
     where += ' AND p.starred = 1';
   }
+
+  return { where, params, order, selectedTags, selectedCategory, selectedSort, showStarred };
+}
+
+// Position of a prompt within the filtered list, plus its neighbours. Returns
+// null when the prompt is not in the list at all (hand-typed URL, or it no
+// longer matches the filters it was opened under) — the view then hides the
+// buttons rather than navigating somewhere unrelated.
+function buildPromptNav(query, promptId) {
+  const { where, params, order } = buildListQuery(query);
+  const ids = db.prepare(`SELECT p.id FROM prompts p ${where} ORDER BY ${order}`).all(...params).map(r => r.id);
+  const idx = ids.indexOf(promptId);
+  if (idx === -1) return null;
+
+  const carried = new URLSearchParams();
+  ['q', 'category', 'sort', 'starred'].forEach(k => { if (query[k]) carried.append(k, query[k]); });
+  const tags = Array.isArray(query.tag) ? query.tag : (query.tag ? [query.tag] : []);
+  tags.forEach(t => carried.append('tag', t));
+  const qs = carried.toString();
+
+  // Back link lands on the page that actually holds this prompt, so it stays
+  // correct after paging forward past a page boundary.
+  const back = new URLSearchParams(qs);
+  const backPage = Math.floor(idx / PAGE_SIZE) + 1;
+  if (backPage > 1) back.set('page', String(backPage));
+
+  return {
+    prevId:  idx > 0 ? ids[idx - 1] : null,
+    nextId:  idx < ids.length - 1 ? ids[idx + 1] : null,
+    position: idx + 1,
+    total: ids.length,
+    qs: qs ? '?' + qs : '',
+    backUrl: '/prompts' + (back.toString() ? '?' + back.toString() : ''),
+  };
+}
+
+router.get('/', async (req, res) => {
+  // background license check — downgrades silently if revoked
+  if (cfg.isPaid()) cfg.checkLicense().catch(() => {});
+  const q = req.query.q || '';
+  const currentPage = Math.max(1, parseInt(req.query.page) || 1);
+  const { where, params, order: ORDER, selectedTags, selectedCategory, selectedSort, showStarred } = buildListQuery(req.query);
 
   const total = db.prepare(`SELECT COUNT(*) as n FROM prompts p ${where}`).get(...params).n;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -894,7 +936,8 @@ router.get('/:id', (req, res) => {
   } else if (prompt.seed || prompt.steps || prompt.width) {
     wfMeta = { seed: prompt.seed, steps: prompt.steps, cfg: prompt.cfg_scale, sampler: prompt.sampler, width: prompt.width, height: prompt.height, scheduler: null, denoise: null };
   }
-  res.render('prompts/detail', { prompt, wfMeta, hasSaveImage, title: prompt.name, paid: cfg.isPaid() });
+  const nav = buildPromptNav(req.query, prompt.id);
+  res.render('prompts/detail', { prompt, wfMeta, hasSaveImage, nav, title: prompt.name, paid: cfg.isPaid() });
 });
 
 router.put('/:id', upload.single('image'), (req, res) => {

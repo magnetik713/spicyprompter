@@ -1,8 +1,23 @@
 <%- include('../partials/header') %>
-<div class="breadcrumb"><a href="/prompts">Library</a> &rsaquo; <%= prompt.name %></div>
+<div class="breadcrumb"><a href="<%= nav ? nav.backUrl : '/prompts' %>">Library</a> &rsaquo; <%= prompt.name %></div>
 <div class="page-header">
   <h1><%= prompt.name %></h1>
   <div style="display:flex;gap:8px;align-items:center">
+    <% if (nav && nav.total > 1) { %>
+    <div style="display:flex;gap:4px;align-items:center;margin-right:4px">
+      <% if (nav.prevId) { %>
+      <a href="/prompts/<%= nav.prevId %><%= nav.qs %>" class="btn btn-secondary" title="Previous prompt">&lsaquo;</a>
+      <% } else { %>
+      <span class="btn btn-secondary" style="opacity:.35;cursor:default" title="First prompt">&lsaquo;</span>
+      <% } %>
+      <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono,monospace);white-space:nowrap"><%= nav.position %> / <%= nav.total %></span>
+      <% if (nav.nextId) { %>
+      <a href="/prompts/<%= nav.nextId %><%= nav.qs %>" class="btn btn-secondary" title="Next prompt">&rsaquo;</a>
+      <% } else { %>
+      <span class="btn btn-secondary" style="opacity:.35;cursor:default" title="Last prompt">&rsaquo;</span>
+      <% } %>
+    </div>
+    <% } %>
     <% if (!prompt.starred) { %>
     <a href="/prompts/<%= prompt.id %>/edit" class="btn btn-secondary">Edit</a>
     <% } %>

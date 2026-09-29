@@ -564,8 +564,7 @@ function getFormState() {
     clothing_male: (document.querySelector('input[name="clothing_male"]:checked')||{}).value||'',
     facial_hair: (document.querySelector('input[name="facial_hair"]:checked')||{}).value||'',
     count: document.getElementById('count-input').value,
-    clean_bg: document.getElementById('clean-bg').checked,
-    model: document.getElementById('model-input').value
+    clean_bg: document.getElementById('clean-bg').checked
   };
 }
 function applyFormState(s) {
@@ -583,7 +582,9 @@ function applyFormState(s) {
   chk('facial_hair',s.facial_hair||'');
   document.getElementById('count-input').value=s.count||10;
   document.getElementById('clean-bg').checked=s.clean_bg!==false;
-  document.getElementById('model-input').value=s.model||'';
+  // Deliberately not restored: the model comes from Settings. Presets used to
+  // carry it, which meant a stale preset silently overrode the configured
+  // model after every model switch.
   syncTabVals();
 }
 function refreshPresets() {

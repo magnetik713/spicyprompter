@@ -142,7 +142,7 @@ try {
   // runs once per release rather than on every start, so a built-in category
   // the user deleted stays deleted until the next bump. INSERT OR IGNORE means
   // categories the user has edited are never overwritten.
-  const SEED_VERSION = '5';
+  const SEED_VERSION = '6';
   const count = db.prepare('SELECT COUNT(*) as n FROM llm_categories').get().n;
   const seenSeed = (db.prepare('SELECT value FROM config WHERE key=?').get('categories_seed_version') || {}).value;
   if (count === 0 || seenSeed !== SEED_VERSION) {
@@ -182,11 +182,62 @@ try {
       const sp = path2.join(__dirname, 'data', 'categories-seed.json');
       if (fs2.existsSync(sp)) backfillAll(JSON.parse(fs2.readFileSync(sp, 'utf8')));
     } catch (e) { console.error('category flag backfill skipped:', e.message); }
+    // Clothing values used to carry a location ("topless in bed"). Once
+    // padPool() mixes generic settings into a themed category, that contradicts
+    // the setting — "stands on a living room sofa ... Topless in bed". The
+    // setting owns location now. INSERT OR IGNORE above cannot correct a row
+    // that already exists, so rewrite the shipped values once. Matching the
+    // exact old token means a value the user edited themselves is left alone.
+    try {
+      const LOCATION_CLOTHING_FIX = {
+        pool:     [['fully nude in pool', 'fully nude']],
+        office:   [['topless in office', 'topless'], ['nude at desk', 'nude']],
+        gym:      [['nude in locker room', 'nude']],
+        car:      [['nude in backseat', 'nude'], ['partially undressed in car', 'partially undressed'], ['topless in passenger seat', 'topless']],
+        college:  [['nude in dorm', 'nude'], ['topless in bed', 'topless']],
+        teacher:  [['topless in classroom', 'topless']],
+        creampie: [['nude lying on bed', 'nude, lying down']],
+      };
+      const selCloth = db.prepare('SELECT clothing FROM llm_categories WHERE name=?');
+      const updCloth = db.prepare('UPDATE llm_categories SET clothing=? WHERE name=?');
+      const fixCloth = db.transaction(function () {
+        for (const name of Object.keys(LOCATION_CLOTHING_FIX)) {
+          const row = selCloth.get(name);
+          if (!row || !row.clothing) continue;
+          const pairs = LOCATION_CLOTHING_FIX[name];
+          let changed = false;
+          const out = [];
+          for (const raw of row.clothing.split('|')) {
+            const t = raw.trim();
+            const hit = pairs.find(p => p[0] === t);
+            const v = hit ? (changed = true, hit[1]) : t;
+            if (!out.includes(v)) out.push(v);   // stripping can collide
+          }
+          if (changed) updCloth.run(out.join('|'), name);
+        }
+      });
+      fixCloth();
+    } catch (e) { console.error('clothing location fix skipped:', e.message); }
     const retype = db.prepare("UPDATE llm_categories SET type='lighting' WHERE name=? AND type='style'");
     for (const n of ['candlelight','golden_hour','low_key','natural_window','neon_light','studio_flash'])
       retype.run(n);
     db.prepare('INSERT OR REPLACE INTO config (key,value) VALUES (?,?)').run('categories_seed_version', SEED_VERSION);
   }
 } catch (e) { console.error('llm_categories init error:', e.message); }
+
+// v1.14.0 renamed the dataset preset namespace from 'dataset' to 'sp_dataset'
+// but left the existing rows behind, so any preset saved before that release
+// stopped appearing in the dropdown. Move them across. A preset of the same
+// name already saved under the new type wins, so nothing is overwritten.
+try {
+  const orphans = db.prepare("SELECT id, name FROM presets WHERE type='dataset'").all();
+  if (orphans.length) {
+    const clash = db.prepare("SELECT 1 FROM presets WHERE type='sp_dataset' AND name=?");
+    const move  = db.prepare("UPDATE presets SET type='sp_dataset' WHERE id=?");
+    db.transaction(function (rows) {
+      for (const r of rows) if (!clash.get(r.name)) move.run(r.id);
+    })(orphans);
+  }
+} catch (e) { console.error('dataset preset migration skipped:', e.message); }
 
 module.exports = db;
